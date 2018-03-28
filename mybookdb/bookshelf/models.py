@@ -5,44 +5,56 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+class authors(models.Model):
+    """ authors """
+    name = models.TextField()
+    lowerCaseName = models.TextField()
+    familyName = models.TextField()
+    
+    def __str__(self):
+        return f"{self.familyName}, {self.name}"
+
+
 class books(models.Model):
     """ books 
     adapted as closely as possible from MyBookDroid table book - 
     to achieve sqllite binary compatible
     """
 
-    _id = models.AutoField(primary_key=True)
-    isbn10 = models.TextField(blank=True)
-    isbn10 = models.TextField(blank=True)
-    title = models.TextField(blank=True)
-    binding = models.TextField(blank=True)
-    description = models.TextField(blank=True)
-    numberOfPages = models.TextField(blank=True)
-    publisher = models.TextField(blank=True)
-    publicationDate = models.IntegerField()
-    reviewsFetchedDate = models.IntegerField()
-    offersFetchedDate = models.IntegerField()
+    isbn10 = models.TextField(null=True)
+    isbn13 = models.TextField(null=True)
+    title = models.TextField(blank=False)
+    binding = models.CharField(max_length=80, null=True)
+    description = models.TextField(null=True, blank=True)
+    numberOfPages = models.CharField(max_length=10, blank=True, null=True)
+    publisher = models.TextField(blank=True, null=True)
+    publicationDate = models.DateField(null=True)
+    reviewsFetchedDate = models.DateField(null=True)
+    offersFetchedDate = models.DateField(null=True)
 
     #author = models.ForeignKey(user)
     #authorBooks # authorId, bookId
     #tags = models.ManyToManyField(Tag, related_name="books", blank=True)
     # bookGroup (bookId, groupId)
 
-    grRating = models.FloatField()
-    grRatingsCount = models.IntegerField()
-    subject = models.TextField(blank=True)
-    created = models.IntegerField()
-    stateId = models.IntegerField()
-    userRating = models.IntegerField()
-    authors = models.TextField(blank=True)
-    lentToName = models.TextField(blank=True)
-    lentToUri = models.TextField(blank=True)
-    familyName = models.TextField(blank=True)
-    thumbnailSmall = models.TextField(blank=True)
-    thumbnailLarge = models.TextField(blank=True)
-    amazonBookId = models.IntegerField()
-    grBookId = models.IntegerField()
-    googleBookId = models.IntegerField()
+    grRating = models.FloatField(null=True)
+    grRatingsCount = models.IntegerField(null=True) # TODO move to grBooks
+    subject = models.TextField(null=True, blank=True)
+    created = models.DateField()
+    updated = models.DateField(null=True)
+    stateId = models.IntegerField() # TODO OneToOne or OneToMany?
+    userRating = models.IntegerField(null = True)
+    #authors = models.TextField(blank=True)
+    authors = models.ManyToManyField(authors,
+    )
+    lentToName = models.CharField(max_length=120, null=True)
+    lentToUri = models.TextField(blank=True, null=True)
+    #familyName = models.TextField(blank=True) # TODO redundant?
+    thumbnailSmall = models.TextField(blank=True, null=True)
+    thumbnailLarge = models.TextField(blank=True, null=True)
+    amazonBookId = models.IntegerField(null=True)
+    #grBookId = models.IntegerField()
+    #googleBookId = models.IntegerField()
 
     def __str__(self):
         #return f"{self.title} | {self.author}"
@@ -51,7 +63,6 @@ class books(models.Model):
 
 class comments(models.Model):
     """ comments on books """
-    _id = models.AutoField(primary_key=True)
     #bookId  ... REFERENCES books ON DELETE SET NULL ON UPDATE SET NULL,
     bookId = models.ForeignKey(books, 
         related_name='bookId',
@@ -64,18 +75,12 @@ class comments(models.Model):
     dateCreated = models.IntegerField()
 
 
-class authors(models.Model):
-    """ authors """
-    _id = models.AutoField(primary_key=True)
-    name = models.TextField()
-    lowerCaseName = models.TextField()
-    familyName = models.TextField()
-
-
 class googleBooks(models.Model):
     """ googlebooks infos """
-    _id = models.AutoField(primary_key=True)
-    bookId = models.IntegerField()
+    book = models.OneToOneField(books, 
+        related_name="googleBookId",
+        on_delete=models.CASCADE,
+        )
     identifier = models.TextField()
     subtitle = models.TextField()
     subject = models.TextField()
@@ -87,8 +92,10 @@ class googleBooks(models.Model):
 
 class grBooks(models.Model):
     """ goodreads books infos """
-    _id = models.AutoField(primary_key=True)
-    bookId = models.IntegerField()
+    book = models.OneToOneField(books, 
+        related_name="grBookId",
+        on_delete=models.CASCADE,
+        )
     grId = models.TextField()
     grAvgRating = models.FloatField()
     grRatingsCount = models.IntegerField()
@@ -103,13 +110,11 @@ class grBooks(models.Model):
 
 class groups(models.Model):
     """ book categories """
-    _id = models.AutoField(primary_key=True)
     name = models.TextField()
 
 
 class reviews(models.Model):
     """ reviews """
-    _id = models.AutoField(primary_key=True)
     bookId = models.IntegerField()
     grReviewId = models.TextField()
     dateCreated = models.IntegerField()
@@ -125,7 +130,6 @@ class reviews(models.Model):
 
 class states(models.Model):
     """ book status read/unread/... """
-    _id = models.AutoField(primary_key=True)
     bookId = models.IntegerField()
     favorite = models.IntegerField(default=0)
     haveRead = models.IntegerField(default=0)
