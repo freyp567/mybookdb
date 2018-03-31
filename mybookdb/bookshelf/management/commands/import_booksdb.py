@@ -7,6 +7,7 @@ usage:
 """
 from django.core.management.base import BaseCommand, CommandError
 from bookshelf.models import books, authors, comments, grBooks, googleBooks, groups
+from django.core.exceptions import ObjectDoesNotExist
 
 import os
 import io
@@ -27,15 +28,27 @@ class Command(BaseCommand):
     def load_table(self, table_name, objType):
         self.stdout.write(f"loading data for table {table_name} ...")
         rowcount = updated = 0
-        for row in self._c.execute(f"SELECT * FROM {table_name}"):
+        rows = self._c.execute(f"SELECT * FROM {table_name}")
+        col_names = [ col_info[0] for col_info in self._c.description ]
+        for row in rows:
             rowcount += 1
-            col_names = [ col_info[0] for col_info in self._c.description ]
             data = {}
             id = None
+            book_id = None
+            book_obj = None
             for pos, value in enumerate(row):
                 col_name = col_names[pos]
                 if col_name == '_id':
                     data['id'] = id = value
+                    
+                elif col_name == "bookId":
+                    book_id = value
+                    try:
+                        book_obj = books.objects.get(id=book_id)
+                    except ObjectDoesNotExist:
+                        book_obj = None
+                    else:
+                        data['book'] = book_obj
                     
                 elif col_name in ('created',):
                     # MyBookDroid stores dates as time_t values, need to convert for Django ORM
@@ -46,8 +59,28 @@ class Command(BaseCommand):
                     
                 else:
                     data[col_name] = value
+
+            if table_name in ('comments',):
+                if book_obj is None:
+                    objs = books.objects.filter(title = data['bookTitle'])
+                    if objs:
+                        assert len(objs) == 1
+                        book_obj = objs[0]
+                        data['book'] = book_obj
+                    else:
+                        self.stderr.write(f"missing book {book_id} - {data['bookTitle']!r}")
+                        continue # do not add if book it relates to does no longer exist
                     
-            #obj = objType.objects.get(pk=id) # raises DoesNotExist if not found, avoid
+                elif book_obj.title != data['bookTitle']: # title mismatch?
+                    if book_obj.title in data['bookTitle']:
+                        # e.g. 'Die letzte Legion. Roman' vs 'Die letzte Legion. Roman.'
+                        pass
+                    else:
+                        #assert book_obj.title == data['bookTitle'], "title mismatch"
+                        # pass similarity, e.g. 'Im Land der wei?en Wolke: Roman' vs 'Im Land der weissen Wolke: Roman'
+                        self.stdout.write(f"title mismatch for book {book_obj.id}:\n  {book_obj.title!r}\n  {data['bookTitle']!r}\n.")
+            
+            #obj = objType.objects.get(pk=id) # raises DoesNotExist if not found, so avoid
             obj = objType.objects.filter(id=id)
             if obj:
                 # item does already exist
@@ -64,9 +97,9 @@ class Command(BaseCommand):
                     
             else:
                 obj = objType(**data)
-                # 
                 obj.save()
                 updated += 1
+                
         self.stdout.write(f"{table_name}: total {updated} rows updated (of total {rowcount})")
         return updated
         
@@ -75,28 +108,49 @@ class Command(BaseCommand):
         self.stdout.write(f"loading data for table books ...")
         rowcount = updated = 0
         book_authors = set()
-        for row in self._c.execute(f"SELECT * FROM books"):
+        book_count = self._c.execute(f"SELECT count(*) FROM books").fetchone()[0]
+        book_rows = self._c.execute(f"SELECT * FROM books") # sqlite3_get_table?
+        col_names = [ col_info[0] for col_info in self._c.description ]
+        for row in book_rows:
             rowcount += 1
-            col_names = [ col_info[0] for col_info in self._c.description ]
-            data = {}
-            id = None
+            #self.stdout.write(".", ending=rowcount % 100 == 0 and "\n" or "")
+            self.stdout.flush()
+            id = row[col_names.index('_id')]; book_title = row[col_names.index('title')] # TODO split line
+            data = { 'id': id }
             for pos, value in enumerate(row):
                 col_name = col_names[pos]
                 if col_name == '_id':
-                    data['id'] = id = value
+                    continue
                     
-                elif col_name == 'authors':
+                if col_name == 'authors':
+                    author_unkn = []
+                    if value is None:
+                        self.stderr.write(f"book without author: {id}")
+                        continue 
+                    
                     for author_name in value.split(','):
-                        author_name = author_name.strip()
-                        obj_author = authors.objects.filter(name = author_name)
+                        author_name = author_name
+                        obj_author = authors.objects.filter(name=author_name.strip())                        
                         # name, familyName, lowerCaseName
                         if not obj_author:
-                            self.stdout.write(f"lookup author {author_name!r} failed for book {id} ({value})")
+                            author_unkn.append(author_name) # e.g. bookdId 106 ' Susanne Goga- Klinkenberg'
                         elif len(obj_author) != 1:
                             test = obj_author[0] # name not unique??
                             assert len(obj_author) == 1, f"author name not unique: {author_name}"
                         else:
                             book_authors.add(obj_author[0])
+                            
+                    if author_unkn:
+                        # e.g. 'Wilbur, Smith'
+                        author_name = ','.join(author_unkn)
+                        obj_author = authors.objects.filter(name=author_name.strip())                        
+                        if obj_author:
+                            assert len(obj_author) == 1
+                            book_authors.add(obj_author[0])
+                        else:
+                            self.stdout.write("")
+                            self.stdout.write(f"lookup author {author_name!r} failed for book {id} {book_title!r}")
+                        
                             
                 elif col_name in ('reviewsFetchedDate', 'offersFetchedDate', 'created', 'publicationDate'):
                     # MyBookDroid stores dates as time_t values, need to convert for Django ORM
@@ -111,38 +165,57 @@ class Command(BaseCommand):
                 
                 elif col_name in ('grBookId', 'googleBookId',):
                     # avoid TypeError: Direct assignment to the reverse side of a related set is prohibited. Use grBookId.set() instead.
-                    continue
+                    pass
                 
                 else:
                     data[col_name] = value
                     
-            obj = books.objects.filter(id=id)
-            if obj:
+            book_obj = books.objects.filter(id=id)
+            if book_obj:
+                book_obj = book_obj[0]
                 # item does already exist
-                assert len(obj) == 1
-                obj = obj[0]
+                self.stdout.write(f"existing book {id} title={data['title']!r}")
                 diff = {}
                 for key, value in data.items():
-                    if key == 'authors':
-                        pass # TODO detect changes in book_authors
-                    elif getattr(obj, key) != value:
-                        diff[key] = (getattr(obj, key), value) 
+                    if getattr(book_obj, key) != value:
+                        diff[key] = (getattr(book_obj, key), value) 
                         
+                if book_authors:
+                    book_authors_set = set([ a.name for a in book_obj.authors.all() ])
+                    book_authors_add = []
+                    for book_author in book_authors:
+                        if book_author.name in book_authors_set:
+                            book_authors_set.remove(book_author.name) # matched, ok
+                        else:
+                            book_obj.authors.add(book_author)
+                            book_obj.save()
+                            book_authors_add.append(book_author.name)
+                            
+                    if book_authors_set: # missing, removed
+                        for book_author_name in book_authors_set:
+                            self.stdout.write("")
+                            self.stderr.write(f"book {id} with author removed: {book_author_name}")
+                            #book_obj.authors. # TODO remove from authors set
+                            #book_obj.save()
+                        
+                    
                 if diff:
                     keys = ", ".join(diff.keys())
+                    self.stdout.write("")
                     self.stdout.write(f"detected mismatch for {table_name} {id} keys={keys}")
                     # TODO update selected fields
                     
             else:
-                obj = books(**data)
-                obj.save()
-                #obj.set(book_authors)
+                self.stdout.write(f"new book {id}: {data['title']!r}")
+                book_obj = books(**data)
+                book_obj.save()
                 for author in book_authors:  
-                    obj.authors.add(author)
-                obj.save()
+                    book_obj.authors.add(author)
+                book_obj.save()
                 
                 updated += 1
                 
+        self.stdout.write("")
         self.stdout.write(f"books: total {updated} rows updated (of total {rowcount})")
         return updated
         
@@ -156,11 +229,13 @@ class Command(BaseCommand):
         conn = sqlite3.connect(dbpath)
         self._c = conn.cursor()
             
-        self.load_table('authors', authors)
-        self.load_table('groups', groups)
+        if 1: # TODO readd when upstream table imports ok
+            self.load_table('authors', authors)
+            self.load_table('groups', groups)
         self.load_books()
-        self.load_table('googleBooks', googleBooks)
-        self.load_table('grBooks', grBooks)        
+        if 1:
+            self.load_table('googleBooks', googleBooks)
+            self.load_table('grBooks', grBooks)        
         self.load_table('comments', comments)
 
         self.stdout.write(self.style.SUCCESS(f"import books.db succeeded"))

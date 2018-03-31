@@ -64,8 +64,7 @@ class books(models.Model):
 class comments(models.Model):
     """ comments on books """
     #bookId  ... REFERENCES books ON DELETE SET NULL ON UPDATE SET NULL,
-    bookId = models.ForeignKey(books, 
-        related_name='bookId',
+    book = models.ForeignKey(books, 
         null = True,
         on_delete=models.SET_NULL, 
         #on_update=models.SET_NULL. # not supported by Django ORM?
@@ -82,12 +81,12 @@ class googleBooks(models.Model):
         on_delete=models.CASCADE,
         )
     identifier = models.TextField()
-    subtitle = models.TextField()
-    subject = models.TextField()
-    publisher = models.TextField()
-    description = models.TextField()
-    format = models.TextField()
-    googleLink = models.TextField()
+    subtitle = models.TextField(null=True)
+    subject = models.TextField(null=True)
+    publisher = models.TextField(null=True)
+    description = models.TextField(null=True)
+    format = models.TextField(null=True)
+    googleLink = models.TextField(null=True)
 
 
 class grBooks(models.Model):
@@ -96,16 +95,16 @@ class grBooks(models.Model):
         related_name="grBookId",
         on_delete=models.CASCADE,
         )
-    grId = models.TextField()
-    grAvgRating = models.FloatField()
-    grRatingsCount = models.IntegerField()
-    grRatingsSum = models.IntegerField()
-    grRatingDistOne = models.IntegerField()
-    grRatingDistTwo = models.IntegerField()
-    grRatingDistThree = models.IntegerField()
-    grRatingDistFour = models.IntegerField()
-    grRatingDistFive = models.IntegerField()
-    grLinkDetail = models.TextField()
+    grId = models.TextField(null=True)
+    grAvgRating = models.FloatField(null=True)
+    grRatingsCount = models.IntegerField(null=True)
+    grRatingsSum = models.IntegerField(null=True)
+    grRatingDistOne = models.IntegerField(null=True)
+    grRatingDistTwo = models.IntegerField(null=True)
+    grRatingDistThree = models.IntegerField(null=True)
+    grRatingDistFour = models.IntegerField(null=True)
+    grRatingDistFive = models.IntegerField(null=True)
+    grLinkDetail = models.TextField(null=True)
 
 
 class groups(models.Model):
