@@ -5,6 +5,7 @@ using django-tables2, see https://github.com/jieter/django-tables2
 
 """
 
+from django.urls import reverse 
 from django.utils.html import format_html
 from django.template.defaultfilters import striptags
 
@@ -20,6 +21,15 @@ class BooksTableFilter(django_filters.FilterSet):
         fields = ['title'] # TODO authors
         
         
+class IDColumn(tables.Column):
+    
+    def render(self, value):
+        # generate link to book details
+        url = reverse('book-detail', args=[str(value)])
+        idhtml = '<a target="book-detail" href="%s">%s</a>' % (url, value)
+        return format_html(idhtml)
+    
+    
 class DescriptionColumn(tables.Column):
     
     def __init__(self):
@@ -37,7 +47,7 @@ class DescriptionColumn(tables.Column):
 
 class BooksTable(tables.Table):
     
-    id = tables.Column(orderable=True)
+    id = IDColumn()
     isbn10 = tables.Column(visible=False)
     isbn13 = tables.Column(visible=False)
     title = tables.Column()
