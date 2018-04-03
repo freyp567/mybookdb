@@ -1,0 +1,35 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+
+<h1>Title: {{ books.title }}</h1>
+
+<p><strong>Authors:</strong>
+{% for author in books.authors.all %}
+  <a href="{% url 'author-detail' author.pk %}">{{ author.name }}</a>
+{% endfor %}
+</p>
+<p><strong>ISBN:</strong> 
+{% if books.isbn10 %}{{ books.isbn10 }}{% endif %}
+{% if books.isbn13 %}{{ books.isbn13 }}{% endif %}
+<p><strong>Description:</strong><br/> {{ books.description }}</p>
+
+<!-- TODO future
+<p><strong>Groups:</strong> { % for grop in book.bookGroup.all %}{{genre}}{ % if not forloop.last %}, { % endif %}{ % endfor %}</p>  
+-->
+
+<div style="margin-left:20px;margin-top:20px">
+<h4>Comments</h4>
+<hr/>
+
+{% for comment in books.comments_set.all %}
+<p class="text-success">{{ comment.dateCreated }}</p>
+<p>{{ comment.text }}</p>
+
+
+{% endfor %}
+<br/>
+<hr/>
+</div>
+{% endblock %}
+

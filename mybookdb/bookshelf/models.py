@@ -4,6 +4,8 @@ django model for bookshelf app
 from django.db import models
 from django.contrib.auth.models import User
 
+from django.urls import reverse 
+
 
 class authors(models.Model):
     """ authors """
@@ -14,6 +16,11 @@ class authors(models.Model):
     def __str__(self):
         return f"{self.familyName}, {self.name}"
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['name'], name='author_name'),
+        ]
+        
 
 class books(models.Model):
     """ books 
@@ -32,8 +39,6 @@ class books(models.Model):
     reviewsFetchedDate = models.DateField(null=True)
     offersFetchedDate = models.DateField(null=True)
 
-    #author = models.ForeignKey(user)
-    #authorBooks # authorId, bookId
     #tags = models.ManyToManyField(Tag, related_name="books", blank=True)
     # bookGroup (bookId, groupId)
 
@@ -42,19 +47,24 @@ class books(models.Model):
     subject = models.TextField(null=True, blank=True)
     created = models.DateField()
     updated = models.DateField(null=True)
-    stateId = models.IntegerField() # TODO OneToOne or OneToMany?
     userRating = models.IntegerField(null = True)
-    #authors = models.TextField(blank=True)
-    authors = models.ManyToManyField(authors,
-    )
+    
+    authors = models.ManyToManyField(authors)
+    
     lentToName = models.CharField(max_length=120, null=True)
     lentToUri = models.TextField(blank=True, null=True)
-    #familyName = models.TextField(blank=True) # TODO redundant?
     thumbnailSmall = models.TextField(blank=True, null=True)
     thumbnailLarge = models.TextField(blank=True, null=True)
     amazonBookId = models.IntegerField(null=True)
-    #grBookId = models.IntegerField()
-    #googleBookId = models.IntegerField()
+
+
+    def get_absolute_url(self):
+        """
+        Returns the url to access a particular book instance.
+        """
+        url = reverse('book-detail', args=[str(self.id)])
+        return url
+
 
     def __str__(self):
         #return f"{self.title} | {self.author}"
@@ -71,7 +81,8 @@ class comments(models.Model):
         )
     text = models.TextField()
     bookTitle = models.TextField()
-    dateCreated = models.IntegerField()
+    dateCreatedInt = models.IntegerField(null=True)
+    dateCreated = models.DateTimeField()
 
 
 class googleBooks(models.Model):
@@ -114,7 +125,10 @@ class groups(models.Model):
 
 class reviews(models.Model):
     """ reviews """
-    bookId = models.IntegerField()
+    book = models.OneToOneField(books, 
+        null=True,
+        on_delete=models.CASCADE,
+        )
     grReviewId = models.TextField()
     dateCreated = models.IntegerField()
     userName = models.TextField()
@@ -129,7 +143,10 @@ class reviews(models.Model):
 
 class states(models.Model):
     """ book status read/unread/... """
-    bookId = models.IntegerField()
+    book = models.OneToOneField(books, 
+        null=True,
+        on_delete=models.CASCADE,
+        )
     favorite = models.IntegerField(default=0)
     haveRead = models.IntegerField(default=0)
     readingNow = models.IntegerField(default=0)

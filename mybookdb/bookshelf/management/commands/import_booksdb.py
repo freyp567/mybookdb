@@ -4,9 +4,12 @@ import from books.db backup
 usage:
   python manage.py import_booksdb 20180121.backup
   
+TODO fix umlaute troubles, 
+e.g. book 179 causing (unicode error) 'utf-8' codec can't decode byte 0xe4 in position 156: invalid continuation byte
+book 336   'Im Land der wei?en Wolke: Roman'
 """
 from django.core.management.base import BaseCommand, CommandError
-from bookshelf.models import books, authors, comments, grBooks, googleBooks, groups
+from bookshelf.models import books, authors, comments, grBooks, googleBooks, groups, states
 from django.core.exceptions import ObjectDoesNotExist
 
 import os
@@ -79,6 +82,10 @@ class Command(BaseCommand):
                         #assert book_obj.title == data['bookTitle'], "title mismatch"
                         # pass similarity, e.g. 'Im Land der wei?en Wolke: Roman' vs 'Im Land der weissen Wolke: Roman'
                         self.stdout.write(f"title mismatch for book {book_obj.id}:\n  {book_obj.title!r}\n  {data['bookTitle']!r}\n.")
+                        
+            elif table_name in ('grBooks','states',) and book_obj is None:
+                # skip if missing book it relates to
+                continue
             
             #obj = objType.objects.get(pk=id) # raises DoesNotExist if not found, so avoid
             obj = objType.objects.filter(id=id)
@@ -107,7 +114,6 @@ class Command(BaseCommand):
     def load_books(self):
         self.stdout.write(f"loading data for table books ...")
         rowcount = updated = 0
-        book_authors = set()
         book_count = self._c.execute(f"SELECT count(*) FROM books").fetchone()[0]
         book_rows = self._c.execute(f"SELECT * FROM books") # sqlite3_get_table?
         col_names = [ col_info[0] for col_info in self._c.description ]
@@ -115,7 +121,9 @@ class Command(BaseCommand):
             rowcount += 1
             #self.stdout.write(".", ending=rowcount % 100 == 0 and "\n" or "")
             self.stdout.flush()
-            id = row[col_names.index('_id')]; book_title = row[col_names.index('title')] # TODO split line
+            id = row[col_names.index('_id')]
+            book_title = row[col_names.index('title')]
+            book_authors = set()
             data = { 'id': id }
             for pos, value in enumerate(row):
                 col_name = col_names[pos]
@@ -163,7 +171,7 @@ class Command(BaseCommand):
                     # eliminate redundancy, see ForeignKey set for col authors
                     pass 
                 
-                elif col_name in ('grBookId', 'googleBookId',):
+                elif col_name in ('grBookId', 'googleBookId', 'stateId'):
                     # avoid TypeError: Direct assignment to the reverse side of a related set is prohibited. Use grBookId.set() instead.
                     pass
                 
@@ -172,36 +180,37 @@ class Command(BaseCommand):
                     
             book_obj = books.objects.filter(id=id)
             if book_obj:
-                book_obj = book_obj[0]
                 # item does already exist
-                self.stdout.write(f"existing book {id} title={data['title']!r}")
+                book_obj = book_obj[0]
+                self.stdout.write(f"existing book {id}: {data['title']!r}")
                 diff = {}
                 for key, value in data.items():
                     if getattr(book_obj, key) != value:
                         diff[key] = (getattr(book_obj, key), value) 
                         
-                if book_authors:
-                    book_authors_set = set([ a.name for a in book_obj.authors.all() ])
-                    book_authors_add = []
-                    for book_author in book_authors:
-                        if book_author.name in book_authors_set:
-                            book_authors_set.remove(book_author.name) # matched, ok
-                        else:
-                            book_obj.authors.add(book_author)
-                            book_obj.save()
-                            book_authors_add.append(book_author.name)
-                            
-                    if book_authors_set: # missing, removed
-                        for book_author_name in book_authors_set:
-                            self.stdout.write("")
-                            self.stderr.write(f"book {id} with author removed: {book_author_name}")
-                            #book_obj.authors. # TODO remove from authors set
-                            #book_obj.save()
+                book_authors_set = set([ a.name for a in book_obj.authors.all() ])
+                book_authors_add = []
+                for book_author in book_authors:
+                    if book_author.name in book_authors_set:
+                        book_authors_set.remove(book_author.name) # matched, ok
+                    else:
+                        book_obj.authors.add(book_author)
+                        book_obj.save()
+                        book_authors_add.append(book_author.name)
+                        
+                # removed authors
+                for book_author_name in book_authors_set:
+                    # author no longer assigned
+                    book_author = [ a for a in book_obj.authors.all() if a.name == book_author_name ]
+                    assert len(book_author) == 1
+                    book_author = book_author[0]
+                    self.stderr.write(f"book {id} with author removed: {book_author.name}")
+                    book_obj.authors.remove(book_author)
+                    book_obj.save()
                         
                     
-                if diff:
+                if diff: # handle other differences
                     keys = ", ".join(diff.keys())
-                    self.stdout.write("")
                     self.stdout.write(f"detected mismatch for {table_name} {id} keys={keys}")
                     # TODO update selected fields
                     
@@ -228,15 +237,18 @@ class Command(BaseCommand):
         # https://docs.python.org/3/library/sqlite3.html
         conn = sqlite3.connect(dbpath)
         self._c = conn.cursor()
+        
+        #self.load_table('authors', authors)
+        #self.load_table('groups', groups)
             
-        if 1: # TODO readd when upstream table imports ok
-            self.load_table('authors', authors)
-            self.load_table('groups', groups)
         self.load_books()
-        if 1:
-            self.load_table('googleBooks', googleBooks)
-            self.load_table('grBooks', grBooks)        
-        self.load_table('comments', comments)
 
+        #self.load_table('states', states)
+        #self.load_table('bookGroup', bookGroup) # TODO
+
+        #self.load_table('googleBooks', googleBooks)
+        #self.load_table('grBooks', grBooks)        
+        #self.load_table('comments', comments)
+        
         self.stdout.write(self.style.SUCCESS(f"import books.db succeeded"))
         
