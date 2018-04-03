@@ -133,7 +133,7 @@ class Command(BaseCommand):
                 if col_name == 'authors':
                     author_unkn = []
                     if value is None:
-                        self.stderr.write(f"book without author: {id}")
+                        self.stderr.write(f"book without author: {id} {book_title!r}")
                         continue 
                     
                     for author_name in value.split(','):
@@ -238,17 +238,17 @@ class Command(BaseCommand):
         conn = sqlite3.connect(dbpath)
         self._c = conn.cursor()
         
-        #self.load_table('authors', authors)
-        #self.load_table('groups', groups)
+        self.load_table('authors', authors)
+        self.load_table('groups', groups)
             
         self.load_books()
 
-        #self.load_table('states', states)
-        #self.load_table('bookGroup', bookGroup) # TODO
+        self.load_table('states', states)
+        self.load_table('bookGroup', bookGroup) # TODO
 
-        #self.load_table('googleBooks', googleBooks)
-        #self.load_table('grBooks', grBooks)        
-        #self.load_table('comments', comments)
+        self.load_table('googleBooks', googleBooks)
+        self.load_table('grBooks', grBooks)        
+        self.load_table('comments', comments)
         
         self.stdout.write(self.style.SUCCESS(f"import books.db succeeded"))
         

@@ -1,0 +1,22 @@
+{% extends "base_generic.html" %}
+{% load render_table from django_tables2 %}
+<!-- { % load bootstrap3 %} 
+ouch, without, we run into TemplateSyntaxError: invalid block tag bootstrap_form ...
+but with bootstrap4 - not a registered tag library
+not yet compatible with bootstrap4 ??
+-->
+
+{% block content %}
+    <h1>Books</h1>
+    
+    {% if filter %}
+        <form action="" method="get" class="form form-inline">
+            {% bootstrap_form filter.form layout='inline' %}
+            {% bootstrap_button 'filter' %}
+        </form>
+    {% endif %}
+
+    {% render_table books_table 'django_tables2/bootstrap.html' %}
+    
+{% endblock %}
+

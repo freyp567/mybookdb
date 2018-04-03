@@ -83,6 +83,9 @@ class comments(models.Model):
     bookTitle = models.TextField()
     dateCreatedInt = models.IntegerField(null=True)
     dateCreated = models.DateTimeField()
+    
+    class Meta:
+        ordering = ['-dateCreated']
 
 
 class googleBooks(models.Model):

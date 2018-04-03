@@ -4,6 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+"django-tables2" = "*"
+django-filter = "*"
 
 [dev-packages]
 

@@ -22,12 +22,25 @@
 <h4>Comments</h4>
 <hr/>
 
+<table class="table-sm">
+<thead>
+  <tr>
+    <th>Date</th>
+    <th>Comment</th>
+  </tr>
+</thead>
+<tbody>
+
 {% for comment in books.comments_set.all %}
-<p class="text-success">{{ comment.dateCreated }}</p>
-<p>{{ comment.text }}</p>
-
-
+<tr>
+<td class="comment-date small">{{ comment.dateCreated|date:'Y-m-d H:i' }}</td>
+<td class="comment-text">{{ comment.text }}</td>
+</tr>
 {% endfor %}
+
+</tbody>
+</table>
+
 <br/>
 <hr/>
 </div>

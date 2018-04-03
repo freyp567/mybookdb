@@ -1,0 +1,10 @@
+{% extends "base_generic.html" %}
+{% load django_tables2 %}
+
+{% block content %}
+    <h1>Books</h1>
+
+    {% render_table books_table %}
+    
+{% endblock %}
+
