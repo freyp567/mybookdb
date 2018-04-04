@@ -32,15 +32,13 @@ def SimpleBookListView(request):
     return render(request, 'bookshelf/books_table.html', {'books_table': table})
 
 
-"""
 class FilteredBookListView(SingleTableMixin, FilterView):
+    # TODO -- test, experienced troubles with django-filter and bootstrap3/4 compatiblity
     table_class = BooksTable 
     model = books
     template_name = 'bookshelf/books_table_filtered.html'
     filterset_class = BooksTableFilter
-    
--- dropped as having troubles with django-filter and bootstrap3/4 compatiblity
-"""
+        
 
 
 class BookListGenericView(generic.ListView):

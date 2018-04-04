@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 "django-tables2" = "*"
 django-filter = "*"
+"django-bootstrap4" = "*"
 
 [dev-packages]
 

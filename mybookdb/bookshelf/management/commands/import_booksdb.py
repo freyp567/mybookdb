@@ -9,8 +9,10 @@ e.g. book 179 causing (unicode error) 'utf-8' codec can't decode byte 0xe4 in po
 book 336   'Im Land der wei?en Wolke: Roman'
 """
 from django.core.management.base import BaseCommand, CommandError
-from bookshelf.models import books, authors, comments, grBooks, googleBooks, groups, states
+from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
+
+from bookshelf.models import books, authors, comments, grBooks, googleBooks, groups, states
 
 import os
 import io
@@ -101,9 +103,11 @@ class Command(BaseCommand):
                     keys = ", ".join(diff.keys())
                     self.stdout.write(f"detected mismatch for {table_name} {id} keys={keys}")
                     # TODO update selected fields
+                    obj.updated = datetime.now(tz=timezone.utc)
                     
             else:
                 obj = objType(**data)
+                obj.updated = datetime.now(tz=timezone.utc)
                 obj.save()
                 updated += 1
                 

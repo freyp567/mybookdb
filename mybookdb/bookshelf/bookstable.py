@@ -16,9 +16,16 @@ from .models import books
 
 
 class BooksTableFilter(django_filters.FilterSet):
+    
+    #def __init__(self, *args, **kwargs):
+    #    # kwargs: data=None, queryset=None, prefix=None, strict=None, request=None
+    #    super().__init__(*args, *kwargs)
+        
     class meta:
         model = books
-        fields = ['title'] # TODO authors
+        fields = ['title', 'created',]  # 'id',  'updated', 'userRating', 'numberOfPages'
+        # TODO description stripped down, with full description in tooltip
+        # TODO authors
         
         
 class IDColumn(tables.Column):

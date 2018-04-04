@@ -9,14 +9,15 @@ a simple adaption of the (no longer maintained) MyBookDroid book list app for Dj
 See Django settings.
 
 ## TODOs
-+ cleanup of imported tata (from MyBookDroid sqllite backup) - umlaite, incomplete info, groups, ...
++ show states in book-detail
++ cleanup of imported data (from MyBookDroid sqllite backup) - umlaute, incomplete info, groups, ...
 + bootstrap4 integration with django-bootstrap4
   but which approach to choose? see:
-  https://github.com/zostera/django-bootstrap4
-  https://github.com/nikolas/django-bootstrap4-1
-  https://github.com/GabrielUlici/django-bootstrap4
-  http://django-bootstrap.readthedocs.io/en/latest/history.html
-  https://github.com/django-crispy-forms/django-crispy-forms/issues/732
+  + https://github.com/zostera/django-bootstrap4
+  + https://github.com/nikolas/django-bootstrap4-1
+  + https://github.com/GabrielUlici/django-bootstrap4
+  + http://django-bootstrap.readthedocs.io/en/latest/history.html
+  + https://github.com/django-crispy-forms/django-crispy-forms/issues/732
 
 + explore:
   replace django-tables2 by bootstrap-tables?
@@ -24,4 +25,5 @@ See Django settings.
 
 + search for / in book title
 + table filtering (would be for free using bootstrap-tables)
++ login and user access
 + editing book details
