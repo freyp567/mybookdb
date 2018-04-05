@@ -8,6 +8,7 @@ using django-tables2, see https://github.com/jieter/django-tables2
 from django.urls import reverse 
 from django.utils.html import format_html
 from django.template.defaultfilters import striptags
+from django import forms
 
 import django_filters
 import django_tables2 as tables
@@ -15,18 +16,42 @@ import django_tables2 as tables
 from .models import books
 
 
+class BooksFilterForm(forms.Form):
+    
+    title = forms.CharField(label='Title', max_length=20) # verbose_name='Book Title'
+
+    # [ f.name for f in books.get_fields() ]
+    # ['comments', 'googleBookId', 'grBookId', 'reviews', 'states', 'id', 'isbn10', 'isbn13', 'title', 'binding', 'description', 'numberOfPages', 'publisher', 'publicationDate', 'reviewsFetchedDate', 'offersFetchedDate', 'grRating', 'grRatingsCount', 'subject', 'created', 'updated', 'userRating', 'lentToName', 'lentToUri', 'thumbnailSmall', 'thumbnailLarge', 'amazonBookId', 'authors']
+
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def is_valid(self):
+        """Return True if the form has no errors, or False otherwise."""
+        #return self.is_bound and not self.errors
+        return True
+                
+        
+
 class BooksTableFilter(django_filters.FilterSet):
     
-    #def __init__(self, *args, **kwargs):
-    #    # kwargs: data=None, queryset=None, prefix=None, strict=None, request=None
-    #    super().__init__(*args, *kwargs)
-        
+    title = django_filters.CharFilter(label='title', lookup_expr='icontains')
+    userRating_gt = django_filters.NumberFilter(label='Rating', name='userRating', lookup_expr='gt')
+    #userRating_lt = django_filters.NumberFilter(label='Rating(lt)', name='userRating', lookup_expr='lt')
+    
     class meta:
         model = books
-        fields = ['title', 'created',]  # 'id',  'updated', 'userRating', 'numberOfPages'
-        # TODO description stripped down, with full description in tooltip
+        # TODO description (html stripped)
         # TODO authors
-        
+        #fields = {
+        #    'title': ['exact', 'contains'],
+        #    'description': ['icontains'],
+        #    'userRating': ['gt', 'lt'],
+        #}
+        #form = BooksFilterForm 
+
+    
         
 class IDColumn(tables.Column):
     
@@ -51,6 +76,13 @@ class DescriptionColumn(tables.Column):
         value = striptags(value)
         return format_html('<span title="%s">%s</span>' % (value, short_desc))
     
+    
+class MinimalBooksTable(tables.Table):
+    
+    class Meta:
+        model = books 
+        #template_name = 'django_tables2/bootstrap.html'
+        
 
 class BooksTable(tables.Table):
     
@@ -82,7 +114,7 @@ class BooksTable(tables.Table):
     class Meta:
         model = books
         #template_name = 'bookshelf/books_table.html'
-        template_name = 'django_tables2/bootstrap.html'
+        
         
     #def render_description(self, value):
     #    return '<span title="%s">(description)</span>' % "TODO title"

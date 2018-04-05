@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'bookshelf.apps.BookshelfConfig',
     'bootstrap4',
     'django_tables2',
+    'django_filters',
 ]
 
 MIDDLEWARE = [

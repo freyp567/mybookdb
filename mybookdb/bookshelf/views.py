@@ -5,7 +5,7 @@ from django_tables2 import RequestConfig
 from django_tables2.views import SingleTableMixin
 
 from .models import books, authors, comments, states
-from .bookstable import BooksTable, BooksTableFilter
+from .bookstable import BooksTable, BooksTableFilter, MinimalBooksTable
 
 
 def index(request):
@@ -32,14 +32,20 @@ def SimpleBookListView(request):
     return render(request, 'bookshelf/books_table.html', {'books_table': table})
 
 
+def TestView(request):
+    book_fields = [ f.name for f in books._meta.get_fields() ]
+    form = BooksTableFilter({}, books.objects.all()).form
+    assert len(form.fields) > 0, "missing form fields"
+    return render(request, 'test.html', {'form': form})
+    
+
 class FilteredBookListView(SingleTableMixin, FilterView):
-    # TODO -- test, experienced troubles with django-filter and bootstrap3/4 compatiblity
-    table_class = BooksTable 
+    table_class = BooksTable #MinimalBooksTable 
     model = books
     template_name = 'bookshelf/books_table_filtered.html'
     filterset_class = BooksTableFilter
         
-
+        
 
 class BookListGenericView(generic.ListView):
     """

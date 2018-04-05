@@ -1,24 +1,22 @@
-{% extends "base_generic.html" %}
-{% load bootstrap4 %}
-{% load render_table from django_tables2 %}
-
-<!-- { % load bootstrap3 %} 
-ouch, without, we run into TemplateSyntaxError: invalid block tag bootstrap_form ...
-but with bootstrap4 - not a registered tag library
-not yet compatible with bootstrap4 ??
+<!--
+see  http://django-tables2.readthedocs.io/en/latest/pages/filtering.html
 -->
+{% extends "base_generic.html" %}
+{% load render_table from django_tables2 %}
+{% load bootstrap4 %}
 
 {% block content %}
     <h1>Books</h1>
     
     {% if filter %}
+    (books_table_filtered TODO fix filter form)<br/>
         <form action="" method="get" class="form form-inline">
             {% bootstrap_form filter.form layout='inline' %}
             {% bootstrap_button 'filter' %}
         </form>
     {% endif %}
 
-    {% render_table books_table 'django_tables2/bootstrap.html' %}
+    {% render_table table 'django_tables2/bootstrap.html' %}
     
 {% endblock %}
 
