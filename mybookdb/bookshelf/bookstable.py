@@ -6,6 +6,7 @@ using django-tables2, see https://github.com/jieter/django-tables2
 """
 
 from django.urls import reverse 
+from django.utils.safestring import mark_safe
 from django.utils.html import format_html
 from django.template.defaultfilters import striptags
 from django import forms
@@ -77,6 +78,26 @@ class DescriptionColumn(tables.Column):
         return format_html('<span title="%s">%s</span>' % (value, short_desc))
     
     
+class DateColumn(tables.Column):
+
+    def __init__(self, verbose_name=None, default=None):
+        super().__init__(orderable=True, 
+                         verbose_name = verbose_name, 
+                         #localize=??? 
+                         empty_values = (),
+                         default = default)
+        self.classname = "date_column"
+    
+    def render(self, value):
+        # TODO set fixed width (10 chars)
+        # https://eric.sau.pe/custom-column-widths-in-bootstrap-tables/
+        # https://stackoverflow.com/questions/4457506/set-the-table-column-width-constant-regardless-of-the-amount-of-text-in-its-cell
+        # https://stackoverflow.com/questions/19847371/django-how-to-change-the-column-width-in-django-tables2
+        value = striptags(value)
+        return mark_safe("<div class='" + self.classname + "' >xx " +value+"</div>")
+        # ATTN not called, see render_created / render_updated below
+
+    
 class MinimalBooksTable(tables.Table):
     
     class Meta:
@@ -89,11 +110,12 @@ class BooksTable(tables.Table):
     id = IDColumn()
     isbn10 = tables.Column(visible=False)
     isbn13 = tables.Column(visible=False)
-    title = tables.Column()
+    title = tables.Column(orderable=True)
     binding = tables.Column(visible=False)
     description = DescriptionColumn()
-    created = tables.Column(verbose_name="created    .")  # attrs= TODO set minmal col width
-    updated = tables.Column(verbose_name="entry_updated", default="(not set)")  # attrs=  TODO set minimal col width
+    created = DateColumn(verbose_name="Created")
+    updated = DateColumn(verbose_name="Updated",
+        default="(not set)")  # attrs=  TODO set minimal col width
     numberOfPages = tables.Column(verbose_name="#")
     publisher = tables.Column(visible=False)
     publicationDate = tables.Column(visible=False)
@@ -115,6 +137,9 @@ class BooksTable(tables.Table):
     class Meta:
         model = books
         #template_name = 'bookshelf/books_table.html'
+        #template_name = 'django_tables2/table.html'
+        template_name = 'django_tables2/bootstrap4.html'
+        #attrs = ... ?
         
         
     #def render_description(self, value):
@@ -126,9 +151,11 @@ class BooksTable(tables.Table):
     def render_created(self, value):
         if value is None:
             return ""
-        return value.strftime("%Y-%m-%d")
+        value = value.strftime("%Y-%m-%d")
+        return mark_safe("<div class='date_column' >" +value+"</div>")
     
     def render_updated(self, value):
         if value is None:
             return ""
-        return value.strftime("%Y-%m-%d")
+        value = value.strftime("%Y-%m-%d")
+        return mark_safe("<div class='date_column' >" +value+"</div>")

@@ -11,3 +11,11 @@
 
 #comment-text {
 }
+
+div.date_column {
+  white-space: normal;
+  width: 100px;
+  white-space: nowrap
+}
+/* height: 45px; */
+/* white-space: nowrap */
