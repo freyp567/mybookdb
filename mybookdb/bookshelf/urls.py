@@ -22,13 +22,9 @@ urlpatterns += [
     path('books/<int:pk>/delete/', views.BookDeleteView.as_view(), name='book-delete'),
 ]
 
-urlpatterns += [  
-    path('test/', views.TestView, name='test'),
+urlpatterns += [
+    #path('test/', views.TestView, name='test'),
     #path('authors/', views.AuthorListView.as_view(), name='authors'),
     path('authors/', views.FilteredAuthorsListView.as_view(), name='authors'),
     path('author/<int:pk>', views.AuthorDetailView.as_view(), name='author-detail'),
 ]
-
-
-
-

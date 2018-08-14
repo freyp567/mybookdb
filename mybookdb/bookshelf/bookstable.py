@@ -43,18 +43,12 @@ class BooksFilterForm(forms.Form):
 class BooksTableFilter(django_filters.FilterSet):
     
     title = django_filters.CharFilter(label='title', lookup_expr='icontains')
-    userRating_gt = django_filters.NumberFilter(label='Rating', name='userRating', lookup_expr='gt')
-    #userRating_lt = django_filters.NumberFilter(label='Rating(lt)', name='userRating', lookup_expr='lt')
+    # TODO author
+    userRating_gt = django_filters.NumberFilter(label='Rating', field_name='userRating', lookup_expr='gt')
+      # TODO field width smaller for Rating
     
     class meta:
         model = books
-        # TODO description (html stripped)
-        # TODO authors
-        #fields = {
-        #    'title': ['exact', 'contains'],
-        #    'description': ['icontains'],
-        #    'userRating': ['gt', 'lt'],
-        #}
         #form = BooksFilterForm 
 
     

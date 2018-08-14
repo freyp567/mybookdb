@@ -1,20 +1,22 @@
+"""
+views on bookshelf (books, authors, ...)
+"""
+import logging
+
 from django.shortcuts import render
 from django.views import generic
-#from django.views.generic.edit import CreateView, UpdateView, DeleteView
+
+# from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import PermissionRequiredMixin
 
 from django_filters.views import View, FilterView
 from django_tables2 import RequestConfig
 from django_tables2.views import SingleTableMixin
 
-from .models import books, authors, comments, states
-from .forms import BookUpdateForm
-from .bookstable import BooksTable, BooksTableFilter, MinimalBooksTable
-from .authorstable import AuthorsTable, AuthorsTableFilter  # , MinimalAuthorsTable
-
-# from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.mixins import PermissionRequiredMixin
-
-import logging
+from bookshelf.models import books, authors, comments, states
+from bookshelf.forms import BookUpdateForm
+from bookshelf.bookstable import BooksTable, BooksTableFilter, MinimalBooksTable
+from bookshelf.authorstable import AuthorsTable, AuthorsTableFilter  # , MinimalAuthorsTable
 
 LOGGER = logging.getLogger(name='mybookdb.bookshelf.views')
 
@@ -30,11 +32,12 @@ def index(request):
     return render(
         request,
         'index.html',
-        context={'num_books':num_books,'num_authors':num_authors,}
+        context={'num_books':num_books, 'num_authors':num_authors,}
     )
 
 
 def SimpleBookListView(request):
+    """ simple list of books """
     queryset = books.objects.all()
     #filterset = BooksTableFilter() # cannot use in place of queryset: no attribute _default_manager
     table = BooksTable(queryset)
@@ -44,22 +47,14 @@ def SimpleBookListView(request):
     return render(request, 'bookshelf/books_table.html', {'books_table': table})
 
 
-def TestView(request):
-    book_fields = [ f.name for f in books._meta.get_fields() ]
-    LOGGER.debug("TestView fields=%s", book_fields)
-    form = BooksTableFilter({}, books.objects.all()).form
-    assert len(form.fields) > 0, "missing form fields"
-    return render(request, 'test.html', {'form': form})
-    
-
 class FilteredBookListView(SingleTableMixin, FilterView):
+    """ list view for books with filtering support """
     table_class = BooksTable
     model = books
     template_name = 'bookshelf/books_table_filtered.html'
     filterset_class = BooksTableFilter
     ordering = '-created'
-    
-            
+
 
 class BookListGenericView(generic.ListView):  # OBSOLETE
     """
@@ -87,7 +82,7 @@ class BookDetailView(generic.DetailView):
     model = books
     
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        context = super(BookDetailView, self).get_context_data(**kwargs)
         return context 
     
     
@@ -97,11 +92,13 @@ class MaintainBooks(PermissionRequiredMixin, View):
     """
     def get(self, request, *args, **kwargs):
         # self.object = self.get_object()
-        return super().get(request, *args, **kwargs)
+        #return super(MaintainBooks, self).get(request, *args, **kwargs)
+        raise NotImplementedError("MaintainBooks.get")
 
     def post(self, request, *args, **kwargs):
         # self.object = self.get_object()
-        return super().post(request, *args, **kwargs)
+        #return super(MaintainBooks, self).post(request, *args, **kwargs)
+        raise NotImplementedError("MaintainBooks.post")
     
     
 class BookCreateView(PermissionRequiredMixin, generic.edit.CreateView):
@@ -119,20 +116,7 @@ class BookUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     model = books
     permission_required = 'bookshelf.can_edit'
     form_class = BookUpdateForm  # failes with TypeError instance on instantiation
-    
-#class BookUpdateView(generic.FormView):  # PermissionRequiredMixin, 
-    #"""
-    #Edit book.
-    #"""
-    #model = books
-    #permission_required = 'bookshelf.can_edit'
-    #template_name = 'bookshelf/books_form.html'
-    #form_class = BookUpdateForm
-    
-    ##def form_valid(self, form):
-        ##context = self.get_context_data() 
-        ###...
-    
+
 class BookDeleteView(PermissionRequiredMixin, generic.edit.DeleteView):
     """
     Delete book.
@@ -140,11 +124,10 @@ class BookDeleteView(PermissionRequiredMixin, generic.edit.DeleteView):
     model = books
     fields = '__all__'
     permission_required = 'bookshelf.can_delete'
-    
-    
+
 class AuthorListView(generic.ListView):
     """
-    Generic class-based list view for a list of authors.
+    list of authors.
     uses template authors_list.html
     """
     model = authors
@@ -162,6 +145,7 @@ class AuthorListView(generic.ListView):
 
 
 class FilteredAuthorsListView(SingleTableMixin, FilterView):
+    """ list of authors with filtering """
     table_class = AuthorsTable
     model = authors
     template_name = 'bookshelf/authors_table_filtered.html'
@@ -170,7 +154,7 @@ class FilteredAuthorsListView(SingleTableMixin, FilterView):
 
 class AuthorDetailView(generic.DetailView):
     """
-    Generic class-based detail view for an author.
+    detail view for an author.
     """
     model = authors
     

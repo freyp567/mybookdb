@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django import forms
+from django.forms import widgets
 
 from .models import books
 
@@ -16,6 +17,8 @@ class BookUpdateForm(forms.ModelForm):
     publisher = forms.CharField(max_length=128)
     publicationDate = forms.DateInput()
     
+    # TODO allow to edit authors 
+    # forms.ModelMultipleChoiceField(queryset=...) ?
     
     class Meta:
         model = books
@@ -29,9 +32,17 @@ class BookUpdateForm(forms.ModelForm):
             'publicationDate',
             ) 
         # 'userrating', 'authors'
-    
+        
+    def __init__(self, *args, **kwargs):
+        super(BookUpdateForm, self).__init__(*args, **kwargs)
+        #self.fields['publicationDate'].widget = widgets.SelectDateWidget()  # years=years_tuple
+        self.fields['publicationDate'].widget = widgets.DateInput()  # TODO date format
+        # https://stackoverflow.com/questions/46094811/change-django-required-form-field-to-false
+        for field_name in ('description','isbn10','isbn13','subject','publisher', 'publicationDate',):
+            self.fields[field_name].required = False
+            
     def clean_isbn10(self):
         data = self.cleaned_data['isbn10']
-        if len(data) < 10:
+        if data and len(data) < 10:
             raise ValidationError('Invalid value for ISBN10, expect 10 digits')
         return data
