@@ -1,0 +1,23 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+    <h1>Authors</h1>
+    order by 
+    <a href="{{ request.path }}?sort=name">name</a>, <br/>
+
+    {% if authors_list %}
+    <ul>
+
+      {% for author in authors_list %}
+      <li>
+        <a href="{{ author.get_absolute_url }}">{{ author.name }}</a>
+      </li>
+      {% endfor %}
+
+    </ul>
+
+    {% else %}
+      <p>There are no authors in the bookshelf.</p>
+    {% endif %}       
+{% endblock %}
+
