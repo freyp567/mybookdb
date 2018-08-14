@@ -9,7 +9,6 @@ see  http://django-tables2.readthedocs.io/en/latest/pages/filtering.html
     <h1>Books</h1>
     
     {% if filter %}
-    (books_table_filtered TODO fix filter form)<br/>
         <form action="" method="get" class="form form-inline">
             {% bootstrap_form filter.form layout='inline' %}
             {% bootstrap_button 'filter' %}

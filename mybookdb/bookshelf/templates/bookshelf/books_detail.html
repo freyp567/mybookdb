@@ -1,8 +1,10 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
+<!-- button type="button" class="btn btn-primary" ... -->
+<a href="{% url 'book-update' books.pk %}">Edit</a>
 
-<h1>Title: {{ books.title }}</h1>
+<h1>{{ books.title }}</h1>
 
 <p><strong>Authors:</strong>
 {% for author in books.authors.all %}
@@ -10,18 +12,27 @@
 {% endfor %}
 </p>
 <p><strong>ISBN:</strong> 
-{% if books.isbn10 %}{{ books.isbn10 }}{% endif %}
+{% if books.isbn10 %}{{ books.isbn10 }}&nbsp;&nbsp;{% endif %}
 {% if books.isbn13 %}{{ books.isbn13 }}{% endif %}
-<p><strong>Description:</strong><br/> {{ books.description }}</p>
+
+<p><strong>Description:</strong><br/> 
+{% if not books.description %}
+    (missing description)
+{% else %}
+  <!-- TODO mark safe -->
+    {{ books.description|safe }}
+{% endif %}
+</p>
 
 <!-- TODO future
 <p><strong>Groups:</strong> { % for grop in book.bookGroup.all %}{{genre}}{ % if not forloop.last %}, { % endif %}{ % endfor %}</p>  
 -->
+<hr/>
 
 <div style="margin-left:20px;margin-top:20px">
 <h4>Comments</h4>
-<hr/>
 
+{% if books.comments_set.count %}
 <table class="table-sm">
 <thead>
   <tr>
@@ -40,6 +51,10 @@
 
 </tbody>
 </table>
+
+{% else %}
+    (no comments)
+{% endif %}
 
 <br/>
 <hr/>

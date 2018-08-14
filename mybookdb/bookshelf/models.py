@@ -28,9 +28,9 @@ class books(models.Model):
     to achieve sqllite binary compatible
     """
 
-    isbn10 = models.TextField(null=True)
-    isbn13 = models.TextField(null=True)
-    title = models.TextField(blank=False)
+    isbn10 = models.TextField(null=True, max_length=10)
+    isbn13 = models.TextField(null=True, max_length=13)
+    title = models.TextField(blank=False, max_length=255)
     binding = models.CharField(max_length=80, null=True)
     description = models.TextField(null=True, blank=True)
     numberOfPages = models.CharField(max_length=10, blank=True, null=True)
@@ -41,7 +41,7 @@ class books(models.Model):
 
     #tags = models.ManyToManyField(Tag, related_name="books", blank=True)
     # bookGroup (bookId, groupId)
-
+    
     grRating = models.FloatField(null=True)
     grRatingsCount = models.IntegerField(null=True) # TODO move to grBooks
     subject = models.TextField(null=True, blank=True)
@@ -57,7 +57,13 @@ class books(models.Model):
     thumbnailLarge = models.TextField(blank=True, null=True)
     amazonBookId = models.IntegerField(null=True)
 
-
+    class Meta:
+        permissions = (
+            ("can_create", "Create book"),
+            ("can_edit", "Edit book"),
+            ("can_delete", "Delete book"),
+        )   
+        
     def get_absolute_url(self):
         """
         Returns the url to access a particular book instance.

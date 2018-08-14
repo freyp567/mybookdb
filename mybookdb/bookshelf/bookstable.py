@@ -21,7 +21,13 @@ class BooksFilterForm(forms.Form):
     title = forms.CharField(label='Title', max_length=20) # verbose_name='Book Title'
 
     # [ f.name for f in books.get_fields() ]
-    # ['comments', 'googleBookId', 'grBookId', 'reviews', 'states', 'id', 'isbn10', 'isbn13', 'title', 'binding', 'description', 'numberOfPages', 'publisher', 'publicationDate', 'reviewsFetchedDate', 'offersFetchedDate', 'grRating', 'grRatingsCount', 'subject', 'created', 'updated', 'userRating', 'lentToName', 'lentToUri', 'thumbnailSmall', 'thumbnailLarge', 'amazonBookId', 'authors']
+    # ['comments', 'googleBookId', 'grBookId', 'reviews', 'states', 'id', 
+    #  'isbn10', 'isbn13', 'title', 'binding', 'description', 'numberOfPages', 
+    #  'publisher', 'publicationDate', 'reviewsFetchedDate', 'offersFetchedDate', 
+    #  'grRating', 'grRatingsCount', 'subject', 'created', 'updated', 'userRating', 
+    #  'lentToName', 'lentToUri', 'thumbnailSmall', 'thumbnailLarge', 
+    #  'amazonBookId', 'authors',
+    # ]
 
     
     def __init__(self, *args, **kwargs):
@@ -92,7 +98,8 @@ class BooksTable(tables.Table):
     title = tables.Column()
     binding = tables.Column(visible=False)
     description = DescriptionColumn()
-    created = tables.Column(verbose_name="EntryCreated")
+    created = tables.Column(verbose_name="created    .")  # attrs= TODO set minmal col width
+    updated = tables.Column(verbose_name="entry_updated", default="(not set)")  # attrs=  TODO set minimal col width
     numberOfPages = tables.Column(verbose_name="#")
     publisher = tables.Column(visible=False)
     publicationDate = tables.Column(visible=False)

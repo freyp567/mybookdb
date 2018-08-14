@@ -122,7 +122,7 @@ USE_TZ = True
 
 
 # Redirect to home URL after login (Default redirects to /accounts/profile/)
-#LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/'
 
 # to test email:
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

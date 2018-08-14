@@ -31,9 +31,7 @@
   {% block sidebar %}
   <ul class="sidebar-nav">
     <li><a href="{% url 'index' %}">Home</a></li>
-    <li><a href="{% url 'books1' %}">All books</a></li>
-    <li><a href="{% url 'books2' %}">All books (v2)</a></li>
-    <li><a href="{% url 'test' %}">Test</a></li>
+    <li><a href="{% url 'books' %}">All books</a></li>
     <li><a href="{% url 'authors' %}">All authors</a></li>
   </ul>
  
@@ -51,8 +49,8 @@
    <hr />
    <ul class="sidebar-nav">
    <li>Staff</li>
-   {% if perms.catalog.can_mark_returned %}
-   <li><a href="{% url 'maintainance' %}">Maintenance</a></li>
+   {% if perms.books.can_edit %}
+   <li><a href="{% url 'maintenance' %}">Maintenance</a></li>
    {% endif %}
    </ul>
     {% endif %}
