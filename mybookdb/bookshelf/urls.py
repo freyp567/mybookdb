@@ -12,6 +12,8 @@ urlpatterns = [
     #path('books/', views.BookListGenericView.as_view(), name='books'),
     #path('books/', views.SimpleBookListView, name='books1'),
     path('books/', views.FilteredBookListView.as_view(), name='books'),
+    path('books-v1/', views.BookListGenericView.as_view(), name='books-v1'),
+    path('books/', views.BooksListTableView.as_view(), name='books-v2'),
     path('books/<int:pk>', views.BookDetailView.as_view(), name='book-detail'),
     path('books/maintain/', views.MaintainBooks.as_view(), name='maintenance'),
 ]

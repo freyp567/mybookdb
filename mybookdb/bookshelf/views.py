@@ -9,7 +9,7 @@ from django.views import generic
 # from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 
-from django_filters.views import View, FilterView
+from django_filters.views import FilterView
 from django_tables2 import RequestConfig
 from django_tables2.views import SingleTableMixin
 
@@ -75,6 +75,19 @@ class BookListGenericView(generic.ListView):  # OBSOLETE
         return ordering    
     
     
+class BooksListTableView(generic.TemplateView):
+    """ book list using native bootstrap tables (bootstrap4) """
+    template_name = "bookshelf/bookslist_table.html"
+    #template_engine = None
+    #response_class = TemplateResponse
+    #content_type = "text/html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['books'] = books.objects.all()[:5]
+        return context
+
+
 class BookDetailView(generic.DetailView):
     """
     detail view for a book.
@@ -86,7 +99,7 @@ class BookDetailView(generic.DetailView):
         return context 
     
     
-class MaintainBooks(PermissionRequiredMixin, View):
+class MaintainBooks(PermissionRequiredMixin, generic.View):
     """
     Maintenance of book database.
     """

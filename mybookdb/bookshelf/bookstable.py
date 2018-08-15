@@ -80,9 +80,9 @@ class DescriptionColumn(tables.Column):
     
 class DateColumn(tables.Column):
 
-    def __init__(self, verbose_name=None, default=None):
+    def __init__(self, accessor, verbose_name=None, default=None):
         super().__init__(orderable=True, 
-                         accessor=None,
+                         #accessor=accessor,
                          verbose_name = verbose_name, 
                          #localize=??? 
                          empty_values = (),
@@ -95,7 +95,7 @@ class DateColumn(tables.Column):
         # https://stackoverflow.com/questions/4457506/set-the-table-column-width-constant-regardless-of-the-amount-of-text-in-its-cell
         # https://stackoverflow.com/questions/19847371/django-how-to-change-the-column-width-in-django-tables2
         value = striptags(value)
-        return mark_safe("<div class='" + self.classname + "' >xx " +value+"</div>")
+        return mark_safe("<div class='" + self.classname + "' >" +value+"</div>")
         # ATTN not called, see render_created / render_updated below
 
     
@@ -114,9 +114,8 @@ class BooksTable(tables.Table):
     title = tables.Column(orderable=True)
     binding = tables.Column(visible=False)
     description = DescriptionColumn()
-    created = DateColumn(verbose_name="Created", )
-    created = DateColumn(verbose_name="Created", accessor="created")
-    updated = DateColumn(verbose_name="Updated",
+    created = DateColumn("created", verbose_name="Created", )
+    updated = DateColumn("updated", verbose_name="Updated",
         default="(not set)")  # attrs=  TODO set minimal col width
     numberOfPages = tables.Column(verbose_name="#")
     publisher = tables.Column(visible=False)

@@ -5,20 +5,18 @@
 
 <p>Welcome to your <em>Bookshelf</em>.</p>
 
-
-<div>
 {% load static %}
-<img src="{% static "images/local_library_model_uml.png" %}" alt="My image" style="width:555px;height:540px;"/>
-</div>  
-
 
 <h2>Overview</h2>
 
-<p>The bookshelf has the following record counts:</p>
+<p>The bookshelf contains the following items:</p>
 <ul>
 <li><strong>Books:</strong> {{ num_books }}</li>
 <li><strong>Authors:</strong> {{ num_authors }}</li>
 </ul>
 
+<div>
+<img src="{% static "images/bookshelf_logo.png" %}" alt="My image" style="width:555px;height:540px;"/>
+</div>  
 
 {% endblock %}
