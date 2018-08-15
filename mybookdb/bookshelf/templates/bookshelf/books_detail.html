@@ -23,6 +23,7 @@
     {{ books.description|safe }}
 {% endif %}
 </p>
+<p>Updated: {{ books.updated|date:"c" }}</p>
 
 <!-- TODO future
 <p><strong>Groups:</strong> { % for grop in book.bookGroup.all %}{{genre}}{ % if not forloop.last %}, { % endif %}{ % endfor %}</p>  

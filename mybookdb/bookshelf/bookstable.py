@@ -82,6 +82,7 @@ class DateColumn(tables.Column):
 
     def __init__(self, verbose_name=None, default=None):
         super().__init__(orderable=True, 
+                         accessor=None,
                          verbose_name = verbose_name, 
                          #localize=??? 
                          empty_values = (),
@@ -113,7 +114,8 @@ class BooksTable(tables.Table):
     title = tables.Column(orderable=True)
     binding = tables.Column(visible=False)
     description = DescriptionColumn()
-    created = DateColumn(verbose_name="Created")
+    created = DateColumn(verbose_name="Created", )
+    created = DateColumn(verbose_name="Created", accessor="created")
     updated = DateColumn(verbose_name="Updated",
         default="(not set)")  # attrs=  TODO set minimal col width
     numberOfPages = tables.Column(verbose_name="#")
@@ -148,11 +150,11 @@ class BooksTable(tables.Table):
     #def render_author(xxx):
     # TODO implement
     
-    def render_created(self, value):
-        if value is None:
-            return ""
-        value = value.strftime("%Y-%m-%d")
-        return mark_safe("<div class='date_column' >" +value+"</div>")
+    #def render_created(self, value):
+    #    if value is None:
+    #        return ""
+    #    value = value.strftime("%Y-%m-%d")
+    #    return mark_safe("<div class='date_column' >" +value+"</div>")
     
     def render_updated(self, value):
         if value is None:
