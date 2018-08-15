@@ -1,14 +1,59 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-<h1>My Bookshelf</h1>
-
-<p>Welcome to your <em>Bookshelf</em>.</p>
+<h1>Books</h1>
 
 {% load static %}
+{% load bootstrap4 %}
 
-<h2>Books in DB</h2>
+<!--
+# https://github.com/wenzhixin/bootstrap-table/tree/master/src/extensions/filter-control
 
-<p>TODO:</p>
+<link rel="stylesheet" type="text/css" href="extensions/filter-control/bootstrap-table-filter-control.css">
+<script src="extensions/filter-control/bootstrap-table-filter-control.js"></script>
+-->
 
+<!-- https://getbootstrap.com/docs/4.0/content/tables/ -->
+<table class="table  table-sm" id="bookslist">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Title</th>
+      <th scope="col">Created</th>
+      <th scope="col">Updated</th>
+      <th scope="col">Rating</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in books %}  
+    <tr>
+      <th scope="row">{{ row.id }}</th>
+      <td>{{ row.title }}</td>
+      <td>{{ row.created|date:"c" }}</td>
+      <td>{{ row.updated|date:"c" }}</td>
+      <td>{{ row.userRating|default:"--" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!--
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">First</th>
+      <th scope="col">Last</th>
+      <th scope="col">Handle</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">1</th>
+      <td>Mark</td>
+      <td>Otto</td>
+      <td>@mdo</td>
+    </tr>
+-->
+    
 {% endblock %}
