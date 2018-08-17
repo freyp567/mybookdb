@@ -2,9 +2,11 @@
 views on bookshelf (books, authors, ...)
 """
 import logging
+import json
 
 from django.shortcuts import render
 from django.views import generic
+from django.http import JsonResponse
 
 # from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -85,10 +87,41 @@ class BooksListTableView(generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         books_count = books.objects.count()
-        context['books'] = books.objects.all()  # [books_count-5:]
+        context['books'] = [ books.objects.last() ]
         return context
 
 
+def search_book(request):
+    query = request.GET
+    offset = int(query['offset'])
+    limit = int(query['limit'])
+    sort_field = query['sort']
+    sort_order = query['order']
+    if sort_order == 'desc':
+        sort_field = '-' + sort_field
+    
+    qs = books.objects.all()
+    
+    if query.get('filter'):
+        search_filter = {}
+        for key, value in json.loads(query['filter']).items():
+            if key in ('title',):
+                search_filter[key +'__icontains'] = value
+            elif key in ('created', 'updated'):
+                search_filter[key +'__contains'] = value  # TODO handle date parts
+            else:
+                search_filter[key] = value  # TODO handle rating
+        qs = qs.filter(**search_filter)
+        
+    row_count = qs.count()
+    qs = qs.order_by(sort_field)
+    data = list(qs.values('id', 'title', 'created', 'updated')[offset:offset+limit])
+    result = {
+        "total": row_count,
+        "rows": data,
+    }
+    return JsonResponse(result)
+    
 class BookDetailView(generic.DetailView):
     """
     detail view for a book.

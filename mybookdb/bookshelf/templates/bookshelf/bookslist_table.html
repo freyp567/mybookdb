@@ -12,7 +12,6 @@
 <script src="/static/jquery/dist/jquery.js"></script>
 <script src="/static/bootstrap4/dist/js/bootstrap.js"></script>
 <script src="/static/bootstrap-table/bootstrap-table.js"></script>
-<script src="bookslist_table.js"></script>
 
 <!-- 
 https://github.com/wenzhixin/bootstrap-table/blob/master/src/extensions/filter-control/README.md
@@ -20,48 +19,50 @@ filterControl
 -->
 <script src="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.js"></script>
 
-<table class="table table-sm" id="bookslist"
-  data-filter-control="true" 
->
-  <thead>
-    <tr>
-      <th scope="col">#</th>
-      <th scope="col">Title</th>
-      <th scope="col">Created</th>
-      <th scope="col">Updated</th>
-      <th scope="col">Rating</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for row in books %}  
-    <tr>
-      <th scope="row">{{ row.id }}</th>
-      <td>{{ row.title }}</td>
-      <td>{{ row.created|date:"c" }}</td>
-      <td>{{ row.updated|date:"c" }}</td>
-      <td>{{ row.userRating|default:"--" }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="container">
+  <table class="table table-sm" id="bookslist"
+    data-toggle="table"
+    data-show-columns="true"
+    data-url="/bookshelf/books/search"
+    data-pagination="true"
+    data-side-pagination="server"
+    data-search="false"
+    data-filter-control="true" 
+    data-filter-show-clear="true"
+    data-click-to-select="true"
+    data-sort-name="created"
+    data-sort-order="desc"
+  >
+  <!-- 
+    data-url="../json/data1.json"
+    data-toolbar= 
+    data-buttons-toolbar=
+  -->
+    <thead>
+      <tr>
+        <th data-field="id" scope="col">#</th>
+        <th id="col-title" data-field="title" data-filter-control="input" scope="col">Title</th>
+        <th id="col-created" data-field="created" data-filter-control="input" data-sortable="true" scope="col">Created</th>
+        <th id="col-updated" data-field="updated" data-filter-control="input" data-sortable="true" scope="col">Updated</th>
+        <th id="col-rating" data-field="rating" data-filter-control="select" scope="col">Rating</th>
+      </tr>
+    </thead>
+    <!--
+      <tbody>
+        { % for row in books % }  
+        <tr>
+          <th scope="row">{{ row.id }}</th>
+          <td>{{ row.title }}</td>
+          <td>{{ row.created|date:"c" }}</td>
+          <td>{{ row.updated|date:"c" }}</td>
+          <td>{{ row.userRating|default:"--" }}</td>
+        </tr>
+        { % endfor % }
+      </tbody>
+    -->
+  </table>
+</div>
 
-<!--
-<table class="table">
-  <thead>
-    <tr>
-      <th scope="col">#</th>
-      <th scope="col">First</th>
-      <th scope="col">Last</th>
-      <th scope="col">Handle</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th scope="row">1</th>
-      <td>Mark</td>
-      <td>Otto</td>
-      <td>@mdo</td>
-    </tr>
--->
+<script src="{% static 'js/bookslist_table.js' %}"></script>
     
 {% endblock %}

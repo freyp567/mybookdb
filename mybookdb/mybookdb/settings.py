@@ -151,10 +151,10 @@ BOOTSTRAP4 = {
     #'javascript_url': STATIC_URL +'bootstrap/js/bootstrap.js',
     'javascript_url': STATIC_URL +'bootstrap4/dist/js/bootstrap.js',
     #'use_i18n': False,
+    'popper_url': STATIC_URL +'node_modules/popper.js/dist/popper.js',
     
     # not available (yet) but overridden to prevent inclusion of external resources
     'jquery_slim_url': STATIC_URL +'jquery/dist/jquery.slim.js',
-    'popper_url': STATIC_URL +'ajax/libs/popper.js',
 }
 
 #STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') 
