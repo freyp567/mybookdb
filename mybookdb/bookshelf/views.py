@@ -109,13 +109,15 @@ def search_book(request):
                 search_filter[key +'__icontains'] = value
             elif key in ('created', 'updated'):
                 search_filter[key +'__contains'] = value  # TODO handle date parts
+            elif key == 'userRating':
+                search_filter["userRating__gte"] = value
             else:
-                search_filter[key] = value  # TODO handle rating
+                search_filter[key] = value  # TODO other cols?
         qs = qs.filter(**search_filter)
         
     row_count = qs.count()
     qs = qs.order_by(sort_field)
-    data = list(qs.values('id', 'title', 'created', 'updated')[offset:offset+limit])
+    data = list(qs.values('id', 'title', 'created', 'updated', 'userRating')[offset:offset+limit])
     result = {
         "total": row_count,
         "rows": data,

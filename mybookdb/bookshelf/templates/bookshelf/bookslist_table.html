@@ -19,6 +19,17 @@ filterControl
 -->
 <script src="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.js"></script>
 
+<script>
+var rating_values = {
+  "5": "5 - highest",
+  "4": "4 - high",
+  "3": "3 - average",
+  "2": "2 - low",
+  "1": "1 - lowest",
+  "" : "0 - not rated"
+};
+</script>
+
 <div class="container">
   <table class="table table-sm" id="bookslist"
     data-toggle="table"
@@ -41,10 +52,22 @@ filterControl
     <thead>
       <tr>
         <th data-field="id" scope="col">#</th>
-        <th id="col-title" data-field="title" data-filter-control="input" scope="col">Title</th>
-        <th id="col-created" data-field="created" data-filter-control="input" data-sortable="true" scope="col">Created</th>
-        <th id="col-updated" data-field="updated" data-filter-control="input" data-sortable="true" scope="col">Updated</th>
-        <th id="col-rating" data-field="rating" data-filter-control="select" scope="col">Rating</th>
+        <th id="col-title" data-field="title" 
+          data-filter-control="input" 
+          scope="col">Title</th>
+        <th id="col-created" data-field="created" 
+          data-filter-control="input" 
+          data-sortable="true" 
+          scope="col">Created</th>
+        <th id="col-updated" data-field="updated" 
+          data-filter-control="input" 
+          data-sortable="true" 
+          scope="col">Updated</th>
+        <th id="col-rating" data-field="userRating" 
+          data-sortable="true"
+          data-filter-control="select"
+          data-filter-data="var:rating_values"
+          scope="col">Rating</th>
       </tr>
     </thead>
     <!--
