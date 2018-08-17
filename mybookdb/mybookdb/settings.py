@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+#from django.templatetags.static import static
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -134,8 +136,28 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 STATIC_URL = '/static/'
 
-#STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') 
+#class StaticWrapper:
 
+
+#BOOTSTRAP3 = {
+#    'css_url': STATIC_URL +'bootstrap4/dist/css/bootstrap.min.css',
+#    'jquery_url': STATIC_URL +'jquery/dist/jquery.min.js',
+#    'javascript_url': STATIC_URL +'bootstrap/dist/js/bootstrap.min.js',
+#}
+
+BOOTSTRAP4 = {
+    'css_url': STATIC_URL +'bootstrap4/dist/css/bootstrap.css',
+    'jquery_url': STATIC_URL +'jquery/dist/jquery.js',
+    #'javascript_url': STATIC_URL +'bootstrap/js/bootstrap.js',
+    'javascript_url': STATIC_URL +'bootstrap4/dist/js/bootstrap.js',
+    #'use_i18n': False,
+    
+    # not available (yet) but overridden to prevent inclusion of external resources
+    'jquery_slim_url': STATIC_URL +'jquery/dist/jquery.slim.js',
+    'popper_url': STATIC_URL +'ajax/libs/popper.js',
+}
+
+#STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'templates', 'static'),
 ]

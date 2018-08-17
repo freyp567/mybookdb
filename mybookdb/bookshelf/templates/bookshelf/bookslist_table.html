@@ -4,17 +4,25 @@
 <h1>Books</h1>
 
 {% load static %}
-{% load bootstrap4 %}
 
-<!--
-# https://github.com/wenzhixin/bootstrap-table/tree/master/src/extensions/filter-control
+<link rel="stylesheet" href="/static/bootstrap4/dist/css/bootstrap.css" />
+<link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
+<link rel="stylesheet" type="text/css" href="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.css">
 
-<link rel="stylesheet" type="text/css" href="extensions/filter-control/bootstrap-table-filter-control.css">
-<script src="extensions/filter-control/bootstrap-table-filter-control.js"></script>
+<script src="/static/jquery/dist/jquery.js"></script>
+<script src="/static/bootstrap4/dist/js/bootstrap.js"></script>
+<script src="/static/bootstrap-table/bootstrap-table.js"></script>
+<script src="bookslist_table.js"></script>
+
+<!-- 
+https://github.com/wenzhixin/bootstrap-table/blob/master/src/extensions/filter-control/README.md
+filterControl
 -->
+<script src="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.js"></script>
 
-<!-- https://getbootstrap.com/docs/4.0/content/tables/ -->
-<table class="table  table-sm" id="bookslist">
+<table class="table table-sm" id="bookslist"
+  data-filter-control="true" 
+>
   <thead>
     <tr>
       <th scope="col">#</th>
