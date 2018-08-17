@@ -10,6 +10,7 @@
 <link rel="stylesheet" type="text/css" href="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.css">
 
 <script src="/static/jquery/dist/jquery.js"></script>
+<script src="/static/js-cookie/js.cookie.js"></script>
 <script src="/static/bootstrap4/dist/js/bootstrap.js"></script>
 <script src="/static/bootstrap-table/bootstrap-table.js"></script>
 
@@ -18,7 +19,7 @@ https://github.com/wenzhixin/bootstrap-table/blob/master/src/extensions/filter-c
 filterControl
 -->
 <script src="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.js"></script>
-
+<script src="/static/bootstrap-table/extensions/cookie/bootstrap-table-cookie.js"></script>
 <script>
 var rating_values = {
   "5": "5 - highest",
@@ -43,6 +44,9 @@ var rating_values = {
     data-click-to-select="true"
     data-sort-name="created"
     data-sort-order="desc"
+    data-cookie="true"
+    data-cookie-id-table="books"
+    data-cookie-storage="cookieStorage"
   >
   <!-- 
     data-url="../json/data1.json"
