@@ -1,9 +1,15 @@
 from datetime import datetime, date
 from django.core.exceptions import ValidationError
+from django.urls import reverse, reverse_lazy
 from django import forms
 from django.forms import widgets
+from django.utils.translation import gettext as _
+#from django_select2.forms import HeavySelect2TagWidget
+# ModelSelect2TagWidget 
 
-from .models import books
+from bookshelf.models import books, authors
+#from .fields import AuthorsMultipleTagField
+from bookshelf.widgets import AuthorsTagWidget
 
 
 class BookUpdateForm(forms.ModelForm):
@@ -14,15 +20,19 @@ class BookUpdateForm(forms.ModelForm):
     description = forms.TextInput()  # TOdO required=False
     isbn10 = forms.CharField(max_length=10, min_length=10)
     isbn13 = forms.CharField(max_length=10, min_length=10)
+    
+    #authors = forms.MultipleChoiceField(choices=???)
+    authors = forms.ModelMultipleChoiceField(
+        queryset=authors.objects.none(), 
+    )
+    
+    
     subject = forms.CharField(max_length=255)
     publisher = forms.CharField(max_length=128)
     publicationDate = forms.DateInput()
     
     created = forms.DateField(disabled=True)
     updated = forms.DateField(disabled=True)
-    
-    # TODO allow to edit authors 
-    # forms.ModelMultipleChoiceField(queryset=...) ?
     
     class Meta:
         model = books
@@ -31,6 +41,7 @@ class BookUpdateForm(forms.ModelForm):
             'description', 
             'created',
             'updated',
+            'authors',
             'isbn10',
             'isbn13', 
             'subject',
@@ -41,14 +52,34 @@ class BookUpdateForm(forms.ModelForm):
         
     def __init__(self, *args, **kwargs):
         super(BookUpdateForm, self).__init__(*args, **kwargs)
+        
+        #self.authors = kwargs.pop('authors')
+        instance = kwargs['instance']
+        book_authors = [ (o.id, o.name) for o in instance.authors.all() ]
+        self.fields['authors'].widget = AuthorsTagWidget(
+                attrs={
+                    # 'data-tags': 'true',
+                    'data-placeholder': 'search for book authors',
+                    'data-minimum-input-length': 2,
+                    #'data-width': 'auto', # / '50em' / ...
+                    },
+                #dependent_fields=,
+                data_url = reverse('authors_book'),
+                choices=book_authors,
+                userGetValTextFuncName=None,
+                )
+        self.fields['authors'].queryset = authors.objects.all()
+        #self.fields['authors'].widget.choices = book_authors
+        
         #self.fields['publicationDate'].widget = widgets.SelectDateWidget()  # years=years_tuple
-        self.fields['publicationDate'].widget = widgets.DateInput()  # TODO date format
+        self.fields['publicationDate'].widget = widgets.DateInput()  # format=('%Y-%m-%d',)
+        
         # https://stackoverflow.com/questions/46094811/change-django-required-form-field-to-false
         for field_name in ('description','isbn10','isbn13','subject','publisher', 'publicationDate',
                            'created', 'updated'):
             self.fields[field_name].required = False
             
-        #self.fields['created'].widget = widgets.DateInput()
+        #self.fields['created'].widget = widgets.DateInput() # BUT not to be edited, readonly
         #self.fields['updated'].value = datetime.now()
             
     def clean_isbn10(self):

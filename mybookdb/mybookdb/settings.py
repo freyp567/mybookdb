@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+import logging
 #from django.templatetags.static import static
 
 
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
     'bootstrap4',
     'django_tables2',
     'django_filters',
+    'django_select2',
 ]
 
 MIDDLEWARE = [
@@ -115,13 +117,31 @@ LANGUAGE_CODE = 'en-us'
 
 #TIME_ZONE = 'UTC'
 TIME_ZONE = 'Europe/Berlin'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'mybookdb': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('LOGLEVEL_DJANGO', 'DEBUG'),
+            'propagate': True,
+        }
+    }
+}
 
 # Redirect to home URL after login (Default redirects to /accounts/profile/)
 LOGIN_REDIRECT_URL = '/'

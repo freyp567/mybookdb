@@ -19,6 +19,7 @@ from django.urls import path, include
 
 from django.conf import settings
 from django.conf.urls.static import static
+from django.conf.urls import url
 
 from django.views.generic import RedirectView
 
@@ -48,3 +49,7 @@ urlpatterns += [
 urlpatterns += [
     path('accounts/', include('django.contrib.auth.urls')),
 ]
+
+# for django_select2 ModelWidgets 
+# https://django-select2.readthedocs.io/en/latest/get_started.html#installation
+# url(r'^select2/', include('django_select2.urls')),

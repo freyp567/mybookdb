@@ -6,7 +6,7 @@ import json
 
 from django.shortcuts import render
 from django.views import generic
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 
 # from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -88,6 +88,7 @@ class BooksListTableView(generic.TemplateView):
         context = super().get_context_data(**kwargs)
         books_count = books.objects.count()
         context['books'] = [ books.objects.last() ]
+        #context['is_paginated'] = False  # TODO verify KeyError
         return context
 
 
@@ -129,9 +130,11 @@ class BookDetailView(generic.DetailView):
     detail view for a book.
     """
     model = books
+    if_paginated = False # KeyError else?
     
     def get_context_data(self, **kwargs):
         context = super(BookDetailView, self).get_context_data(**kwargs)
+        context['is_paginated'] = False  # avoid KeyError
         return context 
     
     
@@ -165,6 +168,16 @@ class BookUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     model = books
     permission_required = 'bookshelf.can_edit'
     form_class = BookUpdateForm  # failes with TypeError instance on instantiation
+    if_paginated = False # KeyError else?
+    
+    def __init__(self, *args, **kwargs):
+        super(BookUpdateView, self).__init__(*args, *kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(BookUpdateView, self).get_context_data(**kwargs)
+        context['is_paginated'] = False  # avoid KeyError
+        return context 
+        
 
 class BookDeleteView(PermissionRequiredMixin, generic.edit.DeleteView):
     """
@@ -210,4 +223,22 @@ class AuthorDetailView(generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return context 
-    
+
+
+def getAuthors(request):
+    term = request.GET['term']
+    filtered_authors = authors.objects.filter(name__icontains = term)
+    data = []
+    for obj in filtered_authors:
+        if not obj.id: 
+            continue 
+        data.append({
+            "id": str(obj.id),
+            "text": obj.name or str(obj.id)
+        })
+    LOGGER.debug("getAuthors found for '%s': %s objects", term, len(data))
+    # https://select2.org/data-sources/formats
+    results = {"results": data, "pagination": {"more": False}}
+    #return JsonResponse(results, safe=False)
+    return HttpResponse(json.dumps(results), content_type="application/json;charset=utf-8")
+

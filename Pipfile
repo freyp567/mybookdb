@@ -8,6 +8,7 @@ name = "pypi"
 "django-tables2" = "*"
 django-filter = "<2.0"
 "django-bootstrap4" = "*"
+"django-select2" = "*"
 
 [dev-packages]
 "flake8" = "*"
