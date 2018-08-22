@@ -1,10 +1,10 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
-<h1>Books</h1>
+    {% load static %}
 
-{% load static %}
-
+    <h1>Authors</h1>
+    
 <link rel="stylesheet" href="/static/bootstrap4/dist/css/bootstrap.css" />
 <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
 <link rel="stylesheet" type="text/css" href="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.css">
@@ -14,68 +14,44 @@
 <script src="/static/bootstrap4/dist/js/bootstrap.js"></script>
 <script src="/static/bootstrap-table/bootstrap-table.js"></script>
 
-<!-- 
-https://github.com/wenzhixin/bootstrap-table/blob/master/src/extensions/filter-control/README.md
-filterControl
--->
 <script src="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.js"></script>
 <script src="/static/bootstrap-table/extensions/cookie/bootstrap-table-cookie.js"></script>
-<script>
-var rating_values = {
-  "5": "5 - highest",
-  "4": "4 - high",
-  "3": "3 - average",
-  "2": "2 - low",
-  "1": "1 - lowest",
-  "" : "0 - not rated"
-};
-</script>
 
 <div class="container">
-  <table class="table table-sm" id="bookslist"
+  <table class="table table-sm" id="authorslist"
     data-toggle="table"
     data-show-columns="true"
-    data-url="/bookshelf/books/search"
+    data-url="/bookshelf/authors/search"
     data-pagination="true"
     data-side-pagination="server"
     data-search="false"
     data-filter-control="true" 
     data-filter-show-clear="true"
     data-click-to-select="true"
-    data-sort-name="created"
-    data-sort-order="desc"
+    data-sort-name="name"
+    data-sort-order="asc"
     data-cookie="true"
-    data-cookie-id-table="books"
+    data-cookie-id-table="authors"
     data-cookie-storage="cookieStorage"
   >
-  <!-- 
-    data-toolbar= 
-    data-buttons-toolbar=
-  -->
     <thead>
       <tr>
         <th data-field="id" scope="col">#</th>
-        <th id="col-title" data-field="title" 
+        <th id="col-name" data-field="name" 
           data-filter-control="input" 
-          scope="col">Title</th>
-        <th id="col-created" data-field="created" 
-          data-filter-control="input" 
-          data-sortable="true" 
-          scope="col">Created</th>
+          scope="col">Name</th>
+        <!-- TODO add
         <th id="col-updated" data-field="updated" 
           data-filter-control="input" 
           data-sortable="true" 
           scope="col">Updated</th>
-        <th id="col-rating" data-field="userRating" 
-          data-sortable="true"
-          data-filter-control="select"
-          data-filter-data="var:rating_values"
-          scope="col">Rating</th>
+        -->
       </tr>
     </thead>
   </table>
 </div>
 
-<script src="{% static 'js/bookslist_table.js' %}"></script>
+<script src="{% static 'js/authors_table.js' %}"></script>
     
 {% endblock %}
+

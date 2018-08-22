@@ -86,9 +86,9 @@ class BooksListTableView(generic.TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        books_count = books.objects.count()
-        context['books'] = [ books.objects.last() ]
-        #context['is_paginated'] = False  # TODO verify KeyError
+        #books_count = books.objects.count()
+        #context['books'] = [ books.objects.last() ]
+        context['is_paginated'] = False
         return context
 
 
@@ -206,13 +206,52 @@ class AuthorListView(generic.ListView):
         return ordering    
 
 
-class FilteredAuthorsListView(SingleTableMixin, FilterView):
+def search_author(request):
+    query = request.GET
+    offset = int(query['offset'])
+    limit = int(query['limit'])
+    sort_field = query['sort']
+    sort_order = query['order']
+    if sort_order == 'desc':
+        sort_field = '-' + sort_field
+    
+    qs = authors.objects.all()
+    
+    if query.get('filter'):
+        search_filter = {}
+        for key, value in json.loads(query['filter']).items():
+            if key in ('name',):
+                search_filter[key +'__icontains'] = value
+            else:
+                search_filter[key] = value  # TODO other cols?
+        qs = qs.filter(**search_filter)
+        
+    row_count = qs.count()
+    qs = qs.order_by(sort_field)
+    data = list(qs.values('id', 'name',)[offset:offset+limit])  # TODO add  'updated'
+    result = {
+        "total": row_count,
+        "rows": data,
+    }
+    return JsonResponse(result)
+        
+class FilteredAuthorsListView(SingleTableMixin, FilterView):  # old
     """ list of authors with filtering """
     table_class = AuthorsTable
     model = authors
     template_name = 'bookshelf/authors_table_filtered.html'
     filterset_class = AuthorsTableFilter
 
+class AuthorsListTableView(generic.TemplateView):
+    """ book list using native bootstrap tables (bootstrap4) """
+    template_name = "bookshelf/authors_table.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        authors_count = authors.objects.count()
+        #context['authors'] = [ authors.objects.last() ]
+        context['is_paginated'] = False
+        return context
 
 class AuthorDetailView(generic.DetailView):
     """
