@@ -25,6 +25,10 @@ div.date_column {
 /* height: 45px; */
 /* white-space: nowrap */
 
+.bookcomment-small {
+    font-size: 12px;
+}
+
 /*
 https://stackoverflow.com/questions/14596743/how-do-you-change-the-width-and-height-of-twitter-bootstraps-tooltips
 */ 

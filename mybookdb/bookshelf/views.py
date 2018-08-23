@@ -282,17 +282,23 @@ def getAuthorsListDetails(request, pk=None):
     if author_books:
         result.append("<ul>")
         for book_item in author_books:
-            desc = book_item.new_description or book_item.description or ""
+            comment_info = []
+            qs_comments = comments.objects.filter(book__id = book_item.id).order_by('dateCreatedInt')
+            for comment in qs_comments:
+                comment_info.append('<span class="bookcomment-small">%s  %s</span>' % (comment.dateCreated.date().isoformat(), comment.text))
+            book_info = ''
             if book_item.userRating:
                 # highlight if book has a rating - assume have read
-                book_info = "<b>%s</b>" % book_item.title
+                book_info += "<b>%s</b>" % book_item.title
                 book_info += " [%s]" % book_item.userRating
             else:
-                book_info = book_item.title
-            # TODO date (first, last) from comments
+                book_info += book_item.title
+            if comment_info:
+                book_info += '<br>'
+                book_info += '<br>'.join(comment_info)
             # TODO status 
+            desc = book_item.new_description or book_item.description or ""
             bs_tooltip = 'class="book_tooltip" data-toggle="tooltip" data-html="true" '
-            # data-placement="right" -- causes flicker
             result.append('<li %s title="%s">%s</li>' % (bs_tooltip, desc, book_info))
         result.append("</ul>")
     else:
