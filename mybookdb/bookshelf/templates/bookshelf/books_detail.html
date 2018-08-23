@@ -16,11 +16,14 @@
 {% if books.isbn13 %}{{ books.isbn13 }}{% endif %}
 
 <p><strong>Description:</strong><br/> 
-{% if not books.description %}
-    (missing description)
+{% if not books.new_description %}
+  {% if not books.description %}
+      (missing description)
+  {% else %}
+      {{ books.description|safe }}
+  {% endif %}
 {% else %}
-  <!-- TODO mark safe -->
-    {{ books.description|safe }}
+      {{ books.new_description|safe }}
 {% endif %}
 </p>
 <p>Updated: {{ books.updated|date:"c" }}</p>

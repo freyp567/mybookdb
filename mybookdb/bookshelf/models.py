@@ -34,6 +34,9 @@ class books(models.Model):
     title = models.TextField(blank=False, max_length=255)
     binding = models.CharField(max_length=80, null=True)
     description = models.TextField(null=True, blank=True)
+      # note: description from mybookdroid (Android app), not to be updated in mybookdb
+      # so add new_description to allow to maintain both
+    new_description = models.TextField(null=True, blank=True)
     numberOfPages = models.CharField(max_length=10, blank=True, null=True)
     publisher = models.TextField(blank=True, null=True)
     publicationDate = models.DateField(null=True)

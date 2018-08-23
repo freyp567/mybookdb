@@ -17,7 +17,7 @@ class BookUpdateForm(forms.ModelForm):
     update book information
     """
     title = forms.CharField(max_length=255)
-    description = forms.TextInput()  # TOdO required=False
+    new_description = forms.CharField()
     isbn10 = forms.CharField(max_length=10, min_length=10)
     isbn13 = forms.CharField(max_length=10, min_length=10)
     
@@ -38,7 +38,7 @@ class BookUpdateForm(forms.ModelForm):
         model = books
         fields = (
             'title', 
-            'description', 
+            'new_description', 
             'created',
             'updated',
             'authors',
@@ -51,10 +51,15 @@ class BookUpdateForm(forms.ModelForm):
         # 'userrating', 'authors'
         
     def __init__(self, *args, **kwargs):
-        super(BookUpdateForm, self).__init__(*args, **kwargs)
-        
-        #self.authors = kwargs.pop('authors')
         instance = kwargs['instance']
+        if not instance.new_description:
+            # never update (original) description, but store updated text in new_description
+            kwargs['initial']['new_description'] = instance.description
+        super(BookUpdateForm, self).__init__(*args, **kwargs)
+
+        self.fields['new_description'].widget = forms.TextInput()
+        self.fields['new_description'].label = 'Description'
+        
         book_authors = [ (o.id, o.name) for o in instance.authors.all() ]
         self.fields['authors'].widget = AuthorsTagWidget(
                 attrs={
@@ -75,7 +80,7 @@ class BookUpdateForm(forms.ModelForm):
         self.fields['publicationDate'].widget = widgets.DateInput()  # format=('%Y-%m-%d',)
         
         # https://stackoverflow.com/questions/46094811/change-django-required-form-field-to-false
-        for field_name in ('description','isbn10','isbn13','subject','publisher', 'publicationDate',
+        for field_name in ('new_description','isbn10','isbn13','subject','publisher', 'publicationDate',
                            'created', 'updated'):
             self.fields[field_name].required = False
             
@@ -92,3 +97,10 @@ class BookUpdateForm(forms.ModelForm):
         data = self.cleaned_data['updated']
         data = datetime.now()
         return data
+    
+    def clean_new_description(self):
+        data = self.cleaned_data['new_description']
+        if self.instance.description == data:
+            return None  # not changed
+        return data
+        

@@ -66,6 +66,8 @@ class BookListGenericView(generic.ListView):  # OBSOLETE
     model = books
     paginate_by = 25
     
+    # TODO how to handle Descripton vs New Description ?
+    
     def get_ordering(self):
         sort = self.request.GET.get('sort', 'title')
         if sort == 'title': 
@@ -118,7 +120,14 @@ def search_book(request):
         
     row_count = qs.count()
     qs = qs.order_by(sort_field)
-    data = list(qs.values('id', 'title', 'created', 'updated', 'userRating')[offset:offset+limit])
+    qs = qs[offset:offset+limit]
+    data = []
+    for row in qs.values():
+        row_data = {}
+        for field_name in ('id', 'title', 'created', 'updated', 'userRating'):
+            row_data[field_name] = row.get(field_name)            
+        data.append(row_data)
+        
     result = {
         "total": row_count,
         "rows": data,
@@ -273,7 +282,7 @@ def getAuthorsListDetails(request, pk=None):
     if author_books:
         result.append("<ul>")
         for book_item in author_books:
-            desc = book_item.description or ""
+            desc = book_item.new_description or book_item.description or ""
             if book_item.userRating:
                 # highlight if book has a rating - assume have read
                 book_info = "<b>%s</b>" % book_item.title
@@ -287,7 +296,7 @@ def getAuthorsListDetails(request, pk=None):
             result.append('<li %s title="%s">%s</li>' % (bs_tooltip, desc, book_info))
         result.append("</ul>")
     else:
-        result.append("<p>no bookes in database</b>")
+        result.append("<p>note: have no bookes in database</b>")
     html = '\n'.join(result)
     return HttpResponse(content=html)
 
