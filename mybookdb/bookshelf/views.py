@@ -282,7 +282,8 @@ def getAuthorsListDetails(request, pk=None):
                 book_info = book_item.title
             # TODO date (first, last) from comments
             # TODO status 
-            bs_tooltip = 'data-toggle="tooltip" data-html="true" '
+            bs_tooltip = 'class="book_tooltip" data-toggle="tooltip" data-html="true" '
+            # data-placement="right" -- causes flicker
             result.append('<li %s title="%s">%s</li>' % (bs_tooltip, desc, book_info))
         result.append("</ul>")
     else:

@@ -24,3 +24,19 @@ div.date_column {
 }
 /* height: 45px; */
 /* white-space: nowrap */
+
+/*
+https://stackoverflow.com/questions/14596743/how-do-you-change-the-width-and-height-of-twitter-bootstraps-tooltips
+*/ 
+.tooltip-inner {
+    min-width: initial;
+    max-width: 90% !important;
+    text-align: left !important;
+    -webkit-border-radius: 0px;
+    -moz-border-radius: 0px;
+    border-radius: 0px;
+    margin-left: 40px !important;
+    margin-bottom: 6px;
+    background-color: #505050;
+    font-size: 14px;
+}

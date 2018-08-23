@@ -26,11 +26,10 @@ if (!filter_control) {
 }
 
 
-//$(function () {
-//  $('[data-toggle="tooltip"]').tooltip();
-//});
-debugger;
-$('#page-title').tooltip();
+// show bootstrap4 titles
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip();
+});
 
 
 if ($('#authorslist').length !== 0) {
@@ -52,7 +51,9 @@ if ($('#authorslist').length !== 0) {
     console.debug("details from " +url);
     $.get(url, (res) => {
       $detail.html(res);
-      $detail.tooltip();
+      $('.book_tooltip').tooltip({
+        container: 'body'
+      });
     });
   });
   
