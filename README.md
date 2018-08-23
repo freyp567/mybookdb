@@ -1,9 +1,19 @@
 # mybookdb
-a simple adaption of the (no longer maintained) MyBookDroid book list app for Django / web.
+A simple adaption of the MyBookDroid book list app for android  (no longer maintained, unfortunately).
+
+Long term vision is to replace MyBookDroid by a web-based application available from everywhere.
+But due to limited time for this personal / educational project, the approach is to build up the mybookdb 
+web app step by step into this direction, but not replacing MyBookDroid in short term so focus is on searching.
+For import of the book database, a migration script will allow to import the book data from .csv exports 
+from MyBookDroid repeatedly (and hopefully lossless).
+
 ## prerequisites
 + Django 2.0  (2.0.3 or newer)
-+ PostgreSQL (or compatible database)
++ SQLLite (or PostgreSQL)
 + more prerequisites, see pipenv.lock
+
+External libraries (bootstrap4, bootstrap-table, ...) are provided locally (but that may be changed in future
+depending on deployment tools and strategy when reaching this stage).
 
 ## configuration
 See Django settings.
@@ -11,19 +21,6 @@ See Django settings.
 ## TODOs
 + show states in book-detail
 + cleanup of imported data (from MyBookDroid sqllite backup) - umlaute, incomplete info, groups, ...
-+ bootstrap4 integration with django-bootstrap4
-  but which approach to choose? see:
-  + https://github.com/zostera/django-bootstrap4
-  + https://github.com/nikolas/django-bootstrap4-1
-  + https://github.com/GabrielUlici/django-bootstrap4
-  + http://django-bootstrap.readthedocs.io/en/latest/history.html
-  + https://github.com/django-crispy-forms/django-crispy-forms/issues/732
-
-+ explore:
-  replace django-tables2 by bootstrap-tables?
-  if yes, how to render them the django way?
-
-+ search for / in book title
-+ table filtering (would be for free using bootstrap-tables)
 + login and user access
 + editing book details
+
