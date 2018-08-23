@@ -285,7 +285,14 @@ def getAuthorsListDetails(request, pk=None):
             comment_info = []
             qs_comments = comments.objects.filter(book__id = book_item.id).order_by('dateCreatedInt')
             for comment in qs_comments:
-                comment_info.append('<span class="bookcomment-small">%s  %s</span>' % (comment.dateCreated.date().isoformat(), comment.text))
+                comment_text = comment.text
+                if len(comment_text) > 80:
+                    comment_text = comment_text[:80] +'...'
+                comment_info.append('<span class="bookcomment-small">%s  %s</span>' % 
+                                    (comment.dateCreated.date().isoformat(), comment_text))
+                if len(comment_info) > 1:
+                    comment_info.append('...')
+                    break
             book_info = ''
             if book_item.userRating:
                 # highlight if book has a rating - assume have read
