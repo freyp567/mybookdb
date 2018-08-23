@@ -3,16 +3,20 @@
 {% block content %}
     {% load static %}
 
-    <h1>Authors</h1>
+    <h1 id="page-title" data-toggle="tooltip" data-html="true" data-placement="left"
+      title="total <b>{{authors_count}} authors</b> in bookdb">
+      Authors
+    </h1>
     
 <link rel="stylesheet" href="/static/bootstrap4/dist/css/bootstrap.css" />
 <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
 <link rel="stylesheet" type="text/css" href="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.css">
 
-<script src="/static/jquery/dist/jquery.js"></script>
-<script src="/static/js-cookie/js.cookie.js"></script>
-<script src="/static/bootstrap4/dist/js/bootstrap.js"></script>
-<script src="/static/bootstrap-table/bootstrap-table.js"></script>
+<script src="{% static "js-cookie/js.cookie.js" %}"></script>
+<script src="{% static "popper.js/dist/popper.js" %}"></script>
+<script src="{% static "jquery/dist/jquery.js" %}"></script>
+<script src="{% static "bootstrap4/dist/js/bootstrap.js" %}"></script>
+<script src="{% static "bootstrap-table/bootstrap-table.js" %}"></script>
 
 <script src="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.js"></script>
 <script src="/static/bootstrap-table/extensions/cookie/bootstrap-table-cookie.js"></script>

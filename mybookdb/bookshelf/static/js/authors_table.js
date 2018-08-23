@@ -26,6 +26,13 @@ if (!filter_control) {
 }
 
 
+//$(function () {
+//  $('[data-toggle="tooltip"]').tooltip();
+//});
+debugger;
+$('#page-title').tooltip();
+
+
 if ($('#authorslist').length !== 0) {
   console.info("initialize bootstrap table authorslist");
   const $table = $('#authorslist');
@@ -45,6 +52,7 @@ if ($('#authorslist').length !== 0) {
     console.debug("details from " +url);
     $.get(url, (res) => {
       $detail.html(res);
+      $detail.tooltip();
     });
   });
   

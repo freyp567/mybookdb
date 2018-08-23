@@ -249,7 +249,7 @@ class AuthorsListTableView(generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         authors_count = authors.objects.count()
-        #context['authors'] = [ authors.objects.last() ]
+        context['authors_count'] = authors_count
         context['is_paginated'] = False
         return context
 
@@ -282,7 +282,8 @@ def getAuthorsListDetails(request, pk=None):
                 book_info = book_item.title
             # TODO date (first, last) from comments
             # TODO status 
-            result.append('<li title="%s">%s</li>' % (desc, book_info))
+            bs_tooltip = 'data-toggle="tooltip" data-html="true" '
+            result.append('<li %s title="%s">%s</li>' % (bs_tooltip, desc, book_info))
         result.append("</ul>")
     else:
         result.append("<p>no bookes in database</b>")
