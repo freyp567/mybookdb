@@ -18,6 +18,7 @@
 <script src="/static/bootstrap-table/extensions/cookie/bootstrap-table-cookie.js"></script>
 
 <div class="container">
+  <div id="toolbarAuthors"></div>
   <table class="table table-sm" id="authorslist"
     data-toggle="table"
     data-show-columns="true"
@@ -33,6 +34,8 @@
     data-cookie="true"
     data-cookie-id-table="authors"
     data-cookie-storage="cookieStorage"
+    data-detail-view="true" 
+    data-detail-formatter="detailFormatterAuthor">
   >
     <thead>
       <tr>

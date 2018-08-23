@@ -31,5 +31,6 @@ urlpatterns += [
     path('authors/', views.AuthorsListTableView.as_view(), name='authors'),
     path('authors/search/', views.search_author, name='authors-search'),    
     path('author/<int:pk>', views.AuthorDetailView.as_view(), name='author-detail'),
+    path('author/<int:pk>/listdetails', views.getAuthorsListDetails, name='authors-list-details'),
     path('authors_book', views.getAuthors, name='authors_book'),
 ]

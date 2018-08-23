@@ -264,6 +264,31 @@ class AuthorDetailView(generic.DetailView):
         return context 
 
 
+def getAuthorsListDetails(request, pk=None):
+    assert pk 
+    LOGGER.debug("details for author %s", pk)
+    author = authors.objects.get(pk=pk)
+    result = []
+    author_books = books.objects.filter(authors__id=pk)
+    if author_books:
+        result.append("<ul>")
+        for book_item in author_books:
+            desc = book_item.description or ""
+            if book_item.userRating:
+                # highlight if book has a rating - assume have read
+                book_info = "<b>%s</b>" % book_item.title
+                book_info += " [%s]" % book_item.userRating
+            else:
+                book_info = book_item.title
+            # TODO date (first, last) from comments
+            # TODO status 
+            result.append('<li title="%s">%s</li>' % (desc, book_info))
+        result.append("</ul>")
+    else:
+        result.append("<p>no bookes in database</b>")
+    html = '\n'.join(result)
+    return HttpResponse(content=html)
+
 def getAuthors(request):
     term = request.GET['term']
     filtered_authors = authors.objects.filter(name__icontains = term)
