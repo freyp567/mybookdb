@@ -18,14 +18,13 @@ class BookUpdateForm(forms.ModelForm):
     """
     title = forms.CharField(max_length=255)
     new_description = forms.CharField()
+    orig_description = forms.CharField(disabled=True, label="Original description")
     isbn10 = forms.CharField(max_length=10, min_length=10)
     isbn13 = forms.CharField(max_length=10, min_length=10)
     
-    #authors = forms.MultipleChoiceField(choices=???)
     authors = forms.ModelMultipleChoiceField(
         queryset=authors.objects.none(), 
     )
-    
     
     subject = forms.CharField(max_length=255)
     publisher = forms.CharField(max_length=128)
@@ -38,6 +37,7 @@ class BookUpdateForm(forms.ModelForm):
         model = books
         fields = (
             'title', 
+            'orig_description', 
             'new_description', 
             'created',
             'updated',
