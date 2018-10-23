@@ -62,6 +62,9 @@ class Command(BaseCommand):
                     else:
                         data[col_name] = None
                     
+                elif col_name == 'description':
+                    data["orig_description"] = value 
+                    
                 else:
                     data[col_name] = value
 
@@ -133,6 +136,9 @@ class Command(BaseCommand):
                 col_name = col_names[pos]
                 if col_name == '_id':
                     continue
+                    
+                if col_name == 'description':
+                    col_name = 'orig_description'
                     
                 if col_name == 'authors':
                     author_unkn = []
