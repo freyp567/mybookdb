@@ -64,11 +64,16 @@ class IDColumn(tables.Column):
     
     
 class DescriptionColumn(tables.Column):
+    """ value is computed from new_description / old_description 
+    through book model property description
+    """
     
     def __init__(self):
-        super().__init__(orderable=False)
+        super().__init__(orderable=False) #, empty_values=())
         
     def render(self, value):
+        if not value: 
+            value = ''
         short_desc = value[:80]
         short_desc = striptags(short_desc)
         if len(value) > 80:
@@ -113,6 +118,8 @@ class BooksTable(tables.Table):
     isbn13 = tables.Column(visible=False)
     title = tables.Column(orderable=True)
     binding = tables.Column(visible=False)
+    orig_description = tables.Column(visible=False)
+    new_description = tables.Column(visible=False)
     description = DescriptionColumn()
     created = DateColumn("created", verbose_name="Created", )
     updated = DateColumn("updated", verbose_name="Updated",
@@ -137,10 +144,7 @@ class BooksTable(tables.Table):
     
     class Meta:
         model = books
-        #template_name = 'bookshelf/books_table.html'
-        #template_name = 'django_tables2/table.html'
         template_name = 'django_tables2/bootstrap4.html'
-        #attrs = ... ?
         
         
     #def render_description(self, value):
