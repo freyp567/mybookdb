@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django_tables2',
     'django_filters',
     'django_select2',
+    'graphene_django',
 ]
 
 MIDDLEWARE = [
@@ -185,3 +186,7 @@ STATICFILES_DIRS = [
 MEDIA_URL = "/media/"
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'templates', 'media')
+
+GRAPHENE = {
+    'SCHEMA': 'app.schema.schema' # Where your Graphene schema lives
+}
