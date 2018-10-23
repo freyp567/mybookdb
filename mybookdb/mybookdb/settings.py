@@ -27,7 +27,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", False)
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", ["127.0.0.1",])
 
@@ -48,6 +48,10 @@ INSTALLED_APPS = [
     'django_select2',
     'graphene_django',
 ]
+
+# 2018-10-23 dropped django_graphiql, seems to be deprecated and outdated
+# and replaced completely by graphene_django
+# use graphene-django to integrate GraphiQL into Django project
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -190,3 +194,24 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'templates', 'media')
 GRAPHENE = {
     'SCHEMA': 'app.schema.schema' # Where your Graphene schema lives
 }
+GRAPHENE = {
+    'SCHEMA': 'bookshelf.schema.schema'
+}
+if DEBUG:
+    GRAPHENE['MIDDLEWARE'] = (
+        'graphene_django.debug.DjangoDebugMiddleware',
+    )
+
+GRAPHIQL_DEFAULT_QUERY = """
+{
+  users {
+    id
+    username
+    lastLogin
+    email
+    #isStaff
+    #isActive
+    #dateJoined
+  }
+}
+"""

@@ -1,8 +1,12 @@
-# see https://github.com/graphql-python/graphene-django
+"""
+integration test for graphql 
+/graphql?variables=null&operationName=null&query=...
+
+"""# see https://github.com/graphql-python/graphene-django
 
 from django.core.management.base import BaseCommand  # , CommandError
 
-from schema.schema import schema
+from bookshelf.schema import schema
 import sys
 import pprint
 
@@ -31,8 +35,7 @@ class Command(BaseCommand):
                 id, username, lastLogin, email, 
                 isStaff, isActive, dateJoined
                 # password # is hashed
-              }
-            }
+            }}
         '''
         result = schema.execute(query)
         self.stdout.write("got result for query: %s" % query)

@@ -3,6 +3,7 @@
 """
 from django.contrib import admin
 from django.urls import path, include
+from mybookdb.settings import DEBUG
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -43,7 +44,8 @@ urlpatterns += [
 # url(r'^select2/', include('django_select2.urls')),
 
 # GraphQL integration
-urlpatterns = [
-    # ...
-    url(r'^graphql', GraphQLView.as_view(graphiql=True)),
+# note: showing GraphiQL only for non-production environment (if DEBUG is True)
+urlpatterns += [
+    url(r'^graphql', GraphQLView.as_view(graphiql=DEBUG)),
 ]
+
