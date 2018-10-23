@@ -33,9 +33,8 @@ class books(models.Model):
     isbn13 = models.TextField(null=True, max_length=13)
     title = models.TextField(blank=False, max_length=255)
     binding = models.CharField(max_length=80, null=True)
-    description = models.TextField(null=True, blank=True)
-      # note: description from mybookdroid (Android app), not to be updated in mybookdb
-      # so add new_description to allow to maintain both
+    orig_description = models.TextField(null=True, blank=True)  
+      # original descriptin from MyBookDroid app
     new_description = models.TextField(null=True, blank=True)
     numberOfPages = models.CharField(max_length=10, blank=True, null=True)
     publisher = models.TextField(blank=True, null=True)
@@ -60,6 +59,13 @@ class books(models.Model):
     thumbnailSmall = models.TextField(blank=True, null=True)
     thumbnailLarge = models.TextField(blank=True, null=True)
     amazonBookId = models.IntegerField(null=True)
+    
+    @property
+    def description(self):
+        """ computed from new_/orig_description """
+        if self.new_description:
+            return self.new_description
+        return self.orig_description
 
     class Meta:
         permissions = (
