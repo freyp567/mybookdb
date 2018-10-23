@@ -20,7 +20,7 @@ class BookUpdateForm(forms.ModelForm):
     new_description = forms.CharField()
     orig_description = forms.CharField(disabled=True, label="Original description")
     isbn10 = forms.CharField(max_length=10, min_length=10)
-    isbn13 = forms.CharField(max_length=10, min_length=10)
+    isbn13 = forms.CharField(max_length=13, min_length=13)
     
     authors = forms.ModelMultipleChoiceField(
         queryset=authors.objects.none(), 
