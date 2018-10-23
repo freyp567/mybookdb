@@ -11,6 +11,8 @@ django-filter = "<2.0"
 "Django-Select2" = "*"
 graphene = ">=2.0"
 graphene-django = ">=2.0"
+django-extensions = "*"
+werkzeug = "*"
 
 [dev-packages]
 "flake8" = "*"

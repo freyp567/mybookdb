@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django_filters',
     'django_select2',
     'graphene_django',
+    'django_extensions',
 ]
 
 # 2018-10-23 dropped django_graphiql, seems to be deprecated and outdated
