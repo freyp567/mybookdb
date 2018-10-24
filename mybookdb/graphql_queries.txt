@@ -1,0 +1,12 @@
+
+http://127.0.0.1:8000/graphql?variables=null&operationName=null&query={users { id username lastLogin}}
+
+graphene queries:
+
+{allBooks {isbn10 isbn13 title 
+  authors { id name }
+}}
+
+
+
+2018-10-24 updated

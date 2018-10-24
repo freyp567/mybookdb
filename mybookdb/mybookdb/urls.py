@@ -46,6 +46,7 @@ urlpatterns += [
 # GraphQL integration
 # note: showing GraphiQL only for non-production environment (if DEBUG is True)
 urlpatterns += [
-    url(r'^graphql', GraphQLView.as_view(graphiql=DEBUG)),
+    url(r'^graphql', GraphQLView.as_view(graphiql=False)),
+    url(r'^graphiql', GraphQLView.as_view(graphiql=True)),
 ]
 

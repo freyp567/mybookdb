@@ -4,6 +4,19 @@ integration test for graphql
 
 { allAuthors { id name }}
 
+{allBooks {isbn10 isbn13 title 
+  authors { id name }
+}}
+
+{book(title:"Die Insel unter dem Meer: Roman") 
+  { id title 
+  authors { id name }
+}}
+
+{ bookAuthors { id title authors { id } }}
+fails with error:
+Invalid field name(s) given in select_related: 'authors'. Choices are: googleBookId, grBookId, reviews, states
+
 """
 # see https://github.com/graphql-python/graphene-django
 # and http://docs.graphene-python.org/projects/django/en/latest/tutorial-plain/#hello-graphql-schema-and-object-types
@@ -31,7 +44,7 @@ class Command(BaseCommand):
         else:
             self.pprint(result.to_dict())
         
-    def allAuthors(self):
+    def all_authors(self):
         self.stdout.write("list all authors")
         query = '''
             query
@@ -40,9 +53,10 @@ class Command(BaseCommand):
         result = schema.execute(query)
         self.stdout.write("got result for query: %s" % query)
         self.verify_result(result)
+        self.stdout.write("\n")
         
-    def allBooks(self):
-        self.stdout.write("list all authors")
+    def all_books(self):
+        self.stdout.write("list all books")
         query = '''
             query
             { allBooks { id title }}
@@ -50,6 +64,32 @@ class Command(BaseCommand):
         result = schema.execute(query)
         self.stdout.write("got result for query: %s" % query)
         self.verify_result(result)
+        self.stdout.write("\n")
+        
+    def books_authors(self):
+        self.stdout.write("list books and authors")
+        query = '''
+{allBooks {isbn10 isbn13 title 
+  authors { id name }
+}}
+        '''
+        result = schema.execute(query)
+        self.stdout.write("got result for query: %s" % query)
+        self.verify_result(result)
+        self.stdout.write("\n")
+        
+    def book_by_title(self, title):
+        self.stdout.write("show book for given title '%s'" % title)
+        query = '''
+{book(title:"%s") 
+  { id title 
+  authors { id name }
+}}
+        ''' % title
+        result = schema.execute(query)
+        self.stdout.write("got result for query: %s" % query)
+        self.verify_result(result)
+        self.stdout.write("\n")
         
     def pprint(self, *args, **kwargs):
         pp = pprint.PrettyPrinter(indent=2, stream=sys.stdout)
@@ -59,7 +99,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # xyz = options.get('xyz')
         self.stdout.write(f"test graphene integration")
-        # self.allAuthors()
-        self.allBooks()
+        self.all_authors()
+        self.all_books()
+        # self.books_authors() # fails - django orm .select_related and many-to-many-relations?
+        # see https://stackoverflow.com/questions/1387044/django-select-related-with-manytomanyfield
+        self.book_by_title("Die Insel unter dem Meer: Roman")
         self.stdout.write("finished.\n")
         

@@ -193,10 +193,7 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, 'templates', 'media')
 
 GRAPHENE = {
-    'SCHEMA': 'app.schema.schema' # Where your Graphene schema lives
-}
-GRAPHENE = {
-    'SCHEMA': 'bookshelf.schema.schema'
+    'SCHEMA': 'mybookdb.schema.schema'
 }
 if DEBUG:
     GRAPHENE['MIDDLEWARE'] = (
