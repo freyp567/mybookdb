@@ -18,12 +18,15 @@ for interantive GraphQL console:
 }}} }
 
 
-xxx TODO adapt to relay style GraphQL query
+{ allAuthors(id:"QXV0aG9yTm9kZTo4NQ==") {  edges { node { id name }}} }
 
-{allbooks(title_Icontains:"Die Insel unter dem Meer") 
-  { id title 
-  authors { id name }
-}}
+
+query { allBooks(title_Icontains:"Die Insel unter dem Meer") {edges{node{
+  title
+  authors {edges{node{
+    name
+  }}}
+}}}}
 
 
 """
