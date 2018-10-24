@@ -1,8 +1,11 @@
 # GraphQL schema for mybookdb 
 # see https://github.com/graphql-python/graphene-django
 
-from graphene_django import DjangoObjectType
+# from graphene import relay, ObjectType
 import graphene
+from graphene_django import DjangoObjectType
+from graphene_django.filter import DjangoFilterConnectionField
+
 from django.contrib.auth import get_user_model
 from .models import authors, books
 
@@ -10,48 +13,27 @@ class User(DjangoObjectType):
     class Meta:
         model = get_user_model()
 
-class Author(DjangoObjectType):
+class AuthorNode(DjangoObjectType):
     class Meta:
         model = authors
+        filter_fields = ['id', 'name']
+        interfaces = (graphene.relay.Node,)
 
-class Book(DjangoObjectType):
+class BookNode(DjangoObjectType):
     class Meta:
         model = books
+        filter_fields = {
+            'id': ['exact'], 
+            'title': ['exact', 'icontains', 'istartswith'],
+        }
+        interfaces = (graphene.relay.Node, )
 
-class Query(graphene.ObjectType):
+class Query(object):
     users = graphene.List(User)
-    all_authors = graphene.List(Author)
-    all_books = graphene.List(Book)
-    # book_authors = graphene.List(Book)
-    book = graphene.Field(Book,
-                          id=graphene.Int(),
-                          title=graphene.String()
-                          )
+    authors = graphene.relay.node.Field(AuthorNode)
+    all_authors = DjangoFilterConnectionField(AuthorNode)
+    books = graphene.relay.node.Field(BookNode)
+    all_books = DjangoFilterConnectionField(BookNode)
 
-    def resolve_users(self, info):
-        UserModel = get_user_model()
-        return UserModel.objects.all()
-    
-    def resolve_all_authors(self, info):
-        return authors.objects.all()
-    
-    def resolve_all_books(self, info):
-        return books.objects.all()
-    
-    #def resolve_book_authors(self, info, **kwargs):
-        #return books.objects.select_related('authors').all()
-        ## fails with django.core.exceptions.FieldError: 
-        ## Invalid field name(s) given in select_related: 'author'.
-        ## Choices are: googleBookId, grBookId, reviews, states
 
-    def resolve_book(self, info, **kwargs):
-        id = kwargs.get('id')
-        title = kwargs.get('title')
-        if id is not None:
-            return books.objects.get(pk=id)
-        if title is not None:
-            return books.objects.get(title=title)
-        return None
-    
-    
-schema = graphene.Schema(query=Query)
+# see mybookdb/schema.py for toplevel schema instance
