@@ -7,6 +7,10 @@ graphene queries:
   authors { id name }
 }}
 
+{book(title:"Die Insel unter dem Meer: Roman") 
+  { id title 
+  authors { id name }
+}}
 
 
 2018-10-24 updated
