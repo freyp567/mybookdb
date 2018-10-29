@@ -39,7 +39,6 @@ if ($('#authorslist').length !== 0) {
   $table.bootstrapTable({
     url: '/bookshelf/authors/search',
   });
-  
 
   $table.on('expand-row.bs.table', function(e, index, row, $detail) {
     //var res = $("#desc" + index).html();

@@ -63,24 +63,28 @@
     data-cookie-id-table="authors"
     data-cookie-storage="cookieStorage"
     data-detail-view="true" 
-    data-detail-formatter="detailFormatterAuthor">  <!-- see view getAuthorsListDetails -->
+    data-detail-formatter="detailFormatterAuthor"  <!-- see view getAuthorsListDetails -->
+    >
     <thead>
-      <th data-field="id" class="author_id">#</th>
-      <th id="col-name" data-field="name" class="author_name"
+      <th class="author_id" 
+        data-field="id" >#</th>
+      <th id="col-name" class="author_name"
+        data-field="name" 
         data-filter-control="input" 
         data-sortable="true"
         scope="col">Name</th>
-      <th id="col-name" data-field="book_rating_avg" class="book_rating_avg"
+      <th id="col-rating" class="book_rating_avg"
         title="average rating of all books read from author"
+        data-field="book_rating_avg" 
         data-filter-control="false" 
         data-sortable="false"
         scope="col">Rating</th>
-      <th id="col-name" data-field="book_count" class="book_count"
+      <th id="col-book-count" data-field="book_count" class="book_count"
         title="number of books (for list of books, click onto row)"
         data-filter-control="false" 
         data-sortable="false"
         scope="col">Books</th>
-      <th id="col-updated" data-field="latest_book" class="author_latest_book"
+      <th id="col-book-latest" data-field="latest_book" class="author_latest_book"
         data-filter-control="false" 
         data-sortable="false" 
         scope="col">Latest Book</th>

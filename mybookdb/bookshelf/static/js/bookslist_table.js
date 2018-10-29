@@ -23,23 +23,38 @@ if (!filter_control) {
 
 
 if ($('#bookslist').length !== 0) {
-  console.error("initialize bootstrap table bookslist");
+  console.info("initialize bootstrap table bookslist");
+  const $table = $('#bookslist');
   
-  $('#bookslist').bootstrapTable({
+  $table.bootstrapTable({
     url: '/bookshelf/books/search',
   });
+
+  $table.on('expand-row.bs.table', function(e, index, row, $detail) {
+    console.info("expand-row.bs.table index=" +index);
+    const res = JSON.stringify(row);
+    console.debug("expand row#" +index +": " +res);
+      $detail.html(res);
+    const book_id = row["id"];
+    const url = `/bookshelf/book/${book_id}/listdetails`;
+    console.debug("details from " +url);
+    $.get(url, (res) => {
+      $detail.html(res);
+    });
+  });
   
+  $table.on("click-row.bs.table", function(e, row, $tr) {
+    console.debug("clicked on table row/cell: " + $(e.target).attr('class'), [e, row, $tr]);
+    // trigger expands row with text detailFormatter..
+    if ($tr.next().is('tr.detail-view')) {
+      $table.bootstrapTable('collapseRow', $tr.data('index'));
+    } else {
+      $table.bootstrapTable('expandRow', $tr.data('index'));
+    }
+  });
+
 } else {
   console.error("bootstrap table bookslist not found");
 }
 
-/*
-    queryParams: function(params) {
-      params['title'] = $('#col-title').text();
-      params['created'] = $('#col-created').text();
-      params['updated'] = $('#col-updated').text();
-      return params;
-    },
-    # queryParamsType: 'limit' # data-query-params-type
 
-*/

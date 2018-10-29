@@ -277,6 +277,49 @@ class AuthorDetailView(generic.DetailView):
         context = super().get_context_data(**kwargs)
         return context 
 
+def getBooksListDetails(request, pk=None):
+    assert pk
+    LOGGER.debug("details for book %s", pk)
+    book = books.objects.get(pk=pk)
+    result = []
+    book_authors = authors.objects.filter(books__id=pk)
+    if book_authors:
+        author_names = []
+        for author in book_authors:
+            author_names.append(author.name)
+        if len(author_names) > 1:
+            result.append("Authors: %s" % ", ".join(author_names))
+        else:
+            result.append("Author: %s" % ", ".join(author_names))
+            
+    description = book.new_description or book.orig_description
+    if description:
+        if result:
+            result.append("")
+        result.append("<p>%s</p>" % description)
+    comment_info = []
+    qs_comments = comments.objects.filter(book__id = pk).order_by('dateCreatedInt')
+    for comment in qs_comments:
+        comment_text = comment.text
+        if len(comment_text) > 80:
+            comment_text = comment_text[:80] +'...'
+        comment_created = comment.dateCreated.date().isoformat()
+        if comment_created in comment_text:
+            comment_info.append('<span class="bookcomment-small">%s</span>' % 
+                                comment_text)
+        else:
+            comment_info.append('<span class="bookcomment-small">%s  %s</span>' % 
+                                (comment_created, comment_text))
+        if len(comment_info) > 5:
+            comment_info.append('...')
+            break
+    if comment_info:
+        book_comments = "%s" % '<br>'.join(comment_info)
+        # if result: 
+        #    result.append('<hr/>')
+        result.append(book_comments)
+    html = '\n'.join(result)
+    return HttpResponse(content=html)
 
 def getAuthorsListDetails(request, pk=None):
     assert pk 
@@ -320,7 +363,7 @@ def getAuthorsListDetails(request, pk=None):
             result.append('<li %s title="%s">%s</li>' % (bs_tooltip, desc, book_info))
         result.append("</ul>")
     else:
-        result.append("<p>note: have no bookes in database</b>")
+        result.append("<p>note: have no books in db for given author</b>")
     html = '\n'.join(result)
     return HttpResponse(content=html)
 
