@@ -25,6 +25,9 @@
   }
   th.author_name {
   }
+  th.book_rating_avg {
+    width: 80px;
+  }
   th.author_latest_book {
     width: 480px;
   }
@@ -64,6 +67,11 @@
         data-filter-control="input" 
         data-sortable="true"
         scope="col">Name</th>
+      <th id="col-name" data-field="book_rating_avg" class="book_rating_avg"
+        title="average rating of all books read from author"
+        data-filter-control="false" 
+        data-sortable="false"
+        scope="col">Rating</th>
       <th id="col-updated" data-field="latest_book" class="author_latest_book"
         data-filter-control="false" 
         data-sortable="false" 

@@ -216,7 +216,7 @@ class AuthorListView(generic.ListView):
 
 def author_obj_to_dict(obj):
     data = {}
-    for key in ('id', 'name', 'latest_book',):
+    for key in ('id', 'name', 'latest_book', 'book_rating_avg'):
         data[key] = getattr(obj, key)
     return data
 
@@ -242,7 +242,6 @@ def search_author(request):
         
     row_count = qs.count()
     qs = qs.order_by(sort_field)
-    # data = list(qs.values('id', 'name', 'latest_book')[offset:offset+limit])
     data = [ author_obj_to_dict(obj) for obj in qs[offset:offset+limit] ]
     result = {
         "total": row_count,

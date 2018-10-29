@@ -27,6 +27,22 @@ class authors(models.Model):
         b = self.books_set.all().order_by('-created')
         return b and b[0].title or None
         
+    @property
+    def book_rating_avg(self):
+        book_count = 0
+        rating = 0
+        for b in self.books_set.all():
+            if b.userRating:
+                book_count += 1
+                rating += b.userRating
+        if rating:
+            # average rating er book
+            rating /= book_count
+            return round(rating, 1)
+        else:
+            # no books read
+            return None
+        
 
 class books(models.Model):
     """ books 
