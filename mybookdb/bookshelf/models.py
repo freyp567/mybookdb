@@ -22,6 +22,11 @@ class authors(models.Model):
             models.Index(fields=['name'], name='author_name'),
         ]
         
+    @property
+    def latest_book(self):
+        b = self.books_set.all().order_by('-created')
+        return b and b[0].title or None
+        
 
 class books(models.Model):
     """ books 

@@ -3,14 +3,32 @@
 {% block content %}
     {% load static %}
 
-    <h1 id="page-title" data-toggle="tooltip" data-html="true" data-placement="bottom"
+    <h1 id="page-title" data-toggle="tooltip" data-html="true" data-placement="left"
       title="total <b>{{authors_count}} authors</b> in bookdb">
-      Authors
+      Authors  
     </h1>
     
 <link rel="stylesheet" href="/static/bootstrap4/dist/css/bootstrap.css" />
 <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
 <link rel="stylesheet" type="text/css" href="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.css">
+
+<style>
+  table.authors {
+    table-layout: fixed;
+  }
+  #authorslist thead > tr > th.detail,
+  #authorslist tbody > tr:not(.detail-view) > td:first-of-type {
+    display: none;
+  }
+  th.author_id {
+    width: 48px;
+  }
+  th.author_name {
+  }
+  th.author_latest_book {
+    width: 480px;
+  }
+</style>
 
 <script src="{% static "js-cookie/js.cookie.js" %}"></script>
 <script src="{% static "popper.js/dist/popper.js" %}"></script>
@@ -22,8 +40,8 @@
 <script src="/static/bootstrap-table/extensions/cookie/bootstrap-table-cookie.js"></script>
 
 <div class="container">
-  <div id="toolbarAuthors"></div>
-  <table class="table table-sm" id="authorslist"
+  <div id="toolbarAuthors"></div>  
+  <table class="table table-sm authors" id="authorslist"
     data-toggle="table"
     data-show-columns="true"
     data-url="/bookshelf/authors/search"
@@ -40,20 +58,16 @@
     data-cookie-storage="cookieStorage"
     data-detail-view="true" 
     data-detail-formatter="detailFormatterAuthor">
-  >
     <thead>
-      <tr>
-        <th data-field="id" scope="col">#</th>
-        <th id="col-name" data-field="name" 
-          data-filter-control="input" 
-          scope="col">Name</th>
-        <!-- TODO add
-        <th id="col-updated" data-field="updated" 
-          data-filter-control="input" 
-          data-sortable="true" 
-          scope="col">Updated</th>
-        -->
-      </tr>
+      <th data-field="id" class="author_id">#</th>
+      <th id="col-name" data-field="name" class="author_name"
+        data-filter-control="input" 
+        data-sortable="true"
+        scope="col">Name</th>
+      <th id="col-updated" data-field="latest_book" class="author_latest_book"
+        data-filter-control="false" 
+        data-sortable="false" 
+        scope="col">Latest Book</th>
     </thead>
   </table>
 </div>
