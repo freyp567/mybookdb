@@ -4,6 +4,10 @@ wiring for bootstrap-table displaying books
 http://bootstrap-table.wenzhixin.net.cn/documentation/
 */
 
+function book_link_formatter(value, row, index) {
+  return "<a href='/bookshelf/book/"+row.id+"'>"+value+"</a>";
+}
+
 // workaround for issue with bootstrap-table filter-control and cookie 
 const filter_control = Cookies.get('books.bs.table.filterControl');
 if (!filter_control) {
