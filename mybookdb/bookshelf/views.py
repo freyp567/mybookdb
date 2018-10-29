@@ -216,7 +216,7 @@ class AuthorListView(generic.ListView):
 
 def author_obj_to_dict(obj):
     data = {}
-    for key in ('id', 'name', 'latest_book', 'book_rating_avg'):
+    for key in ('id', 'name', 'latest_book', 'book_rating_avg', 'book_count'):
         data[key] = getattr(obj, key)
     return data
 
@@ -293,8 +293,13 @@ def getAuthorsListDetails(request, pk=None):
                 comment_text = comment.text
                 if len(comment_text) > 80:
                     comment_text = comment_text[:80] +'...'
-                comment_info.append('<span class="bookcomment-small">%s  %s</span>' % 
-                                    (comment.dateCreated.date().isoformat(), comment_text))
+                comment_created = comment.dateCreated.date().isoformat()
+                if comment_created in comment_text:
+                    comment_info.append('<span class="bookcomment-small">%s</span>' % 
+                                        comment_text)
+                else:
+                    comment_info.append('<span class="bookcomment-small">%s  %s</span>' % 
+                                        (comment_created, comment_text))
                 if len(comment_info) > 1:
                     comment_info.append('...')
                     break
@@ -302,9 +307,10 @@ def getAuthorsListDetails(request, pk=None):
             if book_item.userRating:
                 # highlight if book has a rating - assume have read
                 book_info += "<b>%s</b>" % book_item.title
-                book_info += " [%s]" % book_item.userRating
+                book_info += " [Rating: %s]" % book_item.userRating
             else:
                 book_info += book_item.title
+                book_info += " [no rating]"
             if comment_info:
                 book_info += '<br>'
                 book_info += '<br>'.join(comment_info)

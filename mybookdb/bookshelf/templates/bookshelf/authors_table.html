@@ -26,7 +26,10 @@
   th.author_name {
   }
   th.book_rating_avg {
-    width: 80px;
+    width: 70px;
+  }
+  th.book_count {
+    width: 60px;
   }
   th.author_latest_book {
     width: 480px;
@@ -60,7 +63,7 @@
     data-cookie-id-table="authors"
     data-cookie-storage="cookieStorage"
     data-detail-view="true" 
-    data-detail-formatter="detailFormatterAuthor">
+    data-detail-formatter="detailFormatterAuthor">  <!-- see view getAuthorsListDetails -->
     <thead>
       <th data-field="id" class="author_id">#</th>
       <th id="col-name" data-field="name" class="author_name"
@@ -72,6 +75,11 @@
         data-filter-control="false" 
         data-sortable="false"
         scope="col">Rating</th>
+      <th id="col-name" data-field="book_count" class="book_count"
+        title="number of books (for list of books, click onto row)"
+        data-filter-control="false" 
+        data-sortable="false"
+        scope="col">Books</th>
       <th id="col-updated" data-field="latest_book" class="author_latest_book"
         data-filter-control="false" 
         data-sortable="false" 

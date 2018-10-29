@@ -28,6 +28,11 @@ class authors(models.Model):
         return b and b[0].title or None
         
     @property
+    def book_count(self):
+        b = self.books_set.all()
+        return len(b)
+        
+    @property
     def book_rating_avg(self):
         book_count = 0
         rating = 0
