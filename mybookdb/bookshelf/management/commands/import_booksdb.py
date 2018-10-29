@@ -7,6 +7,13 @@ usage:
 TODO fix umlaute troubles, 
 e.g. book 179 causing (unicode error) 'utf-8' codec can't decode byte 0xe4 in position 156: invalid continuation byte
 book 336   'Im Land der wei?en Wolke: Roman'
+
+TODO check for author uniqueness
+
+ATTN current implementation assumes that author names are unique (or made unique)
+hopefully case same author name matches several authors will be very seldom
+and can be solved by 'discriminating' the author names with a suffix
+
 """
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
@@ -16,11 +23,9 @@ from bookshelf.models import books, authors, comments, grBooks, googleBooks, gro
 
 import os
 import io
+import copy
 from datetime import datetime, date
 import sqlite3
-
-
-import wingdbstub
 
 
 class Command(BaseCommand):
@@ -104,10 +109,15 @@ class Command(BaseCommand):
                         diff[key] = (getattr(obj, key), value) 
                 if diff:
                     keys = ", ".join(diff.keys())
-                    self.stdout.write(f"detected mismatch for {table_name} {id} keys={keys}")
-                    # TODO update selected fields
+                    self.stdout.write(f"update changes to {table_name} {id} keys={keys}")
+                    # update changed fields
+                    for key, value in diff.items():
+                        assert key not in ('id',), "not allowed to update %s" % key 
+                        value = value[1]  # new value
+                        setattr(obj, key, value)
                     obj.updated = datetime.now(tz=timezone.utc)
-                    
+                    obj.save()
+                    updated += 1
             else:
                 obj = objType(**data)
                 obj.updated = datetime.now(tz=timezone.utc)
@@ -117,6 +127,36 @@ class Command(BaseCommand):
         self.stdout.write(f"{table_name}: total {updated} rows updated (of total {rowcount})")
         return updated
         
+
+    def update_book_authors(self, book_obj, authors_set, authors_new):
+        authors_set_ids = set([ a.id for a in authors_set])
+        authors_new_ids = set([ a.id for a in authors_new])
+        if authors_set_ids == authors_new_ids:  # A ^ B, symmetric difference
+            return # same, unchanged
+
+        id = book_obj.id
+        updated = 0
+        delta_new = authors_new_ids - authors_set_ids
+        for author_id in delta_new:
+            author = authors.objects.get(pk=author_id)
+            self.stderr.write(f"book {id} with author added: {author.name} id={author.id}")
+            author.updated = datetime.now(tz=timezone.utc)
+            author.save()
+            book_obj.authors.add(author_id)
+            book_obj.save()
+            updated += 1
+                
+        delta_dropped = authors_set_ids - authors_new_ids 
+        for author_id in delta_dropped:
+            author = authors.objects.get(pk=author_id)
+            self.stderr.write(f"book {id} with author removed: {author.name} id={author.id}")
+            author.updated = datetime.now(tz=timezone.utc)
+            author.save()
+            book_obj.authors.remove(author.id)
+            book_obj.save()
+            updated += 1
+            
+        assert updated > 0, "failed to update book authors"
 
     def load_books(self):
         self.stdout.write(f"loading data for table books ...")
@@ -146,29 +186,24 @@ class Command(BaseCommand):
                         self.stderr.write(f"book without author: {id} {book_title!r}")
                         continue 
                     
-                    for author_name in value.split(','):
-                        author_name = author_name
-                        obj_author = authors.objects.filter(name=author_name.strip())                        
+                    value =  [value]  # normalize!
+                    while value:
+                        author_name = value.pop().strip()
+                        obj_author = authors.objects.filter(name=author_name)
+                        if not obj_author and ',' in author_name:
+                            authors_list = [ a.strip() for a in author_name.split(',')]
+                            value.extend(authors_list)
+                            continue
+                        
                         # name, familyName, lowerCaseName
                         if not obj_author:
-                            author_unkn.append(author_name) # e.g. bookdId 106 ' Susanne Goga- Klinkenberg'
-                        elif len(obj_author) != 1:
-                            test = obj_author[0] # name not unique??
-                            assert len(obj_author) == 1, f"author name not unique: {author_name}"
+                            author_unkn.append(author_name) 
+                            self.stdout.write(f"lookup author {author_name!r} unknown, auto-create for book {id} {book_title!r}")
+                            obj_authors = authors.objects.create(name=author_name)
+                            obj_authors.save()
                         else:
+                            assert len(obj_author) == 1, "trouble with author %s" % author_name
                             book_authors.add(obj_author[0])
-                            
-                    if author_unkn:
-                        # e.g. 'Wilbur, Smith'
-                        author_name = ','.join(author_unkn)
-                        obj_author = authors.objects.filter(name=author_name.strip())                        
-                        if obj_author:
-                            assert len(obj_author) == 1
-                            book_authors.add(obj_author[0])
-                        else:
-                            self.stdout.write("")
-                            self.stdout.write(f"lookup author {author_name!r} failed for book {id} {book_title!r}")
-                        
                             
                 elif col_name in ('reviewsFetchedDate', 'offersFetchedDate', 'created', 'publicationDate'):
                     # MyBookDroid stores dates as time_t values, need to convert for Django ORM
@@ -198,38 +233,38 @@ class Command(BaseCommand):
                     if getattr(book_obj, key) != value:
                         diff[key] = (getattr(book_obj, key), value) 
                         
-                book_authors_set = set([ a.name for a in book_obj.authors.all() ])
-                book_authors_add = []
-                for book_author in book_authors:
-                    if book_author.name in book_authors_set:
-                        book_authors_set.remove(book_author.name) # matched, ok
-                    else:
-                        book_obj.authors.add(book_author)
-                        book_obj.save()
-                        book_authors_add.append(book_author.name)
+                # detect changes in book - authors relationship (many-to-many)
+                book_authors_set = list(book_obj.authors.all())
+                self.update_book_authors(book_obj, book_authors_set, book_authors)
                         
-                # removed authors
-                for book_author_name in book_authors_set:
-                    # author no longer assigned
-                    book_author = [ a for a in book_obj.authors.all() if a.name == book_author_name ]
-                    assert len(book_author) == 1
-                    book_author = book_author[0]
-                    self.stderr.write(f"book {id} with author removed: {book_author.name}")
-                    book_obj.authors.remove(book_author)
-                    book_obj.save()
-                        
-                    
+                diff2 = copy.copy(diff)  # save
+                # discard fields not relevant for update
+                for key in ('reviewsFetchedDate',):
+                    if key in diff:
+                        del diff[key]
                 if diff: # handle other differences
-                    keys = ", ".join(diff.keys())
-                    self.stdout.write(f"detected mismatch for {table_name} {id} keys={keys}")
-                    # TODO update selected fields
+                    keys = ", ".join(diff2.keys())
+                    self.stdout.write(f"detected changes for book {id} keys={keys}")
+                    # update changed fields, e.g. title
+                    for key, value in diff2.items():
+                        assert not key in ('id',) # disallow update
+                        old_value, new_value = value
+                        if key in ('reviewsFechedDate',):
+                            value = new_value  #.isoformat()
+                        else:
+                            value = new_value
+                        setattr(book_obj, key, value)
+                    book_obj.updated = datetime.now(tz=timezone.utc)  #.isoformat()[:10]
+                    book_obj.save()
+                else:
+                    pass # no changes
                     
             else:
                 self.stdout.write(f"new book {id}: {data['title']!r}")
                 book_obj = books(**data)
                 book_obj.save()
                 for author in book_authors:  
-                    book_obj.authors.add(author)
+                    book_obj.authors.add(author.id)
                 book_obj.save()
                 
                 updated += 1
