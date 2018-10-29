@@ -4,8 +4,23 @@ wiring for bootstrap-table displaying books
 http://bootstrap-table.wenzhixin.net.cn/documentation/
 */
 
-function book_link_formatter(value, row, index) {
+function format_book_link(value, row, index) {
   return "<a href='/bookshelf/book/"+row.id+"'>"+value+"</a>";
+}
+
+function format_state(value, row, index){
+  let status = "";
+  if (row.states__haveRead) {
+    status += "have read";
+  } else {
+    if (row.states__readingNow) {
+      status += "reading";
+    } else {
+      status += "NOT read";
+    }
+  }
+  return status;
+
 }
 
 // workaround for issue with bootstrap-table filter-control and cookie 

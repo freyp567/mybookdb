@@ -25,6 +25,9 @@
   th.book_updated {
     width: 100px;
   }
+  th.book_state {
+    width: 120px; 
+  }
   th.user_rating {
     width: 40px;
   }
@@ -50,6 +53,11 @@ var rating_values = {
   "1": "1 - lowest"
 };
 // "0": "0 - not rated" 
+var have_read_values = {
+  "read": "have read",
+  "reading": "reading",
+  "not_read": "NOT read"
+};
 </script>
 
 <div class="container">
@@ -77,9 +85,10 @@ var rating_values = {
     data-buttons-toolbar=
   -->
     <thead>
+    <tr>
       <th class="book_id" 
         data-field="id"
-        data-formatter="book_link_formatter"
+        data-formatter="format_book_link"
         >#</th>
       <th id="col-title" class="book_title" 
         data-field="title" 
@@ -98,6 +107,14 @@ var rating_values = {
         data-sortable="true" 
         scope="col"
         >Updated</th>
+      <th id="col-state" class="book_state"
+        data-field="state"
+        data-filter-control="select" 
+        data-filter-data="var:have_read_values"
+        data-sortable="false" 
+        data-formatter="format_state"
+        scope="col"
+        >Status</th>
       <th id="col-rating" class="user_rating"
         data-field="userRating" 
         data-sortable="true"
@@ -105,6 +122,7 @@ var rating_values = {
         data-filter-data="var:rating_values"
         scope="col"
         >Rating</th>
+    </tr>
     </thead>
     <!-- table body generated, see view search_book -->
   </table>

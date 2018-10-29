@@ -105,6 +105,7 @@ def search_book(request):
     
     qs = books.objects.all()
     
+    qs = qs.select_related("states")
     if query.get('filter'):
         search_filter = {}
         for key, value in json.loads(query['filter']).items():
@@ -114,17 +115,42 @@ def search_book(request):
                 search_filter[key +'__contains'] = value  # TODO handle date parts
             elif key == 'userRating':
                 search_filter["userRating__gte"] = value
+            elif key == 'state':
+                if value == 'read':
+                    search_filter["states__haveRead"] = True
+                elif value == 'reading':
+                    search_filter["states__readingNow"] = True
+                elif value == 'not_read':
+                    search_filter["states__haveRead"] = False
+                    search_filter["states__readingNow"] = False
+                else:
+                    LOGGER.warn("unrecognized filter value for vield state: %s" % value)
             else:
                 search_filter[key] = value  # TODO other cols?
         qs = qs.filter(**search_filter)
         
     row_count = qs.count()
+    """
+    favorite
+    haveRead
+    readingNow
+    iOwn
+    toBuy
+    toRead
+    
+    """
     qs = qs.order_by(sort_field)
     qs = qs[offset:offset+limit]
     data = []
-    for row in qs.values():
+    fields = (
+        'id', 'title', 'created', 'updated', 'userRating', 
+        'states__haveRead', 'states__readingNow', 'states__toRead',
+    )
+    for row in qs.values(*fields):
         row_data = {}
-        for field_name in ('id', 'title', 'created', 'updated', 'userRating'):
+        for field_name in fields:
+            if field_name.startswith('states__'):
+                pass  # TODO compute display state
             row_data[field_name] = row.get(field_name)            
         data.append(row_data)
         

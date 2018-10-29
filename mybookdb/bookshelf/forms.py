@@ -17,8 +17,8 @@ class BookUpdateForm(forms.ModelForm):
     update book information
     """
     title = forms.CharField(max_length=255)
-    new_description = forms.CharField()
     orig_description = forms.CharField(disabled=True, label="Original description")
+    new_description = forms.CharField()
     isbn10 = forms.CharField(max_length=10, min_length=10)
     isbn13 = forms.CharField(max_length=13, min_length=13)
     
@@ -57,7 +57,7 @@ class BookUpdateForm(forms.ModelForm):
             kwargs['initial']['new_description'] = instance.description
         super(BookUpdateForm, self).__init__(*args, **kwargs)
 
-        self.fields['new_description'].widget = forms.TextInput()
+        self.fields['new_description'].widget = forms.Textarea(attrs={'cols': 80, 'rows': 5})
         self.fields['new_description'].label = 'Description'
         
         book_authors = [ (o.id, o.name) for o in instance.authors.all() ]
