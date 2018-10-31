@@ -3,12 +3,10 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse, reverse_lazy
 from django import forms
 from django.forms import widgets
+#from django.forms.models import inlineformset_factory
 from django.utils.translation import gettext as _
-#from django_select2.forms import HeavySelect2TagWidget
-# ModelSelect2TagWidget 
 
-from bookshelf.models import books, authors
-#from .fields import AuthorsMultipleTagField
+from bookshelf.models import books, authors, states
 from bookshelf.widgets import AuthorsTagWidget
 
 
@@ -86,7 +84,10 @@ class BookUpdateForm(forms.ModelForm):
             
         #self.fields['created'].widget = widgets.DateInput() # BUT not to be edited, readonly
         #self.fields['updated'].value = datetime.now()
-            
+
+
+    #def clean(self):
+    
     def clean_isbn10(self):
         data = self.cleaned_data['isbn10']
         if data and len(data) < 10:
@@ -103,4 +104,83 @@ class BookUpdateForm(forms.ModelForm):
         if self.instance.description == data:
             return None  # not changed
         return data
+
+
+class BookInfoForm(forms.ModelForm):
+    """
+    show book information
+    """
+    title = forms.CharField(max_length=255)  # TODO readonly
+    
+    class Meta:
+        model = books
+        fields = (
+            'title', 
+            )
         
+    def __init__(self, *args, **kwargs):
+        super(BookInfoForm, self).__init__(*args, **kwargs)
+        self.fields['title'].widget.attrs['disabled'] = 'disabled'
+    
+#BookInfoFormSet = inlineformset_factory(states, books, extra=0)
+
+class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for book
+    """
+    update book state
+    """
+    # TODO correlate state with book (OneToOne relationship)
+    # see https://stackoverflow.com/questions/27832076/modelform-with-onetoonefield-in-django
+    #
+    # inline formset 
+    # https://docs.djangoproject.com/en/dev/topics/forms/modelforms/#inline-formsets
+    # https://stackoverflow.com/questions/1113047/creating-a-model-and-related-models-with-inline-formsets
+    #
+    # or implement as new standalone form
+    # TODO fix initialization
+    favorite = forms.BooleanField(
+        required=False, initial=False, 
+        label=_("my Favorite"),
+        help_text='to flag favorite book (read or unread)')
+    toRead = forms.BooleanField(
+        required=False, initial=False, 
+        label=_("to read"),
+        help_text='book on wishlist, to read')
+    readingNow = forms.BooleanField(
+        required=False, 
+        initial=False, 
+        label=_("currently reading"),
+        help_text='currently reading (active or suspended)')
+    haveRead = forms.BooleanField(
+        required=False, initial=False, 
+        label=_("have read"),
+        help_text='have read')
+    
+    class Meta:
+        model = states
+        fields = (
+            'favorite',
+            'toRead',
+            'readingNow',
+            'haveRead',
+            )
+
+    def __init__(self, *args, **kwargs):
+        super(StateUpdateForm, self).__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super(StateUpdateForm, self).clean()
+        haveRead = cleaned_data.get('haveRead')
+        
+        # validate to disallow certain combinations
+        haveRead = cleaned_data.get('haveRead')
+        readingNow = cleaned_data.get('readingNow')
+        iOwn = cleaned_data.get('iOwn')
+        toBuy = cleaned_data.get('toBuy')
+        toRead = cleaned_data.get('toRead')
+        if haveRead and readingNow:
+            raise ValidationError("either read or currently reading")
+        if haveRead and toRead:
+            raise ValidationError("either read or to be read")
+        if readingNow and toRead:
+            raise ValidationError("either currently reading or to be read")
+        # return cleaned_data

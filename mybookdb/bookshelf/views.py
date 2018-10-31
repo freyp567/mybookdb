@@ -7,6 +7,7 @@ import json
 from django.shortcuts import render
 from django.views import generic
 from django.http import HttpResponse, JsonResponse
+from django.urls import reverse
 
 # from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -16,7 +17,7 @@ from django_tables2 import RequestConfig
 from django_tables2.views import SingleTableMixin
 
 from bookshelf.models import books, authors, comments, states
-from bookshelf.forms import BookUpdateForm
+from bookshelf.forms import BookUpdateForm, StateUpdateForm, BookInfoForm
 from bookshelf.bookstable import BooksTable, BooksTableFilter, MinimalBooksTable
 from bookshelf.authorstable import AuthorsTable, AuthorsTableFilter  # , MinimalAuthorsTable
 
@@ -195,14 +196,14 @@ class BookCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     model = books
     fields = '__all__'
     permission_required = 'bookshelf.can_create'
-    
+
 class BookUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     """
-    Edit book.
+    Edit book details.
     """
     model = books
     permission_required = 'bookshelf.can_edit'
-    form_class = BookUpdateForm  # failes with TypeError instance on instantiation
+    form_class = BookUpdateForm  # fails with TypeError instance on instantiation
     if_paginated = False # KeyError else?
     
     def __init__(self, *args, **kwargs):
@@ -222,6 +223,39 @@ class BookDeleteView(PermissionRequiredMixin, generic.edit.DeleteView):
     fields = '__all__'
     permission_required = 'bookshelf.can_delete'
 
+class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
+    # TODO how to display title?
+    # need to use InlineFormSet?
+    # Another option is django-betterforms's Multiform and ModelMultiForm.
+    # or rather combine two forms (BooksInfoView showing brief books info, readonly) on template states_form.html
+    """
+    Edit book state.
+    """
+    model = states
+    permission_required = 'bookshelf.can_edit'
+    form_class = StateUpdateForm
+    #if_paginated = False # KeyError else?
+    
+    def __init__(self, *args, **kwargs):
+        super(StateUpdateView, self).__init__(*args, *kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(StateUpdateView, self).get_context_data(**kwargs)
+        if self.request.POST:
+            pass  # book info is read-only
+        else:
+            context['bookinfo_form'] = BookInfoForm(instance=self.object.book)
+        return context
+    
+    def get_success_url(self): 
+        success_url = reverse('book-detail', args=(self.object.id,))
+        return success_url
+    
+    #def form_valid(self, form):
+    #    # django.core.exceptions.ImproperlyConfigured: No URL to redirect to.  Either provide a url or define a get_absolute_url method on the Model.
+    #    return self.render_to_response(self.get_context_data(form=form))    
+    
+    
 class AuthorListView(generic.ListView):
     """
     list of authors.

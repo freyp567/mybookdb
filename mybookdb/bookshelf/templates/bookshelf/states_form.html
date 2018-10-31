@@ -3,7 +3,7 @@
 {% load bootstrap4 %}
 
 {% block title %}
-    Edit Book Details
+    Edit Book State
 {% endblock %}
 
 {% block content %}
@@ -17,8 +17,14 @@
         </div>
     {% endfor %}
     
-    <form role="form" method="post"> <!-- action="/update_book" -->
-        <!-- legend>Update book entry:</legend -->
+    <!-- 
+    show book title - readonly
+    -->
+    <h3>Book state</h3>
+    {{ bookinfo_form.as_p }}
+    
+    <form role="form" method="post"> <!-- action="/update_book_state" -->
+        <!-- legend>Update book state:</legend -->
         {% csrf_token %}
         {% bootstrap_form form %}
         {% buttons submit='OK' reset="Cancel" %}{% endbuttons %}        

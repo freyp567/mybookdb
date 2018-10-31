@@ -2,7 +2,10 @@
 
 {% block content %}
 <!-- button type="button" class="btn btn-primary" ... -->
-<a href="{% url 'book-update' books.pk %}">Edit</a>
+<a class="btn btn-primary btn-sm" role="button" 
+  href="{% url 'book-update' books.pk %}">Update Book Details</a>
+<a class="btn btn-secondary btn-sm" role="button" 
+  href="{% url 'state-update' books.pk %}">Update Book State</a>
 
 <h1>{{ books.title }}</h1>
 

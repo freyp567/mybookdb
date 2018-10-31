@@ -192,9 +192,9 @@ class states(models.Model):
         null=True,
         on_delete=models.CASCADE,
         )
-    favorite = models.IntegerField(default=0)
-    haveRead = models.IntegerField(default=0)
-    readingNow = models.IntegerField(default=0)
-    iOwn = models.IntegerField(default=0)
-    toBuy = models.IntegerField(default=0)
-    toRead = models.IntegerField(default=0)
+    favorite = models.BooleanField(default=False)
+    haveRead = models.BooleanField(default=False)
+    readingNow = models.BooleanField(default=False)
+    iOwn = models.BooleanField(default=False)
+    toBuy = models.BooleanField(default=False)
+    toRead = models.BooleanField(default=False)
