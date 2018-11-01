@@ -1,6 +1,8 @@
 """
 views on bookshelf (books, authors, ...)
 """
+
+import os
 import logging
 import json
 import requests
@@ -75,7 +77,8 @@ class LibraryThingInfoForm(forms.Form):
         # title = urllib.parse.quote_plus(book.title)
         # url = 'http://www.librarything.com/title/%s' % title
         # https://www.librarything.com/work/20777649/workdetails
-        apikey = "d231aa37c9b4f5d304a60a3d0ad1dad4"  #TODO replace by own API key / configurable
+        # apikey = "d231aa37c9b4f5d304a60a3d0ad1dad4"  # API key see LibraryThing wiki
+        apikey = os.environ["LIBRARYTHING_APIKEY"]
         baseuri = "http://www.librarything.com/services/rest/1.1/"
         url = f'{baseuri}?method=librarything.ck.getwork&isbn={isbn}&apikey={apikey}'
         response = requests.get(url, headers=headers)
