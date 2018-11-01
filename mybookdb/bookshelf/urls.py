@@ -4,6 +4,7 @@
 # from django.contrib import admin
 from django.urls import path
 from . import views
+from . import catalog_librarything
 from django.urls import include, reverse 
 
 
@@ -27,9 +28,16 @@ urlpatterns += [
 ]
 
 urlpatterns += [
-    path('states/<int:pk>/update/', 
+    path('book/<int:pk>/state', 
          views.StateUpdateView.as_view(), 
          name='state-update'),
+]
+
+
+urlpatterns += [
+    path('book/<int:pk>/librarything>', 
+         catalog_librarything.LibraryThingView.as_view(), 
+         name='lookup-librarything'),
 ]
 
 urlpatterns += [

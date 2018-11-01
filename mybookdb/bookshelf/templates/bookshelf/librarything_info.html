@@ -1,0 +1,16 @@
+<div id='librarything_info'>
+
+    <h3>Book Info from LibraryThing</h3>
+    <p>Title: {{form.title}}</p>
+    <p>Author: 
+      {{form.author_name}} id={{form.author_id}}
+      {{form.author_url}}
+    </p>
+    <a href="{{form.author_url.initial}}">
+      show Author info on LibraryThing
+    </a>
+    <br/>
+    yyyy {{form.instance.author_url}}
+    <br/>
+    
+</div>

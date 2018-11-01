@@ -1,0 +1,41 @@
+{% extends "base_generic.html" %}
+
+{% load bootstrap4 %}
+
+{% block title %}
+    book info on LibraryThing
+{% endblock %}
+
+{% block content %}
+    {{ form.media.css }}
+    {{ form.media.js }}
+
+    {% for message in messages %}
+        <div class="{{ message|bootstrap_message_classes }} alert-dismissable">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&#215;</button>
+            {{ message|safe }}
+        </div>
+    {% endfor %}
+    
+    <!-- 
+    show book title - readonly
+    -->
+    <h3>Book Info on LibraryThing</h3>
+    {{ bookinfo_form.as_p }}
+    
+    {{ libraryinfo_form.as_p }}
+    
+    <a href="{{ libraryinfo_form.author_url.initial }}" target="lt_author">
+      show author details in LibraryThing
+    </a>
+    <hr/>
+    
+    <form role="form" method="post"> <!-- action="TODO" -->
+        <!-- legend>Update book state:</legend -->
+        {% csrf_token %}
+        <!-- % bootstrap_form form % -->
+        <p>TODO fields to link book with LibraryThing to be shown here</p>
+        {% buttons submit='OK' reset="Cancel" %}{% endbuttons %}        
+    </form>
+    
+{% endblock %}

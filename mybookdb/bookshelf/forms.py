@@ -120,6 +120,7 @@ class BookInfoForm(forms.ModelForm):
         
     def __init__(self, *args, **kwargs):
         super(BookInfoForm, self).__init__(*args, **kwargs)
+        self.fields['title'].widget = forms.Textarea(attrs={'cols': 80, 'rows': 1})
         self.fields['title'].widget.attrs['disabled'] = 'disabled'
     
 #BookInfoFormSet = inlineformset_factory(states, books, extra=0)

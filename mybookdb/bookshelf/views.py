@@ -224,17 +224,12 @@ class BookDeleteView(PermissionRequiredMixin, generic.edit.DeleteView):
     permission_required = 'bookshelf.can_delete'
 
 class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
-    # TODO how to display title?
-    # need to use InlineFormSet?
-    # Another option is django-betterforms's Multiform and ModelMultiForm.
-    # or rather combine two forms (BooksInfoView showing brief books info, readonly) on template states_form.html
     """
     Edit book state.
     """
     model = states
     permission_required = 'bookshelf.can_edit'
     form_class = StateUpdateForm
-    #if_paginated = False # KeyError else?
     
     def __init__(self, *args, **kwargs):
         super(StateUpdateView, self).__init__(*args, *kwargs)
@@ -242,6 +237,7 @@ class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     def get_context_data(self, **kwargs):
         context = super(StateUpdateView, self).get_context_data(**kwargs)
         if self.request.POST:
+            # if "cancel" in request.POST:
             pass  # book info is read-only
         else:
             context['bookinfo_form'] = BookInfoForm(instance=self.object.book)
