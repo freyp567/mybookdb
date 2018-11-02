@@ -21,6 +21,10 @@ See Django settings.
 The following environment variables have to be set additionally before starting the Django app:#
 SECRET_KEY  (no longer in settings.py for security reason)
 
+To untegrate with LibraryThing, you will need to pass the LT API Key by setting the environment variable LIBRARYTHING_APIKEY.
+and take care that you fullfill the licensing requirments listed in LibraryThing API wiki (non-commercial use, not more than one request per second, ...).
+For details see https://wiki.librarything.com/index.php/LibraryThing_APIs.
+
 ## TODOs
 + show states in book-detail
 + cleanup of imported data (from MyBookDroid sqllite backup) - umlaute, incomplete info, groups, ...
