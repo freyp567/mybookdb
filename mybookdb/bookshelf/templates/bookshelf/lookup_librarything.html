@@ -17,16 +17,16 @@
         </div>
     {% endfor %}
     
-    <!-- 
-    show book title - readonly
-    -->
-    <h3>Book Info on LibraryThing</h3>
+    <h3>Book Info</h3>
     {{ bookinfo_form.as_p }}
+    
+    <hr/>
+    <h3>Info from LibraryThing:</h3>
     
     {{ libraryinfo_form.as_p }}
     
     <a href="{{ libraryinfo_form.author_url.initial }}" target="lt_author">
-      show author details in LibraryThing
+      show author details on LibraryThing
     </a>
     <hr/>
     

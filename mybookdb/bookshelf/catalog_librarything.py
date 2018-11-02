@@ -31,7 +31,7 @@ from bookshelf.authorstable import AuthorsTable, AuthorsTableFilter  # , Minimal
 LOGGER = logging.getLogger(name='mybookdb.bookshelf.librarything')
 
 class PlainTextWidget(forms.Widget):
-    def render(self, _name, value, _attrs):
+    def render(self, name, value, attrs):
         return mark_safe(value) if value is not None else '-'
 
 
@@ -55,6 +55,11 @@ class LibraryThingInfoForm(forms.Form):
             isbn10 = book.isbn10
         book_info = self.lookup_book_isbn(isbn10)
         
+        # force fields to be readonly
+        for key in self.fields.keys():
+            self.fields[key].disabled = True
+            self.fields[key].widget = PlainTextWidget()
+        
         # fill form fields
         # self.fields['author_name'].widget = PlainTextWidget()
         self.fields['author_name'].initial = book_info.get('author_name')
@@ -63,10 +68,6 @@ class LibraryThingInfoForm(forms.Form):
         self.fields['author_url'].initial = self.author_url
         self.fields['title'].initial = book_info.get('title')
         self.fields['title'].widget = forms.Textarea(attrs={'cols': 80, 'rows': 1})
-        
-        # force fields to be readonly
-        for key in self.fields.keys():
-            self.fields[key].disabled = True
         
     def lookup_book_isbn(self, isbn):
         result = {}
