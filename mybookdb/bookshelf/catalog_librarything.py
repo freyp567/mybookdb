@@ -106,7 +106,21 @@ class LibraryThingInfoForm(forms.Form):
         ns = '{http://www.librarything.com/}'
         data = etree.fromstring(data_xml)
         assert data.tag == 'response', "expect LibraryThing response"
-        assert data.get("stat") == "ok"
+        if data.get("stat") != "ok":
+            # e.g. <response stat="fail"><err code="105">Could not determine data ID to retrieve</err></response>
+            assert data.get("stat") == "fail"
+            err = data.find('err')
+            LOGGER.error("failed to lookup book with ISBN %s on LibraryThing:\n%s" 
+                         % (isbn, err.text))
+            result = {
+                'author_id': '',
+                'author_code': 'fail',
+                'author_name': 'fail, error code=%s' % err.get('code'),
+                'title': "%s (ISBN %s)" % (err.text, isbn),
+            }
+            # TODO pass error info in messages
+            return result
+            
         # item = data.find(".//item")
         assert data[0].tag == ns+'ltml'
         item = data[0][0]
@@ -144,9 +158,9 @@ class LibraryThingInfoForm(forms.Form):
         pass
 
 
-class LibraryThingInfoView(generic.TemplateView):  # InlineView ?  # TODO needed?
-    """ Show book info from LibraryThing. """
-    template_name = "bookshelf/librarything_info.html"
+#class LibraryThingInfoView(generic.TemplateView):  # InlineView ?  # TODO needed?
+#    """ Show book info from LibraryThing. """
+#    template_name = "bookshelf/librarything_info.html"
     
     
 class LibraryThingUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
