@@ -213,3 +213,7 @@ GRAPHIQL_DEFAULT_QUERY = """
   }
 }
 """
+
+
+assert TEMPLATES[0]['BACKEND'] == 'django.template.backends.django.DjangoTemplates'
+TEMPLATES[0]['OPTIONS']['context_processors'].append('mybookdb.context_processors.export_vars')
