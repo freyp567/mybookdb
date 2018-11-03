@@ -21,13 +21,16 @@
     {{ bookinfo_form.as_p }}
     
     <hr/>
-    <h3>Info from LibraryThing:</h3>
-    
+    <h3><a href="{{ book_url }}" target="book_info">
+    Info from LibraryThing
+    </a></h3>
     {{ libraryinfo_form.as_p }}
     
-    <a href="{{ libraryinfo_form.author_url.initial }}" target="lt_author">
+    {% if book_info.author_url %}
+    <a href="{{ book_info.author_url }}" target="lt_author">
       show author details on LibraryThing
     </a>
+    {% endif %}
     <hr/>
     
     <form role="form" method="post"> <!-- action="TODO" -->

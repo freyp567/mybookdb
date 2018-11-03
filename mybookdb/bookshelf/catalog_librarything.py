@@ -30,66 +30,41 @@ from bookshelf.authorstable import AuthorsTable, AuthorsTableFilter  # , Minimal
 
 LOGGER = logging.getLogger(name='mybookdb.bookshelf.librarything')
 
+LT_BASEURL = 'http://www.librarything.com'
+LT_NAMESPACE = '{http://www.librarything.com/}'
+
+
 class PlainTextWidget(forms.Widget):
     def render(self, name, value, attrs):
         return mark_safe(value) if value is not None else '-'
 
 
-class LibraryThingInfoForm(forms.Form):
-    """ show info from LibraryThing for selected book """
-    title = forms.CharField(max_length=240)
-    author_name = forms.CharField()
-    author_id = forms.CharField()
-    author_url = forms.URLField()
+def lookup_book_isbn(book_obj):
+    assert isinstance(book_obj, books)
+    result = {}
+    result['error'] = None
+    if not book_obj.isbn10 and book_obj.isbn13:
+        isbn = Isbn13(book_obj.isbn13)
+        isbn10 = isbn.convert()
+    elif book_obj.isbn10:
+        isbn10 = book_obj.isbn10
+    else:
+        raise ValueError('missing book isbn for lookup in LibraryThing')
     
-    
-    def __init__(self , *args, **kwargs):
-        book = kwargs.pop('instance') 
-        super(LibraryThingInfoForm, self).__init__(*args, **kwargs)      
-        assert isinstance(book, books)
-        
-        if not book.isbn10 and book.isbn13:
-            isbn = Isbn13(book.isbn13)
-            isbn10 = isbn.convert()
-        else:
-            isbn10 = book.isbn10
-        book_info = self.lookup_book_isbn(isbn10)
-        
-        # force fields to be readonly
-        for key in self.fields.keys():
-            self.fields[key].disabled = True
-            self.fields[key].widget = PlainTextWidget()
-        
-        # fill form fields
-        # self.fields['author_name'].widget = PlainTextWidget()
-        self.fields['author_name'].initial = book_info.get('author_name')
-        self.fields['author_id'].initial = book_info.get('author_id')
-        self.author_url = 'http://www.librarything.com/author/%s' % book_info.get('author_code')
-        self.fields['author_url'].initial = self.author_url
-        self.fields['title'].initial = book_info.get('title')
-        self.fields['title'].widget = forms.Textarea(attrs={'cols': 80, 'rows': 1})
-        
-    def lookup_book_isbn(self, isbn):
-        result = {}
-        headers = {}
-        # headers['Accept-Encoding'] = 'application/json'  # is ignored, always get XML
-        user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
-        headers['User-Agent'] = user_agent
-        # title = urllib.parse.quote_plus(book.title)
-        # url = 'http://www.librarything.com/title/%s' % title
-        # https://www.librarything.com/work/20777649/workdetails
-        # apikey = "d231aa37c9b4f5d304a60a3d0ad1dad4"  # API key see LibraryThing wiki
-        apikey = os.environ["LIBRARYTHING_APIKEY"]
-        baseuri = "http://www.librarything.com/services/rest/1.1/"
-        url = f'{baseuri}?method=librarything.ck.getwork&isbn={isbn}&apikey={apikey}'
-        response = requests.get(url, headers=headers)
-        if response.status_code != 200:
-            LOGGER.error("lookup on LibraryThing failed: %s" % result)
-            assert False, 'TODO handle book lookup failres'
-        data_xml = response.text
-        data_xml = data_xml.replace('<?xml version="1.0" encoding="UTF-8"?>', '')
-        #  prevent ValueError: Unicode strings with encoding declaration are not supported
-        """ e.g.
+    headers = {}
+    user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
+    headers['User-Agent'] = user_agent
+    apikey = os.environ["LIBRARYTHING_APIKEY"]
+    baseuri = LT_BASEURL +"/services/rest/1.1/"
+    url = f'{baseuri}?method=librarything.ck.getwork&isbn={isbn10}&apikey={apikey}'
+    response = requests.get(url, headers=headers, timeout=30.0)
+    if response.status_code != 200:
+        LOGGER.error("lookup on LibraryThing failed: %s" % result)
+        assert False, 'TODO handle book lookup failures'
+    data_xml = response.text
+    data_xml = data_xml.replace('<?xml version="1.0" encoding="UTF-8"?>', '')
+    #  prevent ValueError: Unicode strings with encoding declaration are not supported
+    """ e.g.
 <response stat="ok">
     <ltml xmlns="http://www.librarything.com/" version="1.1">
         <item id="20777649" type="work">
@@ -102,57 +77,90 @@ class LibraryThingInfoForm(forms.Form):
         <legal>By using this data you agree to the LibraryThing API terms of service.</legal>
     </ltml>
 </response>
-        """
-        ns = '{http://www.librarything.com/}'
-        data = etree.fromstring(data_xml)
-        assert data.tag == 'response', "expect LibraryThing response"
-        if data.get("stat") != "ok":
-            # e.g. <response stat="fail"><err code="105">Could not determine data ID to retrieve</err></response>
-            assert data.get("stat") == "fail"
-            err = data.find('err')
-            LOGGER.error("failed to lookup book with ISBN %s on LibraryThing:\n%s" 
-                         % (isbn, err.text))
-            result = {
-                'author_id': '',
-                'author_code': 'fail',
-                'author_name': 'fail, error code=%s' % err.get('code'),
-                'title': "%s (ISBN %s)" % (err.text, isbn),
-            }
-            # TODO pass error info in messages
-            return result
-            
-        # item = data.find(".//item")
-        assert data[0].tag == ns+'ltml'
-        item = data[0][0]
-        assert item.tag == ns+'item'
-        item_id = item.get('id')
-        assert item.get('type') == "work"
-        for child in item:
-            tag_name = child.tag
-            if child.tag == ns + 'author':
-                # {'id': '812768', 'authorcode': 'maiwaldstefan'}
-                result['author_id'] = child.get('id')
-                result['author_code'] = child.get('authorcode')
-                result['author_name'] = child.text
-            elif child.tag == ns +'title':
-                result['title'] = child.text
-            elif child.tag == ns +'rating':
-                result['rating'] = child.text
-            elif child.tag == ns +'url':
-                lt_url = child.text
-            elif child.tag == ns +'commonknowledge':
-                pass
-            else:
-                LOGGER.debug("ignored LibraryThing element %s" % child.tag)
-                
-        # more info?
-        # lt_url +'/reviews'
-        # lt_url +'/descriptions'
-        # lt_url +'/covers'
-        
-        # add book to account (login!)
-        # http://www.librarything.com/addbook/{item_id}
+    """
+    ns = LT_NAMESPACE
+    data = etree.fromstring(data_xml)
+    assert data.tag == 'response', "expect LibraryThing response"
+    if data.get("stat") != "ok":
+        # e.g. <response stat="fail"><err code="105">Could not determine data ID to retrieve</err></response>
+        assert data.get("stat") == "fail"
+        err = data.find('err')
+        LOGGER.error("failed to lookup book with ISBN %s on LibraryThing:\n%s" 
+                     % (isbn, err.text))
+        result = {
+            'author_id': '',
+            'author_code': 'fail',
+            'author_name': 'fail, error code=%s' % err.get('code'),
+            'title': "%s (%s)" % (err.text, isbn),
+        }
+        # pass back error
+        result['error'] = 'lookup failed (%s) - %s' % (err.get('code'), err.text)
         return result
+        
+    # item = data.find(".//item")
+    assert data[0].tag == ns+'ltml'
+    item = data[0][0]
+    assert item.tag == ns+'item'
+    item_id = item.get('id')
+    assert item.get('type') == "work"
+    for child in item:
+        tag_name = child.tag
+        if child.tag == ns + 'author':
+            # {'id': '812768', 'authorcode': 'maiwaldstefan'}
+            result['author_id'] = child.get('id')
+            result['author_code'] = child.get('authorcode')
+            result['author_name'] = child.text
+        elif child.tag == ns +'title':
+            result['title'] = child.text
+        elif child.tag == ns +'rating':
+            result['rating'] = child.text
+        elif child.tag == ns +'url':
+            lt_url = child.text
+        elif child.tag == ns +'commonknowledge':
+            pass
+        else:
+            LOGGER.debug("ignored LibraryThing element %s" % child.tag)
+            
+    # more info?
+    #http://www.librarything.com/work/{book_id}
+    # lt_url +'/reviews'
+    # lt_url +'/descriptions'
+    # lt_url +'/covers'
+    result['book_url'] = lt_url
+
+    if result.get('author_code'):
+        result['author_url'] = LT_BASEURL +'/author/%s' % result.get('author_code')
+    else:
+        pass  # TODO guess from author name or search on LT?
+    
+    # TODO add book to account (login!) - if not added
+    # http://www.librarything.com/addbook/{item_id}
+    return result
+
+
+class LibraryThingInfoForm(forms.Form):
+    """ show info from LibraryThing for selected book """
+    title = forms.CharField(max_length=240)
+    author_name = forms.CharField()
+    author_id = forms.CharField()
+    
+    
+    def __init__(self , *args, **kwargs):
+        book_info = kwargs.pop('book_info') 
+        super(LibraryThingInfoForm, self).__init__(*args, **kwargs)      
+        
+        # force fields to be readonly
+        for key in self.fields.keys():
+            self.fields[key].disabled = True
+            self.fields[key].widget = PlainTextWidget()
+        
+        # fill form fields
+        # self.fields['author_name'].widget = PlainTextWidget()
+        self.fields['author_name'].initial = book_info.get('author_name')
+        self.fields['author_id'].initial = book_info.get('author_id')
+        self.fields['title'].initial = book_info.get('title')
+        self.fields['title'].widget = forms.Textarea(attrs={'cols': 80, 'rows': 1})
+        
         
     def clean(self):
         pass
@@ -190,9 +198,18 @@ class LibraryThingView(generic.TemplateView):
             context['bookinfo_form'] = BookInfoForm(instance=book)
             
             # with matching info from LibraryThing
-            context['libraryinfo_form'] = LibraryThingInfoForm(instance=book)
+            book_info = lookup_book_isbn(book)            
+            form = LibraryThingInfoForm(book_info = book_info)
+            context['libraryinfo_form'] = form
+            context['book_info'] = book_info
+            context['book_url'] = book_info.get('book_url')
             
-            # context['librarything_info'] = Bxxx
+            if book_info.get('error'):
+                # TODO handle and return lookup errors
+                pass  # TODO pass error to form message
+            
+            # TODO fill LibraryThingUpdateView
+            
         return context
     
     def get_success_url(self): 
