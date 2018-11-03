@@ -1,5 +1,5 @@
 """
-views on bookshelf (books, authors, ...)
+look book on bookshelf in LibraryThing catalog
 """
 
 import os

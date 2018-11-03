@@ -14,6 +14,14 @@
   >LibraryThing</a>
 {% endif %}
 
+{% if USE_ONLEIHE == "1" %}
+<!-- currently not working, and no API documentation available -->
+<a class="btn btn-secondary btn-sm" role="button" 
+  title="search book in Onleihe"
+  href="{% url 'lookup-onleihe' pk=books.pk %}"
+  >Onleihe</a>
+{% endif %}
+
 <h1>{{ books.title }}</h1>
 
 <p><strong>Author(s):</strong>

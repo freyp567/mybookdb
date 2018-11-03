@@ -5,6 +5,7 @@
 from django.urls import path
 from . import views
 from . import catalog_librarything
+from . import catalog_onleihe
 from django.urls import include, reverse 
 
 
@@ -35,9 +36,13 @@ urlpatterns += [
 
 
 urlpatterns += [
-    path('book/<int:pk>/librarything>', 
+    path('book/<int:pk>/librarything', 
          catalog_librarything.LibraryThingView.as_view(), 
          name='lookup-librarything'),
+    path('book/<int:pk>/onleihe', 
+         catalog_onleihe.OnleiheView.as_view(), 
+         name='lookup-onleihe'),
+    # TODO goodreads, googlebooks, audible
 ]
 
 urlpatterns += [
