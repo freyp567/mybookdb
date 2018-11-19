@@ -1,43 +1,78 @@
 {% extends "base_generic.html" %}
 
 {% load bootstrap4 %}
+{% load static %}
 
 {% block title %}
     book info from Onleihe
 {% endblock %}
 
 {% block content %}
-    {{ form.media.css }}
-    {{ form.media.js }}
+{{ form.media.css }}
 
-    {% for message in messages %}
-        <div class="{{ message|bootstrap_message_classes }} alert-dismissable">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&#215;</button>
-            {{ message|safe }}
-        </div>
-    {% endfor %}
-    
-    <h3>Book Info</h3>
-    {{ bookinfo_form.as_p }}
-    
-    <hr/>
-    <h3>Info from Onleihe</h3>
-    
-    {% if book_url %}
-    <a href="{{ book_url }}" target="_author">
-      show book details on Onleihe
-    </a>
-    {% else %}
-    <p>Not found in Onleihe!</p>
-    {% endif %}
-    <hr/>
-    
-    <form role="form" method="post"> <!-- action="TODO" -->
+<link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
+
+{{ form.media.js }}
+
+<script src="{% static "bootstrap-table/bootstrap-table.js" %}"></script>
+
+{% for message in messages %}
+    <div class="{{ message|bootstrap_message_classes }} alert-dismissable">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&#215;</button>
+        {{ message|safe }}
+    </div>
+{% endfor %}
+
+<h3>Book Info</h3>
+{{ bookinfo_form.as_p }}
+
+<hr/>
+<h3>Info from Onleihe</h3>
+
+{% if details %}
+<br/>
+
+    <form role="form" method="post" action="{% url 'lookup-onleihe' book_id %}">
         <!-- legend>Update book state:</legend -->
         {% csrf_token %}
+        
+   <div class="container">
+        <table id="book-detail-table" data-height="460"
+        >
+        <!--     //data-formatter="CustomFormatter" -->
+        <thead>
+            <tr>
+                <th data-field="field_name" data-sortable="true" data-visible="false"></th>
+                <th data-field="field_title" data-sortable="true"></th>
+                <th data-field="book1" data-sortable="false" 
+                    data-formatter="CustomFormatter">book</th>
+{% for book_index in other_books_idx %}                
+                <th data-field="book{{book_index}}" data-sortable="true" 
+                     data-formatter="CustomFormatter">book #{{book_index}}</th>
+{% endfor %}                
+            </tr>
+        </thead>
+    </table>
+    </div>
+
         <!-- % bootstrap_form form % -->
-        <p>TODO fields to link book with Onleihe to be shown here</p>
-        {% buttons submit='OK' reset="Cancel" %}{% endbuttons %}        
+{% if mustConfirm %}
+        {% buttons submit='OK' %}{% endbuttons %}        
+{% endif %}
     </form>
     
+{% else %}
+<p>Book not found in Onleihe!</p>
+{% endif %}
+<hr/>
+
+
+<script type="text/javascript">
+var onleiheId = "{{onleiheId}}"; // last confirmed Id
+var table_data_json = "{{ table_data|safe }}".replace(/\'/g, '\"').replace('None', '\"(?)\"');
+var table_data = JSON.parse(table_data_json);
+</script>
+
+<script src="{% static 'js/lookup_onleihe.js' %}"></script>
+
 {% endblock %}

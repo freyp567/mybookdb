@@ -11,4 +11,6 @@ def export_vars(request):
     data = {}
     if os.environ.get("LIBRARYTHING_APIKEY"):
         data['USE_LIBRARYTHING'] = '1'
+    if os.environ.get("ONLEIHE_URL"):
+        data['USE_ONLEIHE'] = '1'
     return data

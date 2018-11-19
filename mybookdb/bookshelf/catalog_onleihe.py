@@ -1,3 +1,4 @@
+# -*- coding: latin-1 -*-
 """
 lookup book from bookshelf in Onleihe website
 """
@@ -6,7 +7,7 @@ import os
 import logging
 import json
 import requests
-import http.client
+from pathlib import Path
 import urllib
 import re
 from lxml import etree
@@ -22,127 +23,81 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 
 from django import forms
 
-from bookshelf.models import books, authors, comments, states
+from bookshelf.models import books, authors, comments, states, onleiheBooks
 from bookshelf.forms import BookUpdateForm, StateUpdateForm, BookInfoForm
 from bookshelf.bookstable import BooksTable, BooksTableFilter, MinimalBooksTable
 from bookshelf.authorstable import AuthorsTable, AuthorsTableFilter  # , MinimalAuthorsTable
 
+from bookshelf.onleihe_client import OnleiheClient, ONLEIHE_DETAIL_FIELDS
+
 LOGGER = logging.getLogger(name='mybookdb.bookshelf.onleihe')
-
-ONLEIHE_HOST = 'www.onleihe.de'
-#ONLEIHE_BASEURL = 'http://www.onleihe.de'
-ONLEIHE_BASEURL = 'http://www4.onleihe.de'
-
 
 
 def lookup_book_isbn(book_obj):
     assert isinstance(book_obj, books)
     result = {}
     result['error'] = None
-    if not book_obj.isbn10 and book_obj.isbn13:
-        isbn = Isbn13(book_obj.isbn13)
-        isbn10 = isbn.convert()
-    elif book_obj.isbn10:
+    
+    # use cached onleihe data to reduce impact
+    cached_name = (book_obj.isbn13 or book_obj.isbn10 or 'id_%s' % book_obj.id) +'.json'
+    cached_path = Path(__file__).parent / 'static' / 'onleihe'
+    cached_path = cached_path / cached_name
+    cached_path.resolve()
+    if cached_path.exists():
+        data = json.loads(cached_path.read_text())
+        return data
+    
+    client = OnleiheClient()
+    client.connect()
+    
+    media_info = []
+    if book_obj.isbn13:
+        media_info = client.search_book(isbn=book_obj.isbn13)
+        isbn13 = Isbn13(book_obj.isbn13)
+        isbn10 = book_obj.isbn10 or isbn13.convert()
+    if not media_info:
         isbn10 = book_obj.isbn10
-    else:
-        raise ValueError('missing book isbn for lookup in Onleihe')
-    
-    headers = {}
-    user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'
-    headers['User-Agent'] = user_agent
-    #url = ONLEIHE_BASEURL +'/onleiheregio/frontend/myBib,0-0-0-100-0-0-0-0-0-0-0.html'
-    
-    #conn = http.client.HTTPSConnection(ONLEIHE_HOST)
-    #conn.request("GET", '/onleiheregio/frontend/login,0-0-0-0-0-0-0-0-0-0-0.html')
-    #response = conn.getresponse()
-    
-    #url = ONLEIHE_BASEURL +'/onleiheregio/frontend/myBib,0-0-0-100-0-0-0-0-0-0-0.html'
-    url = ONLEIHE_BASEURL +'/onleiheregio/frontend/login,0-0-0-0-0-0-0-0-0-0-0.html'
-    response = requests.get(url)
-    cookies = response.headers.get("Set-Cookie")
-    if cookies:
-        ck = cookies.split(';')
-        
-    # select Onleihe biblio 
-    url = ONLEIHE_BASEURL +'/onleiheregio/frontend/login,0-0-0-0-0-0-0-0-0-0-0.html'
-    headers['Content-Type'] = "application/x-www-form-urlencoded"
-    response = requests.post(url, data='cmdId=800&libraryId=411&Weiter=Weiter', headers=headers)
-    cookies = response.headers.get("Set-Cookie")
-    if cookies:
-        ck = cookies.split(';')
-    
-    cookie = 'FESLIBID=NDEx'
-    headers['Cookie'] = cookie
-    url = ONLEIHE_BASEURL +'/onleiheregio/frontend/search,0-0-0-0-0-0-0-0-0-0-0.html'
-    response = requests.get(url, headers=headers)
-    assert response.status_code == 200, "onleihe not reachable?"
-    # html = response.text 
-    cookies = response.headers.get("Set-Cookie")
-    if cookies:
-        ck = cookies.split(';')
-        # add JSESSONID to cookie
-        cookie += '; ' +ck[0]
-    #Cookie: JSESSIONID=8A80BC69606A4DB6BF1C19FBF8032D48.vs11308n3; FESLIBID=NDEx; NewLogaholic_VID=108140310991; NewLogaholic_SESSION=53557563076; _ga=GA1.2.401254113.1525934352
-    cookie += '; _ga=GA1.2.254826237.1541237449'
-    cookie += '; _gid=GA1.2.1604980323.1541237449'
-    headers['Cookie'] = cookie
-    headers['Origin'] = ONLEIHE_BASEURL
-    headers['Cache-Control'] = "max-age=0"
-    headers['Referer'] = "http://www4.onleihe.de/onleiheregio/frontend/search,0-0-0-0-0-0-0-0-0-0-0.html"
-    headers['Content-Type'] = "application/x-www-form-urlencoded"
-    #headers['Upgrade-Insecure-Requests'] = "1"
-    """
-    -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8" 
-    -H "Accept-Encoding: gzip, deflate" 
-    -H "Accept-Language: en-US,en;q=0.9,de-DE;q=0.8,de;q=0.7" 
-    -H "Cookie: JSESSIONID=5484285A100DF7A559449E39CD49288B.vs11308n3; NewLogaholic_VID=108140310991; NewLogaholic_SESSION=333909064; _ga=GA1.2.254826237.1541237449; _gid=GA1.2.1604980323.1541237449" 
-    """
-    url = ONLEIHE_BASEURL +"/onleiheregio/frontend/search,0-0-0-0-0-0-0-0-0-0-0.html"
+        if isbn10:
+            media_info = client.search_book(isbn=isbn10)
+        elif not book_obj.isbn10 and book_obj.isbn13:
+            isbn = Isbn13(book_obj.isbn13)
+            isbn10 = isbn.convert()
+            media_info = client.search_book(isbn=isbn10)
+        else:
+            LOGGER.warning('missing isbn for book %s' % book_obj.id)
+            isbn10 = None
 
-    # while debugging, send request to httpbin.org
-    # url = "http://httpbin.org"
-    #url = "http://192.168.188.27:8083"
+    if not media_info:
+        # lookup by ISBN not successful, search book title (fulltext)
+        media_info = client.search_book(book_title=book_obj.title)
     
-    #data = f'cmdId=701^&sK=1000^&pText=^&pTitle=^&pAuthor=^&pKeyword=^&pisbn={isbn10}&ppublishdate=^&pMediaType=-1^&pLang=-1^&pPublisher=-1^&pCategory=-1^&SK=1000^&pPageLimit=20^&Suchen=Suchen'
-    data = f'cmdId=701^&sK=1000^&pText=^&pTitle=Rosenthal&pAuthor=^&pKeyword=^&pisbn=^&ppublishdate=^&pMediaType=-1^&pLang=-1^&pPublisher=-1^&pCategory=-1^&SK=1000^&pPageLimit=20^&Suchen=Suchen'
-    # TODO make sure to handle properly
-    response = requests.post(url, headers=headers, data=data, timeout=30.0)
-    if response.status_code != 200:
-        # http://192.168.188.27:8083
-        LOGGER.error("lookup on Onleihe failed: %s" % response.text)
-        assert False, 'TODO handle book lookup failures'
-    data_html = response.text
-    if "Ein unerwarteter Fehler ist aufgetreten" in data_html:
-        """ e.g.
-        <div class="m-row">	
-            <div class="item-1">&nbsp;</div>			
-            <div class="item-2"><p>Ein unerwarteter Fehler ist aufgetreten! Bitte versuchen Sie es ...	
-            </p></div>
-        """
-        result['html'] = data_html  # TODO extract error relevant portion
-        result['error'] = 'unexpected error'
+    if not media_info:
+        LOGGER.warning("lookup on Onleihe not successful")
+        result['html'] = "not found"
+        result['error'] = 'book not found in onleihe'
         return result
     
-    # TODO determine page url for book(s) found and extract info using GDOM
-    """
-    <a class="anchor" title="Details zum Titel: Die Akte Rosenthal - Teil 1" 
-    href="mediaInfo,0-0-539763720-200-0-0-0-0-0-0-0.html">
-	Details <span class="hidden">zum Titel: Die Akte Rosenthal - Teil 1</span></a>    
-    """
-    #if 'mediaInfo,' not in data_html:
-    #    LOGGER.warning("no media items found")
-    #else:
-    media_info = []
-    for match in re.finditer('<a (.*?)>(.*?)</a>', data_html):
-        anchor = match.group(0)
-        if 'mediaInfo' in anchor:
-            media_info.append(anchor)  # TODO extract media id
-        else:
-            LOGGER.debug("link ignored: %s" % anchor)
+    LOGGER.info("search found %s mediaInfo items" % len(media_info))
+    result['details'] = all_details = []
+    for item in media_info:
+        media_url = item['href']
+        # lookup book details from media_url, extract description, author, ...
+        details = client.get_book_details(media_url)
+        all_details.append(details)
+    
+    # display info found 
+    if len(all_details) > 1:
+        # more than one book matching in Onleihe 
+        LOGGER.warning("found %s books in Onleihe matching book %s '%s'" % 
+                       (bookobj.id, bookobj.title))
+        assert False  # TODO let user pick if more than one book for given search criterias 
         
-    if media_info:
-        LOGGER.info("search found %s mediaInfo items" % len(media_info))
-    assert False, "TODO to be implemented"
+    # if unique, pick summary for selected book and store / cache in booksdb 
+    # TODO via view / interaction with user
+    # keys in details: 'meta-keywords', 'img_cover', 'Titel', 'Autor', '�bersetzer', 'Jahr', 'Verlag', 
+    #   'Sprache', 'ISBN', 'Format', 'Umfang', 'Dateigr��e', 'keywords', 'Exemplare', 'Verf�gbar', 
+    #   'Vormerker', 'Voraussichtlich verf�gbar ab', 'Kopieren'
+    cached_path.write_text(json.dumps(result))
     return result
 
     
@@ -162,27 +117,159 @@ class OnleiheView(generic.TemplateView):
     template_name = "bookshelf/lookup_onleihe.html"
     #response_class = TemplateResponse
     #content_type = "text/html"
+    #http_method_names = [u'get', u'post', u'put', u'delete', u'head', u'options', u'trace']
     
+    def post(self, request, pk):
+        book = books.objects.get(pk=pk)
+        choice = request.POST.get('choice')
+        #TODO if more than one book in onleihe, need user to choose one
+        if not choice:
+            raise ValueError("missing choice")  # TODO better error handling
+            # form error
+        
+        # cache onleihe book details in DB
+        client = OnleiheClient()
+        client.connect()
+        if hasattr(book, 'onleihebooks'):
+            onleihe_book = book.onleihebooks
+            details = client.get_book_details(onleihe_book.onleiheId)
+            assert details['isbn'] == onleihe_book.isbn
+            # update book fields if changed
+            changed = set()
+            for key in ('book_description', ):  # TODO more attributes to sync? 
+                # 'Kopieren' -> 'allow_copy'
+                if getattr(onleihe_book, key) != details[key]:
+                    LOGGER.warning("detected change in key=%s" % key)
+                    assert details[key]  # not None !
+                    setattr(onleihe_book, key, details[key])
+                    change.add(key)
+            if changed:
+                onleihe_book.save()
+                
+        else:
+            media_url = request.POST.get('choice')
+            details = client.get_book_details(media_url)
+            onleihe_book = onleiheBooks(
+                book=book,
+                onleiheId = media_url,
+                status = 'confirmed',
+                )
+            CACHE_FIELDS = (
+                ('bookCoverURL', 'img_cover'),
+                # ('translator', ''),
+                # ('title', ''),
+                # ('author', ''),
+                ('year', ''),
+                ('isbn', ''),
+                # ('metaKeywords', 'meta-keywords'),
+                ('keywords', ''),
+                ('publisher', ''),
+                # ('language', ''),
+                ('format', ''),
+                ('pages', (self.get_pages, 'pages')),
+                ('allow_copy', (self.is_copy_allowed, 'Kopieren')),
+                ('book_description', ''),
+                # ('', ''),
+            )
+            for tgt_name, from_name in CACHE_FIELDS:
+                if not from_name:  # same name
+                    value = details[tgt_name]
+                elif isinstance(from_name, tuple):
+                    fn = from_name[0]
+                    value = fn(details[from_name[1]])
+                else:
+                    value = details[from_name]
+                setattr(onleihe_book, tgt_name, value)
+                
+            onleihe_book.save()
+        
+        context = self.get_context_data(pk=book.id)
+        return super(generic.TemplateView, self).render_to_response(context)
+        
+        
+    def is_copy_allowed(self, value):
+        return value != 'nicht erlaubt'
+        
+    def get_pages(self, value):
+        assert value.endswith(' S.')
+        value = value[:-3]
+        return int(value)
+        
     def get_context_data(self, **kwargs):
         context = super(OnleiheView, self).get_context_data(**kwargs)
         book = books.objects.get(pk=kwargs['pk'])
-        if self.request.POST:
-            pass  # book info is read-only
+        #if self.request.POST:
+        #    assert False  # book info is read-only
+        #    context["errors"] = "POST unsupported, view is readonly"
+        #    return
+
+        if hasattr(book, 'onleihebooks'):
+            onleiheBook = book.onleihebooks
+            context['onleiheId'] = onleiheBook.onleiheId
+            context['mustConfirm'] = False
         else:
-            # book info from our db
-            context['bookinfo_form'] = BookInfoForm(instance=book)
+            onleiheBook = None
+            context['onleiheId'] = None
+            context['mustConfirm'] = True
+
+        # book info from our db
+        context['bookinfo_form'] = BookInfoForm(instance=book)
+        context['book_id'] = book.id
+        
+        # with matching info from LibraryThing
+        book_info = lookup_book_isbn(book)            
+        
+        if book_info.get('error'):
+            # pass error from lookup to form message handling
+            context["messages"] = [book_info.get('error')]
+        
+        context['details'] = []
+        context['book_url'] = None
+        table_data = []
+        if book_info.get('details'):
+            details = book_info['details']
+            context['details'] = details
+        
+            # transform details into JSON payload for bootstrap-table
+            # where the keys are in the first rows, one column per book found
             
-            # with matching info from LibraryThing
-            book_info = lookup_book_isbn(book)            
-            context['book_info'] = book_info
-            context['book_url'] = book_info.get('book_url')
+            img_covers = [d['img_cover'] for d in details]
+            book_ids = [d['book_url'].split('/')[-1] for d in details]
             
-            if book_info.get('error'):
-                # TODO handle and return lookup errors
-                pass  # TODO pass error to form message
+            table_data = []
+            if len(details) == 1:  # found one book
+                context['onleiheId'] = book_ids[0]
+            row = {
+                'field_name': 'choice', 
+                'field_title': 'Buchauswahl',
+            }
+            for pos, item in enumerate(details):
+                row['book%s' % (pos+1)] = book_ids[pos]
+            table_data.append(row)
+                
+            row = {}
+            for field_name, field_title, field_title_loc in ONLEIHE_DETAIL_FIELDS:
+                row = {}
+                row['field_name'] = field_name
+                row['field_title'] = field_title_loc or field_title
+                for pos, item in enumerate(details):
+                    value = item.get(field_name)
+                    if field_name == 'book_url':
+                        value = [value, img_covers[pos]]
+                    row['book%s' % (pos+1)] = value or ''
+                    
+                    if onleiheBook:
+                        # TODO determine where differences between details item and onleiheBook
+                        pass
+                table_data.append(row)
+                
+        else:
+            context['details'] = details = []
+            table_data = []
             
-            # TODO fill OnleiheUpdateView
-            
+        context["table_data"] = table_data
+        context["other_books_idx"] = list(range(2, len(details)+1))
+        
         return context
     
     def get_success_url(self): 

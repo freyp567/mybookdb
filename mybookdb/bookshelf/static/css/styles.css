@@ -45,3 +45,7 @@ https://stackoverflow.com/questions/14596743/how-do-you-change-the-width-and-hei
     font-size: 14px;
 }
 
+.book-title-table {
+    font-weight:bold;
+    color: read;
+}

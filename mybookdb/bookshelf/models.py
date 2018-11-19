@@ -130,6 +130,33 @@ class comments(models.Model):
         ordering = ['-dateCreated']
 
 
+class onleiheBooks(models.Model):
+    """ onleihe infos """
+    book = models.OneToOneField(books, 
+        # related_name="onleiheBookId",
+        on_delete=models.CASCADE,
+        )
+    onleiheId = models.TextField(null=False)
+    status = models.TextField(null=False)  # 'confirmed', ...
+    bookCoverURL = models.TextField(null=True)
+    #translator
+    year = models.IntegerField()
+    isbn = models.TextField(null=False, max_length=13)
+    #metaKeywords = models.TextField() # Array
+    #keywords = # Array
+    publisher = models.TextField()
+    #language = models.TextField()
+    format = models.TextField()
+    pages = models.IntegerField()
+    # filesize', 'Dateigr��e'],
+    # copies', 'Exemplare'],
+    # available', 'Verf�gbar'],
+    # reservations', 'Vormerker'],
+    # available_after', 'Voraussichtlich verf�gbar ab'],
+    allow_copy = models.BooleanField()
+    book_description = models.TextField()
+    
+    
 class googleBooks(models.Model):
     """ googlebooks infos """
     book = models.OneToOneField(books, 

@@ -3,3 +3,4 @@ books.db*
 db.sqlite3*
 
 wingdbstub.py
+.vscode/

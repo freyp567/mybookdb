@@ -30,5 +30,6 @@ For details see https://wiki.librarything.com/index.php/LibraryThing_APIs.
 + cleanup of imported data (from MyBookDroid sqllite backup) - umlaute, incomplete info, groups, ...
 + login and user access (currently only limited to editing book details)
 + editing book details: more fields to add
++ wishlist feature
 + add more features, e.g. to add new books with lookup book catalogues for details
 
