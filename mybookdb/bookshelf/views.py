@@ -59,22 +59,48 @@ class FilteredBookListView(SingleTableMixin, FilterView):
     ordering = '-created'
 
 
-class BookListGenericView(generic.ListView):  # OBSOLETE
+class BookListGenericView(generic.ListView):
     """
     Generic class-based view for a list of books.
     uses template books_list.html
+    
+    used for Book List, /bookshelf/books/v1/?sort=
     """
     model = books
     paginate_by = 25
+
+    def get_queryset(self):  # disables ordering
+        """ overloaded to implement custom sort orders """
+        ordering = self.get_ordering()
+        qs = books.objects.all() #.filter('states__')
+        if ordering:
+            if isinstance(ordering, str):
+                if ordering == 'wishlist':
+                    # map ordering to what can be handled by DB
+                    ordering = ['states__toBuy', 'userRating', '-updated']
+                    # FieldError: Cannot resolve keyword '+states' into field. 
+                    #ordering = ['-states', '-updated']
+                    qs = qs.filter(states__haveRead=False)
+                elif ordering == 'onleihe_unkown':
+                    ordering = ['states__toBuy', 'userRating', '-updated']
+                    qs = qs.filter(onleihebooks=None)
+                else:
+                    ordering = (ordering,)
+            qs = qs.order_by(*ordering)
+        return qs
     
-    # TODO how to handle Descripton vs New Description ?
+    #def get_context_data(self, *, object_list=None, **kwargs):
     
     def get_ordering(self):
-        sort = self.request.GET.get('sort', 'title')
+        sort = self.request.GET.get('sort', 'updated')
         if sort == 'title': 
             ordering = [ 'title' ]
+        elif sort == 'created':
+            ordering = [ '-created' ]
         elif sort == 'updated':
             ordering = [ '-updated' ]
+        elif sort in ('wishlist', 'onleihe_unkown',):
+            ordering = sort  # mapped by get_queryset
         else:
             ordering = [] # use default / unordered
         return ordering    
@@ -124,6 +150,8 @@ def search_book(request):
                 elif value == 'not_read':
                     search_filter["states__haveRead"] = False
                     search_filter["states__readingNow"] = False
+                elif value == 'want_read':
+                    search_filter["states__toBuy"] = True
                 else:
                     LOGGER.warn("unrecognized filter value for vield state: %s" % value)
             else:
@@ -145,7 +173,7 @@ def search_book(request):
     data = []
     fields = (
         'id', 'title', 'created', 'updated', 'userRating', 
-        'states__haveRead', 'states__readingNow', 'states__toRead',
+        'states__haveRead', 'states__readingNow', 'states__toRead', 'states__toBuy'
     )
     for row in qs.values(*fields):
         row_data = {}
@@ -164,6 +192,7 @@ def search_book(request):
 class BookDetailView(generic.DetailView):
     """
     detail view for a book.
+    template: books_detail.html
     """
     model = books
     if_paginated = False # KeyError else?

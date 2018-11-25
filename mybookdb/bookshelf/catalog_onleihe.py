@@ -10,6 +10,8 @@ import requests
 from pathlib import Path
 import urllib
 import re
+from datetime import datetime 
+
 from lxml import etree
 from pyisbn import Isbn13
 
@@ -33,16 +35,34 @@ from bookshelf.onleihe_client import OnleiheClient, ONLEIHE_DETAIL_FIELDS
 LOGGER = logging.getLogger(name='mybookdb.bookshelf.onleihe')
 
 
+def get_cached_details_path(book_obj):
+    cached_name = book_obj.isbn13 or book_obj.isbn10 or 'id_%s' % book_obj.id
+    cached_name = cached_name +'.json'
+    cached_path = Path(__file__).parent / 'static' / 'onleihe'
+    cached_path = cached_path / cached_name
+    cached_path.resolve()
+    return cached_path
+
+
+def get_cached_details(book_obj):
+    cached_path = get_cached_details_path(book_obj)
+    if cached_path.exists():
+        data = json.loads(cached_path.read_text())
+        data = data['details']
+        assert len(data) == 1
+        details = data[0]
+        return details
+    return None
+
+
 def lookup_book_isbn(book_obj):
     assert isinstance(book_obj, books)
     result = {}
     result['error'] = None
+    result['updated'] = datetime.now().isoformat()
     
     # use cached onleihe data to reduce impact
-    cached_name = (book_obj.isbn13 or book_obj.isbn10 or 'id_%s' % book_obj.id) +'.json'
-    cached_path = Path(__file__).parent / 'static' / 'onleihe'
-    cached_path = cached_path / cached_name
-    cached_path.resolve()
+    cached_path = get_cached_details_path(book_obj)
     if cached_path.exists():
         data = json.loads(cached_path.read_text())
         return data
@@ -72,9 +92,21 @@ def lookup_book_isbn(book_obj):
         media_info = client.search_book(book_title=book_obj.title)
     
     if not media_info:
-        LOGGER.warning("lookup on Onleihe not successful")
+        LOGGER.warning("lookup %s in Onleihe not successful" % book_obj.id)
         result['html'] = "not found"
         result['error'] = 'book not found in onleihe'
+        #book_obj .onleiheBooks
+        onleihe_book = onleiheBooks(
+            book=book_obj,
+            status = 'lookupfailed',
+            updated = datetime.now(),
+            comment = "lookup in Onleihe not successful"
+            )
+        onleihe_book.save()
+        book_obj.updated = datetime.now()
+        book_obj.save()
+        result['error'] = 'lookup failed'
+        cached_path.write_text(json.dumps(result))
         return result
     
     LOGGER.info("search found %s mediaInfo items" % len(media_info))
@@ -89,8 +121,8 @@ def lookup_book_isbn(book_obj):
     if len(all_details) > 1:
         # more than one book matching in Onleihe 
         LOGGER.warning("found %s books in Onleihe matching book %s '%s'" % 
-                       (bookobj.id, bookobj.title))
-        assert False  # TODO let user pick if more than one book for given search criterias 
+                       (len(all_details), book_obj.id, book_obj.title))
+        # let user pick if more than one book for given search criterias 
         
     # if unique, pick summary for selected book and store / cache in booksdb 
     # TODO via view / interaction with user
@@ -120,19 +152,41 @@ class OnleiheView(generic.TemplateView):
     #http_method_names = [u'get', u'post', u'put', u'delete', u'head', u'options', u'trace']
     
     def post(self, request, pk):
-        book = books.objects.get(pk=pk)
+        book_obj = books.objects.get(pk=pk)
         choice = request.POST.get('choice')
         #TODO if more than one book in onleihe, need user to choose one
         if not choice:
-            raise ValueError("missing choice")  # TODO better error handling
-            # form error
+            # no book selected, i.e. notfound
+            # TODO extra button next to OK to allow to reject
+            LOGGER.warning("none of books found in onleihe does match")
+            if not hasattr(book_obj, 'onleihebooks'):
+                onleihe_book = onleiheBooks(
+                    book=book_obj,
+                    status = 'notfound',
+                    updated = datetime.now(),
+                    comment = "none of the books found in onleihe matches"
+                    )
+                onleihe_book.save()
+                book_obj.updated = datetime.now()
+                book_obj.save()
+            else:
+                onleihe_book = book_obj.onleihebooks
+                # TODO need to update?
+                
+            #result['error'] = 'none of the books found in onleihe matches'
+            #TODO how to give feedback?
+            context = self.get_context_data(pk=book_obj.id)
+            return super(generic.TemplateView, self).render_to_response(context)
         
         # cache onleihe book details in DB
         client = OnleiheClient()
         client.connect()
-        if hasattr(book, 'onleihebooks'):
-            onleihe_book = book.onleihebooks
-            details = client.get_book_details(onleihe_book.onleiheId)
+        if hasattr(book_obj, 'onleihebooks'):
+            # already have onleiheBook info assigned, so update it
+            onleihe_book = book_obj.onleihebooks
+            details = get_cached_details(book_obj)  # TODO option to drop cache to force update
+            if not details:
+                details = client.get_book_details(onleihe_book.onleiheId)
             assert details['isbn'] == onleihe_book.isbn
             # update book fields if changed
             changed = set()
@@ -145,24 +199,32 @@ class OnleiheView(generic.TemplateView):
                     change.add(key)
             if changed:
                 onleihe_book.save()
-                
+                book_obj.updated = datetime.now()
+                book_obj.save()
+            else:
+                LOGGER.info("no changes for onleihe book info detected for %s" % book_obj.id)
         else:
             media_url = request.POST.get('choice')
-            details = client.get_book_details(media_url)
+            details = get_cached_details(book_obj)
+            if not details:
+                details = client.get_book_details(media_url)
             onleihe_book = onleiheBooks(
-                book=book,
+                book=book_obj,
                 onleiheId = media_url,
                 status = 'confirmed',
+                updated = datetime.now(),
+                
                 )
             CACHE_FIELDS = (
                 ('bookCoverURL', 'img_cover'),
-                # ('translator', ''),
+                ('translator', ''),
                 # ('title', ''),
-                # ('author', ''),
+                ('author', ''),
                 ('year', ''),
                 ('isbn', ''),
                 # ('metaKeywords', 'meta-keywords'),
-                ('keywords', ''),
+                ('keywords', (self.store_keywords, 'keywords')),
+                ('category', (self.store_category, 'category')),
                 ('publisher', ''),
                 # ('language', ''),
                 ('format', ''),
@@ -171,26 +233,47 @@ class OnleiheView(generic.TemplateView):
                 ('book_description', ''),
                 # ('', ''),
             )
+            LOGGER.info("updating onleihe related book details for %s" % book_obj.id)
             for tgt_name, from_name in CACHE_FIELDS:
                 if not from_name:  # same name
-                    value = details[tgt_name]
+                    value = details.get(tgt_name)
                 elif isinstance(from_name, tuple):
                     fn = from_name[0]
-                    value = fn(details[from_name[1]])
+                    from_name = from_name[1]
+                    value = details.get(from_name)
+                    value = fn(value)
                 else:
                     value = details[from_name]
+                if value is None:
+                    # e.g. no 'translator' if original book language is german
+                    LOGGER.debug("missing value for field %s" % (from_name or tgt_name))
                 setattr(onleihe_book, tgt_name, value)
                 
             onleihe_book.save()
+            book_obj.updated = datetime.now()
+            book_obj.save()
         
-        context = self.get_context_data(pk=book.id)
+        context = self.get_context_data(pk=book_obj.id)
         return super(generic.TemplateView, self).render_to_response(context)
         
         
+    def store_keywords(self, value):
+        """ store keywords as comma separated list """
+        # sqllite and array valued fields?
+        if not value: return None
+        return ','.join(value)
+    
+    def store_category(self, value):
+        """ onleihe book category, separate using pipe char """
+        if not value: return None
+        return '|'.join(value)
+    
     def is_copy_allowed(self, value):
+        if not value: return None
         return value != 'nicht erlaubt'
         
     def get_pages(self, value):
+        if not value: return None
         assert value.endswith(' S.')
         value = value[:-3]
         return int(value)
@@ -256,6 +339,12 @@ class OnleiheView(generic.TemplateView):
                     value = item.get(field_name)
                     if field_name == 'book_url':
                         value = [value, img_covers[pos]]
+                    if field_name in ('title','book_description'):
+                        value = value.replace('"', '')
+                        # TODO fix this, but having double quotes inside description 
+                        # causes troubles with python -> javascript -> bootstrap-table
+                        # while loading html: Uncaught SyntaxError: Unexpected identifier
+                        #value = json.dumps(value)
                     row['book%s' % (pos+1)] = value or ''
                     
                     if onleiheBook:
@@ -269,6 +358,7 @@ class OnleiheView(generic.TemplateView):
             
         context["table_data"] = table_data
         context["other_books_idx"] = list(range(2, len(details)+1))
+        context["details_url"] = reverse('book-detail', args=(book.id,))
         
         return context
     

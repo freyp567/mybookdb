@@ -93,6 +93,19 @@ class books(models.Model):
             return self.new_description
         return self.orig_description
 
+    @property
+    def state_info(self):
+        return self.states.state_info
+
+    @property
+    def onleihe_status(self):
+        status = self.onleihebooks.status
+        if status == 'confirmed':
+            return 'onleihe'
+        if status == 'notfound':
+            return 'NOT onleihe'
+        return 'onleihe:%s' % status
+
     class Meta:
         permissions = (
             ("can_create", "Create book"),
@@ -136,25 +149,43 @@ class onleiheBooks(models.Model):
         # related_name="onleiheBookId",
         on_delete=models.CASCADE,
         )
-    onleiheId = models.TextField(null=False)
+    onleiheId = models.TextField(null=True)
     status = models.TextField(null=False)  # 'confirmed', ...
     bookCoverURL = models.TextField(null=True)
-    #translator
-    year = models.IntegerField()
-    isbn = models.TextField(null=False, max_length=13)
-    #metaKeywords = models.TextField() # Array
-    #keywords = # Array
-    publisher = models.TextField()
-    #language = models.TextField()
-    format = models.TextField()
-    pages = models.IntegerField()
-    # filesize', 'Dateigrï¿½ï¿½e'],
+    author = models.TextField(null=True)
+    translator = models.TextField(null=True)
+    year = models.IntegerField(null=True)
+    isbn = models.TextField(null=True, max_length=13)
+    #metaKeywords = models.TextField(null=True) # Array
+    #category = # Array or many to many # TODO fix later, for searching
+    category = models.TextField(null=True) # string, separated by '/'
+    #keywords = # Array or many to many # TODO fix later, for searching
+    keywords = models.TextField(null=True) # string, comma separated
+    publisher = models.TextField(null=True)
+    #language = models.TextField(null=True)
+    format = models.TextField(null=True)
+    pages = models.IntegerField(null=True)
+    # filesize', 'Dateigröße'],
     # copies', 'Exemplare'],
-    # available', 'Verfï¿½gbar'],
+    # available', 'Verfügbar'],
     # reservations', 'Vormerker'],
-    # available_after', 'Voraussichtlich verfï¿½gbar ab'],
-    allow_copy = models.BooleanField()
-    book_description = models.TextField()
+    # available_after', 'Voraussichtlich verfügbar ab'],
+    allow_copy = models.NullBooleanField(null=True)
+    book_description = models.TextField(null=True)
+    updated = models.DateField(null=True)
+    comment = models.TextField(null=True, blank=True)
+    
+    def __str__(self):
+        value = []
+        if self.onleiheId:
+            value.append(self.onleiheId)
+        if not self.status in ('confirmed',):
+            value.append(self.status)
+        if not value:
+            value.append('?')
+        if self.updated:
+            value.append(' updated %s' % self.updated)
+        return "onleihe(%s)" % (",".join(value))
     
     
 class googleBooks(models.Model):
@@ -225,3 +256,30 @@ class states(models.Model):
     iOwn = models.BooleanField(default=False)
     toBuy = models.BooleanField(default=False)
     toRead = models.BooleanField(default=False)
+    
+    def __str__(self):
+        state_value = []
+        for key in ('favorite', 'readingNow', 'haveRead', 'toRead', 'toBuy', 'iOwn'):
+            value = getattr(self, key)
+            if value == True:
+                state_value.append(key)
+            elif value is None:
+                state_value.append("(%s?)" % key)
+        return 'states(%s)' % (' '.join(state_value),)
+        
+    @property
+    def state_info(self):
+        state_info = []
+        if self.favorite:
+            state_info.append('++')
+        if self.iOwn:
+            state_info.append('-')
+        if self.haveRead:
+            state_info.append('read')
+        if self.readingNow:
+            state_info.append('reading')
+        if self.toRead:
+            state_info.append('picked')
+        if self.toBuy:
+            state_info.append('wish')
+        return ' '.join(state_info)

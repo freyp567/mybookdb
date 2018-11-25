@@ -44,7 +44,10 @@
       {{ books.new_description|safe|linebreaks }}
 {% endif %}
 </p>
-<p>Updated: {{ books.updated|date:"c" }}</p>
+<hr/>
+<p class="detail_brief">Updated: {{ books.updated|date:"c" }}</p>
+<p class="detail_brief">States: {{ books.states }}</p>
+<p class="detail_brief">Onleihe: {{ books.onleihebooks|default:'---' }}</p>
 
 <hr/>
 

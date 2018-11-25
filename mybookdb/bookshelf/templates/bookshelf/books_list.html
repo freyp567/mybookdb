@@ -4,15 +4,22 @@
     <h1>Book List</h1>
     order by 
     <a href="{{ request.path }}?sort=title">title</a>, 
-    <a href="{{ request.path }}?sort=updated">updated</a>, 
-    <a href="{{ request.path }}?sort=status">status</a>, <br/>
+    <a href="{{ request.path }}?sort=created">created</a>, 
+    <a href="{{ request.path }}?sort=updated">updated</a>,
+    <a href="{{ request.path }}?sort=wishlist">wishlist</a>,
+    <a href="{{ request.path }}?sort=onleihe_unkown">onleihe?</a>
+    <br/>
 
     {% if books_list %}
     <ul>
 
       {% for book in books_list %}
       <li>
-        <a href="{{ book.get_absolute_url }}">{{ book.title }}</a>
+        <a href="{{ book.get_absolute_url }}">
+            {{ book.title }}
+        </a>
+        [{{ book.state_info }}]
+        {{ book.onleihe_status }}
         &ndash; {% for author in book.authors.all|slice:":3" %}
             {{author.name}}{% if not forloop.last %}, {% endif %}
         {% endfor %}

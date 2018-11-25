@@ -16,7 +16,12 @@ function format_state(value, row, index){
     if (row.states__readingNow) {
       status += "reading";
     } else {
-      status += "NOT read";
+      if (row.states__toBuy) {
+        status += "want read";
+      }
+      else {
+        status += "NOT read";
+      }
     }
   }
   return status;

@@ -30,7 +30,11 @@ class OnleiheBookDetailsParser(HTMLParser):
         
         
     def set_props(self, key, value):
-        assert not key in self.props 
+        if key in self.props:
+            if key == 'keywords':
+                key = 'category'
+            else:
+                assert not key in self.props
         if key in ('Exemplare', 'Verfügbar', 'Vormerker'):
             if value.startswith('('):
                 value = int(value[1:-1])
@@ -69,8 +73,8 @@ class OnleiheBookDetailsParser(HTMLParser):
                 self.prop_value = ''
                 if self.keywords_status > 0 and self.keywords_text:
                     self.keywords.append(self.keywords_text.strip()[:-1])
-                    self.keywords_status = 0
                     self.set_props('keywords', self.keywords)
+                    self.keywords_status = 0
             else:
                 pass
         else:

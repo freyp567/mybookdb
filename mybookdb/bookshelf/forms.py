@@ -104,6 +104,10 @@ class BookUpdateForm(forms.ModelForm):
         if self.instance.description == data:
             return None  # not changed
         return data
+    
+    def orig_description(self):
+        data = self.cleaned_data['orig_description']
+        return data or ''
 
 
 class BookInfoForm(forms.ModelForm):
@@ -163,6 +167,7 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
             'toRead',
             'readingNow',
             'haveRead',
+            # 'wantRead',
             )
 
     def __init__(self, *args, **kwargs):

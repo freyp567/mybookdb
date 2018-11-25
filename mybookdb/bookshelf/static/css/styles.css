@@ -47,5 +47,11 @@ https://stackoverflow.com/questions/14596743/how-do-you-change-the-width-and-hei
 
 .book-title-table {
     font-weight:bold;
-    color: read;
+}
+
+.detail_brief {
+    /* .small-well ? */
+    font-size: 11px;
+    margin: 0;
+    padding: 0;
 }
