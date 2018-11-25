@@ -2,7 +2,7 @@
 import from books.db backup
 
 usage:
-  python manage.py import_booksdb 20180121.backup
+  python manage.py import_booksdb 2018-11-25.backup
   
 TODO fix umlaute troubles, 
 e.g. book 179 causing (unicode error) 'utf-8' codec can't decode byte 0xe4 in position 156: invalid continuation byte
@@ -60,7 +60,7 @@ class Command(BaseCommand):
                     else:
                         data['book'] = book_obj
                     
-                elif col_name in ('created',):
+                elif col_name in ('created','dateCreated',):
                     # MyBookDroid stores dates as time_t values, need to convert for Django ORM
                     if value:
                         data[col_name] = datetime.fromtimestamp(value//1000).date()
@@ -68,7 +68,10 @@ class Command(BaseCommand):
                         data[col_name] = None
                     
                 elif col_name == 'description':
-                    data["orig_description"] = value 
+                    if table_name in ('googleBooks',):
+                        data["description"] = value
+                    else:
+                        data["orig_description"] = value 
                     
                 else:
                     data[col_name] = value
@@ -116,7 +119,11 @@ class Command(BaseCommand):
                         value = value[1]  # new value
                         setattr(obj, key, value)
                     obj.updated = datetime.now(tz=timezone.utc)
-                    obj.save()
+                    try:
+                        obj.save()
+                    except BaseException as err:
+                        # for debugging, to set breakpoint
+                        raise
                     updated += 1
             else:
                 obj = objType(**data)
@@ -289,7 +296,7 @@ class Command(BaseCommand):
         self.load_books()
 
         self.load_table('states', states)
-        self.load_table('bookGroup', bookGroup) # TODO
+        # self.load_table('bookGroup', bookGroup) # TODO 
 
         self.load_table('googleBooks', googleBooks)
         self.load_table('grBooks', grBooks)        
