@@ -70,7 +70,8 @@
 
 <script type="text/javascript">
 var onleiheId = "{{onleiheId|default:''}}"; // last confirmed Id
-var table_data_json = "{{ table_data|safe }}".replace(/\'/g, '\"').replace('None', '\"(?)\"');
+var table_data_json = "{{ table_data_json|safe }}";
+//var table_data_json = table_data_json.replace('None', '\"(?)\"');
 var table_data = JSON.parse(table_data_json);
 </script>
 

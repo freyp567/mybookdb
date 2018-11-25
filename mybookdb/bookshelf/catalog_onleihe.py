@@ -35,6 +35,14 @@ from bookshelf.onleihe_client import OnleiheClient, ONLEIHE_DETAIL_FIELDS
 LOGGER = logging.getLogger(name='mybookdb.bookshelf.onleihe')
 
 
+def escape_json(value):
+    """ escape json string to pass / embedd as variable in HTML script block """
+    # 'Chen, Jade Y'
+    value = value.replace('\\r\\n', '\\n')
+    value = value.replace('\\n', '\\\\n')
+    value = value.replace('"', '\\"')
+    return value
+
 def get_cached_details_path(book_obj):
     cached_name = book_obj.isbn13 or book_obj.isbn10 or 'id_%s' % book_obj.id
     cached_name = cached_name +'.json'
@@ -82,10 +90,14 @@ def lookup_book_isbn(book_obj):
         elif not book_obj.isbn10 and book_obj.isbn13:
             isbn = Isbn13(book_obj.isbn13)
             isbn10 = isbn.convert()
+            book_obj.isbn10 = isbn10
             media_info = client.search_book(isbn=isbn10)
         else:
             LOGGER.warning('missing isbn for book %s' % book_obj.id)
             isbn10 = None
+    else:
+        if not book_obj.isbn10:
+            book_obj.isbn10 = Isbn13(book_obj.isbn13).convert()
 
     if not media_info:
         # lookup by ISBN not successful, search book title (fulltext)
@@ -95,7 +107,6 @@ def lookup_book_isbn(book_obj):
         LOGGER.warning("lookup %s in Onleihe not successful" % book_obj.id)
         result['html'] = "not found"
         result['error'] = 'book not found in onleihe'
-        #book_obj .onleiheBooks
         onleihe_book = onleiheBooks(
             book=book_obj,
             status = 'lookupfailed',
@@ -235,7 +246,8 @@ class OnleiheView(generic.TemplateView):
             )
             LOGGER.info("updating onleihe related book details for %s" % book_obj.id)
             for tgt_name, from_name in CACHE_FIELDS:
-                if not from_name:  # same name
+                if not from_name:  # name from is name to
+                    from_name = tgt_name
                     value = details.get(tgt_name)
                 elif isinstance(from_name, tuple):
                     fn = from_name[0]
@@ -247,10 +259,20 @@ class OnleiheView(generic.TemplateView):
                 if value is None:
                     # e.g. no 'translator' if original book language is german
                     LOGGER.debug("missing value for field %s" % (from_name or tgt_name))
+                if from_name == 'author':
+                    if ';' in value:
+                        # multiple authors, normalize and split
+                        value = value.replace('\r\n', '\n').replace('\n', '')
+                        value = [ n.strip() for n in value.split(';')]
                 setattr(onleihe_book, tgt_name, value)
                 
             onleihe_book.save()
             book_obj.updated = datetime.now()
+            if not book_obj.new_description:
+                description = onleihe_book.book_description
+                now_date = datetime.now().date()
+                description += "\n[from onleihe %s]" % now_date.isoformat()
+                book_obj.new_description = description
             book_obj.save()
         
         context = self.get_context_data(pk=book_obj.id)
@@ -340,11 +362,16 @@ class OnleiheView(generic.TemplateView):
                     if field_name == 'book_url':
                         value = [value, img_covers[pos]]
                     if field_name in ('title','book_description'):
-                        value = value.replace('"', '')
-                        # TODO fix this, but having double quotes inside description 
-                        # causes troubles with python -> javascript -> bootstrap-table
-                        # while loading html: Uncaught SyntaxError: Unexpected identifier
-                        #value = json.dumps(value)
+                        if '"' in value:
+                            # causes troubles with python -> javascript -> bootstrap-table
+                            # while loading html: Uncaught SyntaxError: Unexpected identifier
+                            # as for display only, map them
+                            value = value.replace('"', '*')
+                    if field_name == 'author':
+                        if '\r\n' in value:
+                            # multiple author names separated by ';', normalize/drop newlines
+                            value = value.replace('\r\n', '\n')
+                            value = value.replace('\n', '')
                     row['book%s' % (pos+1)] = value or ''
                     
                     if onleiheBook:
@@ -357,6 +384,7 @@ class OnleiheView(generic.TemplateView):
             table_data = []
             
         context["table_data"] = table_data
+        context["table_data_json"] = escape_json(json.dumps(table_data))
         context["other_books_idx"] = list(range(2, len(details)+1))
         context["details_url"] = reverse('book-detail', args=(book.id,))
         
