@@ -103,6 +103,9 @@ ENV/
 
 # WingIDE 
 *.wpr
-*.wpu 
+*.wpu
+
+# PyCharm
+.idea/
 
 work/
