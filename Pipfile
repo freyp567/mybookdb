@@ -16,6 +16,7 @@ werkzeug = "*"
 requests = "*"
 pyisbn = "*"
 lxml = "*"
+django-crispy-forms = "*"
 
 [dev-packages]
 "flake8" = "*"

@@ -9,6 +9,10 @@ from django.utils.translation import gettext as _
 from bookshelf.models import books, authors, states
 from bookshelf.widgets import AuthorsTagWidget
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Field, Div
+from crispy_forms.bootstrap import FormActions, TabHolder, Tab
+
 
 class BookUpdateForm(forms.ModelForm):
     """
@@ -54,9 +58,45 @@ class BookUpdateForm(forms.ModelForm):
             # never update (original) description, but store updated text in new_description
             kwargs['initial']['new_description'] = instance.description
         super(BookUpdateForm, self).__init__(*args, **kwargs)
+        
+        self.helper = FormHelper()
+        #self.helper.form_class = 'form-horizontal'
+        self.helper.label_class = 'lb-sm'
+        #self.helper.field_class = 'col-lg-8'
+        self.helper.layout = Layout(
+            # Alert(...)
+            Fieldset(
+                'edit book details',
+                Field('title'),
+                Div(
+                    Div(Field('updated', readonly=True), css_class='col-md-4',),
+                    Div(Field('created', readonly=True), css_class='col-md-4',),
+                    Div('publicationDate', css_class='col-md-4',),
+                    css_class='row',
+                ),
+                Div(
+                    Div(Field('isbn13'), css_class='col-md-6',),
+                    Div(Field('isbn10'), css_class='col-md-6',),
+                    css_class='row',
+                ),
+            ),
+            TabHolder(
+                Tab('description',
+                    Field('new_description', label='')
+                    ), 
+                Tab('orig-description',
+                    Field('orig_description', readonly=True, title='imported description')
+                    ),
+                ),
+            'subject',
+            FormActions(
+                Submit('save', 'Save changes'),
+            )
+        )
 
-        self.fields['new_description'].widget = forms.Textarea(attrs={'cols': 80, 'rows': 5})
-        self.fields['new_description'].label = 'Description'
+        self.fields['new_description'].widget = forms.Textarea(attrs={'cols': 80, 'rows': 7})
+        self.fields['new_description'].label = False
+        self.fields['orig_description'].label = False
         
         book_authors = [ (o.id, o.name) for o in instance.authors.all() ]
         self.fields['authors'].widget = AuthorsTagWidget(
@@ -81,7 +121,7 @@ class BookUpdateForm(forms.ModelForm):
         for field_name in ('new_description','isbn10','isbn13','subject','publisher', 'publicationDate',
                            'created', 'updated'):
             self.fields[field_name].required = False
-            
+
         #self.fields['created'].widget = widgets.DateInput() # BUT not to be edited, readonly
         #self.fields['updated'].value = datetime.now()
 

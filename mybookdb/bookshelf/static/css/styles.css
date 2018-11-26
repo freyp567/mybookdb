@@ -55,3 +55,7 @@ https://stackoverflow.com/questions/14596743/how-do-you-change-the-width-and-hei
     margin: 0;
     padding: 0;
 }
+
+.lb-sm {
+  font-size: 12px;
+}

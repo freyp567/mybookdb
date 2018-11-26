@@ -279,7 +279,7 @@ class states(models.Model):
         if self.readingNow:
             state_info.append('reading')
         if self.toRead:
-            state_info.append('picked')
+            state_info.append('to read')
         if self.toBuy:
             state_info.append('wish')
         return ' '.join(state_info)
