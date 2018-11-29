@@ -48,7 +48,7 @@ class IDColumn(tables.Column):
     
     def render(self, value):
         # generate link to book details
-        url = reverse('author-detail', args=[str(value)])
+        url = reverse('bookshelf:author-detail', args=[str(value)])
         idhtml = '<a target="author-detail" href="%s">%s</a>' % (url, value)
         return format_html(idhtml)
     

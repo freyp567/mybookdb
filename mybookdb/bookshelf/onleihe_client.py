@@ -157,7 +157,8 @@ class OnleiheClient:
             headers=self.get_search_headers(),
             )
         html = response.content.decode('utf-8')
-        assert '<title>die OnleiheRegio. Suchergebnis :  Ihre Suche nach ' in html
+        if not '<title>die OnleiheRegio. Suchergebnis :  Ihre Suche nach ' in html:
+            self.dump_html('check_search_result.html', html, "check")
         # ... Suche nach [ Titel: Rosenthal] ergab 3 Titeltreffer. S. 1 (1 bis 3)</title>
         if book_title:
             book_title = urllib.parse.quote(book_title)
@@ -171,9 +172,9 @@ class OnleiheClient:
         # extract mediaItem info from html response
         return self.extract_mediainfo(html)
     
-    def dump_html(self, dump_path, info):
+    def dump_html(self, dump_path, html, info="", encoding='utf-8'):
         dump_path = Path(dump_path).resolve()
-        dump_path.write_text(html)
+        dump_path.write_text(html, encoding=encoding, errors=None)
         LOGGER.debug("HTML (%s) dumped to %s" % (info, dump_path))
             
     def get_book_details(self, book_ref):
@@ -184,7 +185,7 @@ class OnleiheClient:
         html = response.content.decode('utf-8')
         assert '<title>die OnleiheRegio. ' in html
         if DUMP_RESPONSE:
-            self.dump_html('book_details.html', 'book_details')
+            self.dump_html('book_details.html', html, 'book_details')
             
         # extract book details
         try:
@@ -202,7 +203,7 @@ class OnleiheClient:
                 info[field_name] = field_value
                 
         except:
-            self.dump_html('book_details_error.html', 'book_details')
+            self.dump_html('book_details_error.html', html, 'book_details')
             LOGGER.exception("failed to extact book details, see book_details_error.html")
             raise RuntimeError("filed to extract book details from %s" % book_ref)
 

@@ -117,7 +117,7 @@ class books(models.Model):
         """
         Returns the url to access a particular book instance.
         """
-        url = reverse('book-detail', args=[str(self.id)])
+        url = reverse('bookshelf:book-detail', args=[str(self.id)])
         return url
 
 

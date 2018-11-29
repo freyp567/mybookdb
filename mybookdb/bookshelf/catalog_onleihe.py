@@ -386,10 +386,10 @@ class OnleiheView(generic.TemplateView):
         context["table_data"] = table_data
         context["table_data_json"] = escape_json(json.dumps(table_data))
         context["other_books_idx"] = list(range(2, len(details)+1))
-        context["details_url"] = reverse('book-detail', args=(book.id,))
+        context["details_url"] = reverse('bookshelf:book-detail', args=(book.id,))
         
         return context
     
     def get_success_url(self): 
-        success_url = reverse('book-detail', args=(self.object.id,))
+        success_url = reverse('bookshelf:book-detail', args=(self.object.id,))
         return success_url

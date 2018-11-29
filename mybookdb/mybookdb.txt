@@ -2,24 +2,41 @@ My Bookshelf
 implementation notes / index to views
 2018-11-24  updated
 
+***
 Book list  /bookshelf/books/v1/?sort=
-   simole list of books, orderable by title, updated, status
-   TODO improve sort wishlist
+   simple list of books, orderable by title, updated, status
    view: BookListGenericView, generic.Listview
    template: books_list.html
 
-All books
+***
+All books  /bookshelf/books/
+   search for books 
+   view: FilteredBookListView, SingleTableMixin+FilterView
+   table_class: BooksTable
+   template: books_table_filtered.html
+   using django_tables2, django_filters
 
-Search books
+***
+Search books  /bookshelf/books/v2/
+   bootstrap-table with filter controls
+   view: BooksListTableView, generic.TemplateView
+   template: bookslist_table.html
+   
+
+***
 Search authors
 
+***
 Currently Reading
 
+
+***
 Maintenance
 
 
 ***
 
+***
 Book Details  /bookshelf/book/27
     show book details
     TODO show onleihe status, states, user rating
@@ -27,13 +44,15 @@ Book Details  /bookshelf/book/27
 	view: BookDetailView, generic.DetailView
 	template: books_detail.html
 	
-	
-TODO status onleihe: 
-if lookup failed, create dummy onleiheBooks and record when looked updated
-and that not successful
 
-TODO onleihe page, back button to detail page
+***	
+TODO use FormView / Crispy Forms to edit book details and book status on one page
+TODO status onleihe: 
 TODO update more fields for onleihe page 
+TODO resolve problems with bootstrap-table / editable / x-edit 
+
+***
+troublesome
 
 mutiple titles for search in onleihe,
 but none does match:

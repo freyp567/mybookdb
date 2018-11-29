@@ -18,7 +18,7 @@ urlpatterns = [
 ]
 
 urlpatterns += [
-    path('bookshelf/', include('bookshelf.urls')),
+    path('bookshelf/', include('bookshelf.urls', namespace="bookshelf")),
 ]
 
 

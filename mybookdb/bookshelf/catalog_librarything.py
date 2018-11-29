@@ -213,5 +213,5 @@ class LibraryThingView(generic.TemplateView):
         return context
     
     def get_success_url(self): 
-        success_url = reverse('book-detail', args=(self.object.id,))
+        success_url = reverse('bookshelf:book-detail', args=(self.object.id,))
         return success_url

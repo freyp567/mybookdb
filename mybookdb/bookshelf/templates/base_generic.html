@@ -16,8 +16,12 @@
   {% load static %}
   
   <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">  
-  <script src="{% static 'jquery/jquery-3.3.1.min.js' %}"></script>
-  <script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
+  <!-- script src="{% static 'jquery/jquery-3.3.1.min.js' %}"></script -->
+  <script src="/static/jquery/dist/jquery.js"></script>
+  <script src="{% static "/popper.js/umd/popper.js" %}"></script>
+  <script src="{% static "/popper.js/umd/tooltip.js" %}"></script>
+  <!-- script src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script -->
+  <script src="{% static 'bootstrap/js/bootstrap.js' %}"></script>
   
   
   <link rel="stylesheet" href="{% static 'css/styles.css' %}">
@@ -30,20 +34,20 @@
   <div class="col-sm-2">
   {% block sidebar %}
   <ul class="sidebar-nav">
-    <li><a href="{% url 'index' %}">Home</a></li>
-    <li><a href="{% url 'books-list' %}">Book list</a></li>
-    <li><a href="{% url 'books' %}">All books</a></li>
-    <li><a href="{% url 'books-v2' %}">Search books</a></li>
-    <li><a href="{% url 'authors' %}">Search authors</a></li>
+    <li><a href="{% url 'bookshelf:index' %}">Home</a></li>
+    <li><a href="{% url 'bookshelf:books-list' %}">Book list</a></li>
+    <li><a href="{% url 'bookshelf:books' %}">All books</a></li>
+    <li><a href="{% url 'bookshelf:books-v2' %}">Search books</a></li>
+    <li><a href="{% url 'bookshelf:authors' %}">Search authors</a></li>
   </ul>
  
   <ul class="sidebar-nav">
    {% if user.is_authenticated %}
      <li>User: {{ user.get_username }}</li>
-     <li><a href="{ % url 'reading' %}">Currently Reading</a></li>
-     <li><a href="{ % url 'logout'%}?next={{request.path}}">Logout</a></li>   
+     <li><a href="{ % url 'bookshelf:reading' %}">Currently Reading</a></li>
+     <li><a href="{ % url 'bookshelf:logout'%}?next={{request.path}}">Logout</a></li>   
    {% else %}
-     <li><a href="{ % url 'login'%}?next={{request.path}}">Login</a></li>   
+     <li><a href="{ % url 'bookshelf:login'%}?next={{request.path}}">Login</a></li>   
    {% endif %} 
   </ul>
   
@@ -52,7 +56,7 @@
    <ul class="sidebar-nav">
    <li>Staff</li>
    {% if perms.books.can_edit %}
-   <li><a href="{% url 'maintenance' %}">Maintenance</a></li>
+   <li><a href="{% url 'bookshelf:maintenance' %}">Maintenance</a></li>
    {% endif %}
    </ul>
     {% endif %}

@@ -9,6 +9,9 @@
     <a href="{{ request.path }}?sort=wishlist">wishlist</a>,
     <a href="{{ request.path }}?sort=onleihe_unkown">onleihe?</a>
     <br/>
+    <a href="{% url 'bookshelf:book-create' %}">add new book</a>
+    <br/>
+    <br/>
 
     {% if books_list %}
     <ul>

@@ -33,7 +33,7 @@
 {% if details %}
 <br/>
 
-    <form role="form" method="post" action="{% url 'lookup-onleihe' book_id %}">
+    <form role="form" method="post" action="{% url 'bookshelf:lookup-onleihe' book_id %}">
         <!-- legend>Update book state:</legend -->
         {% csrf_token %}
         

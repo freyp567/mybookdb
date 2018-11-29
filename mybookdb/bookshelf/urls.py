@@ -1,14 +1,16 @@
-"""bookshelf URL Configuration
-
 """
+bookshelf URL Configuration
+"""
+
 # from django.contrib import admin
 from django.urls import path
-from . import views
-from . import catalog_librarything
-from . import catalog_onleihe
 from django.urls import include, reverse 
 
+from bookshelf import views
+from bookshelf import catalog_librarything
+from bookshelf import catalog_onleihe
 
+app_name = 'bookshelf'
 urlpatterns = [
     path('', views.index, name='index'),
     #path('books/', views.SimpleBookListView, name='books-v1'),
@@ -22,7 +24,8 @@ urlpatterns = [
     path('books/maintain/', views.MaintainBooks.as_view(), name='maintenance'),
 ]
 
-urlpatterns += [  
+urlpatterns += [
+    path('books/editable-update/', views.BookEditableUpdate.as_view(), name='editable-update'),
     path('books/create/', views.BookCreateView.as_view(), name='book-create'),
     path('books/<int:pk>/update/', views.BookUpdateView.as_view(), name='book-update'),
     path('books/<int:pk>/delete/', views.BookDeleteView.as_view(), name='book-delete'),

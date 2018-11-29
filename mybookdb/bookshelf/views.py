@@ -1,6 +1,7 @@
 """
 views on bookshelf (books, authors, ...)
 """
+import os
 import logging
 import json
 
@@ -8,6 +9,9 @@ from django.shortcuts import render
 from django.views import generic
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
+
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt  # csrf_protect
 
 # from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -17,7 +21,7 @@ from django_tables2 import RequestConfig
 from django_tables2.views import SingleTableMixin
 
 from bookshelf.models import books, authors, comments, states
-from bookshelf.forms import BookUpdateForm, StateUpdateForm, BookInfoForm
+from bookshelf.forms import BookCreateForm, BookUpdateForm, StateUpdateForm, BookInfoForm
 from bookshelf.bookstable import BooksTable, BooksTableFilter, MinimalBooksTable
 from bookshelf.authorstable import AuthorsTable, AuthorsTableFilter  # , MinimalAuthorsTable
 
@@ -202,7 +206,6 @@ class BookDetailView(generic.DetailView):
         context['is_paginated'] = False  # avoid KeyError
         return context 
     
-    
 class MaintainBooks(PermissionRequiredMixin, generic.View):
     """
     Maintenance of book database.
@@ -222,9 +225,64 @@ class BookCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     """
     Create book.
     """
-    model = books
-    fields = '__all__'
     permission_required = 'bookshelf.can_create'
+    model = books
+    form_class = BookCreateForm
+    
+    def clean_title(self, form):
+        raise ValidationError("test validation")
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        autnors = cleaned_data.get("authors")
+    
+        
+    def get_initial(self):
+        initial_data = super(BookCreateView, self).get_initial()
+        return initial_data
+ 
+    def get_context_data(self, **kwargs):
+        context = super(BookCreateView, self).get_context_data(**kwargs)
+        return context
+
+    def get_form(self, form_class=None):
+        form = super(BookCreateView, self).get_form(form_class)
+        return form
+        
+
+    def get_form_kwargs(self, **kwargs):
+        kwargs = super(BookCreateView, self).get_form_kwargs(**kwargs)
+        #if 'xxxdata' in kwargs:
+            #form = BookCreateForm(self.request.POST)
+            ### form.instance.title not yet set, must save
+            ### this will trigger validation, too
+            #instance = form.save(commit=False)
+            #kwargs.update({'instance': instance})
+            #pass
+        return kwargs
+    
+    def form_valid(self, form):
+        return super(BookCreateView, self).form_valid(form)    
+
+
+# @method_decorator(csrf_exempt, name='dispatch')
+class BookEditableUpdate(generic.UpdateView):  # PermissionRequiredMixin
+    """
+    handles update requests from list of books (bootstap-table / editable plugin)
+    """
+    
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BookEditableUpdate, self).dispatch(request, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        return self.update(request, **kwargs)
+    
+    def update(self, request, **kwargs):
+        return JsonResponse({
+            'status': 'error',
+        'msg': 'FAIL!'})
+
 
 class BookUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     """
@@ -273,7 +331,7 @@ class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
         return context
     
     def get_success_url(self): 
-        success_url = reverse('book-detail', args=(self.object.id,))
+        success_url = reverse('bookshelf:book-detail', args=(self.object.id,))
         return success_url
     
     #def form_valid(self, form):

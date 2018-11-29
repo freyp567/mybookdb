@@ -9,6 +9,8 @@
 <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
 <link rel="stylesheet" type="text/css" href="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.css">
 
+<link rel="stylesheet" href="{% static "bootstrap3-editable/css/bootstrap-editable.css" %}" />
+
 <style>
   table.books {
     table-layout: fixed;
@@ -26,24 +28,32 @@
     width: 100px;
   }
   th.book_state {
-    width: 120px; 
+    width: 112px; 
   }
   th.user_rating {
     width: 40px;
   }
 </style>
 
+<!-- already loaded by base_generic.html: 
 <script src="/static/jquery/dist/jquery.js"></script>
-<script src="/static/js-cookie/js.cookie.js"></script>
 <script src="/static/bootstrap4/dist/js/bootstrap.js"></script>
-<script src="/static/bootstrap-table/bootstrap-table.js"></script>
+<script src="{% static "/popper.js/umd/popper.js" %}"></script>
+-->
+<script src="/static/js-cookie/js.cookie.js"></script>
+<script src="{% static "bootstrap-table/bootstrap-table.js" %}"></script>
+<script src="{% static "/bootstrap3-editable/js/bootstrap-editable.js" %}"></script>
+
 
 <!-- 
 https://github.com/wenzhixin/bootstrap-table/blob/master/src/extensions/filter-control/README.md
 filterControl
 -->
+
 <script src="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.js"></script>
 <script src="/static/bootstrap-table/extensions/cookie/bootstrap-table-cookie.js"></script>
+<script src="/static/bootstrap-table/extensions/editable/bootstrap-table-editable.js"></script>
+
 <script>
 var rating_values = {
   "5": "5 - highest",
@@ -78,10 +88,15 @@ var have_read_values = {
     data-cookie="true"
     data-cookie-id-table="books"
     data-cookie-storage="cookieStorage"
-    data-detail-view="true" 
+    data-detail-view="false" 
     data-detail-formatter="detailFormatterBook" 
+    data-editable-url="{% url 'bookshelf:editable-update'%}"
   >
-   <!-- detailFormatterBook see view getBooksListDetails -->
+   <!-- 
+   TODO data-detail-view="true" 
+   but need to handle click on rating columns
+   detailFormatterBook see view getBooksListDetails 
+   -->
   <!-- 
     data-toolbar= 
     data-buttons-toolbar=
@@ -122,6 +137,7 @@ var have_read_values = {
         data-sortable="true"
         data-filter-control="select"
         data-filter-data="var:rating_values"
+        data-editable="true"
         scope="col"
         >Rating</th>
     </tr>

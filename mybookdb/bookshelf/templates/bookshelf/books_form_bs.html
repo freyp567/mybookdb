@@ -20,10 +20,9 @@
     <form role="form" method="post"> <!-- action="/update_book" -->
         <!-- legend>Update book entry:</legend -->
         {% csrf_token %}
+        {% bootstrap_form form %}
+        {% buttons submit='OK' reset="Cancel" %}{% endbuttons %}
         
-        {% load crispy_forms_tags %}
-        {% crispy form %}
-
     </form>
     
 {% endblock %}

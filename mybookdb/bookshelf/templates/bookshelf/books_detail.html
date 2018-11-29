@@ -3,14 +3,14 @@
 {% block content %}
 <!-- button type="button" class="btn btn-primary" ... -->
 <a class="btn btn-primary btn-sm" role="button" 
-  href="{% url 'book-update' books.pk %}">Update Book Details</a>
+  href="{% url 'bookshelf:book-update' books.pk %}">Edit Book Details</a>
 <a class="btn btn-secondary btn-sm" role="button" 
-  href="{% url 'state-update' books.pk %}">Update Book State</a>
+  href="{% url 'bookshelf:state-update' books.pk %}">Update Book State</a>
 
 {% if USE_LIBRARYTHING == "1" %}
 <a class="btn btn-secondary btn-sm" role="button" 
   title="book details and reviews on LibraryThing"
-  href="{% url 'lookup-librarything' pk=books.pk %}"
+  href="{% url 'bookshelf:lookup-librarything' pk=books.pk %}"
   >LibraryThing</a>
 {% endif %}
 
@@ -18,7 +18,7 @@
 <!-- currently not working, and no API documentation available -->
 <a class="btn btn-secondary btn-sm" role="button" 
   title="search book in Onleihe"
-  href="{% url 'lookup-onleihe' pk=books.pk %}"
+  href="{% url 'bookshelf:lookup-onleihe' pk=books.pk %}"
   >Onleihe</a>
 {% endif %}
 
@@ -26,7 +26,7 @@
 
 <p><strong>Author(s):</strong>
 {% for author in books.authors.all %}
-  <a href="{% url 'author-detail' author.pk %}">{{ author.name }}</a>{% if not forloop.last %}, {% endif %}
+  <a href="{% url 'bookshelf:author-detail' author.pk %}">{{ author.name }}</a>{% if not forloop.last %}, {% endif %}
 {% endfor %}
 </p>
 <p><strong>ISBN:</strong> 

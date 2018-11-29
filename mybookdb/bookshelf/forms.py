@@ -1,4 +1,6 @@
 from datetime import datetime, date
+from pyisbn import Isbn13, Isbn10, IsbnError
+
 from django.core.exceptions import ValidationError
 from django.urls import reverse, reverse_lazy
 from django import forms
@@ -10,8 +12,192 @@ from bookshelf.models import books, authors, states
 from bookshelf.widgets import AuthorsTagWidget
 
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Field, Div
+from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Field, Div, Button
 from crispy_forms.bootstrap import FormActions, TabHolder, Tab
+
+
+
+class BookCreateForm(forms.ModelForm):
+    """
+    create book information
+    """
+    title = forms.CharField(max_length=255)
+    orig_description = forms.CharField(disabled=True, label="Original description")
+    new_description = forms.CharField()
+    isbn10 = forms.CharField(max_length=10, min_length=10)
+    isbn13 = forms.CharField(max_length=13, min_length=13)
+    
+    authors = forms.ModelMultipleChoiceField(
+        queryset=authors.objects.none(), 
+    )
+    
+    subject = forms.CharField(max_length=255)
+    publisher = forms.CharField(max_length=128)
+    publicationDate = forms.DateInput()
+    
+    created = forms.DateField(disabled=True)
+    updated = forms.DateField(disabled=True)
+    
+    class Meta:
+        model = books
+        fields = (
+            'title', 
+            'orig_description', 
+            'new_description', 
+            'created',
+            'updated',
+            'authors',
+            'isbn10',
+            'isbn13', 
+            'subject',
+            'publisher',
+            'publicationDate',
+            ) 
+        # 'userrating', 'authors'
+        
+    def __init__(self, *args, **kwargs):
+        super(BookCreateForm, self).__init__(*args, **kwargs)
+        
+        self.helper = FormHelper()
+        self.helper.label_class = 'lb-sm'
+        
+        # TODO show validation messages (when returning after save failed)
+        
+        self.helper.layout = Layout(
+            # Alert(...)
+            Fieldset(
+                '',
+                Field('title'),
+                Div(
+                    Div(Field('updated', readonly=True), css_class='col-md-4',),
+                    Div(Field('created', readonly=True), css_class='col-md-4',),
+                    Div('publicationDate', css_class='col-md-4',),
+                    css_class='row',
+                ),
+                Div(
+                    Div(Field('isbn13'), css_class='col-md-6',),
+                    Div(Field('isbn10'), css_class='col-md-6',),
+                    css_class='row',
+                ),
+            ),
+            TabHolder(
+                Tab('description',
+                    Field('new_description', label='')
+                    ), 
+                Tab('orig-description',
+                    Field('orig_description', readonly=True, title='imported description')
+                    ),
+                ),
+            Div(
+                'authors',
+                'subject',
+                ),
+            FormActions(
+                Submit('save', 'Save changes'),
+                Button( 'cancel', 'Cancel', css_class = 'btn btn-default',
+                        onclick="window.history.back()")
+            )
+        )
+
+        self.fields['new_description'].widget = forms.Textarea(attrs={'cols': 80, 'rows': 7})
+        self.fields['new_description'].label = False
+        self.fields['orig_description'].label = False
+        
+        book_authors = []
+        self.fields['authors'].widget = AuthorsTagWidget(
+                attrs={
+                    # 'data-tags': 'true',
+                    'data-placeholder': 'search for book authors',
+                    'data-minimum-input-length': 2,
+                    #'data-width': 'auto', # / '50em' / ...
+                    },
+                #dependent_fields=,
+                data_url = reverse('bookshelf:authors_book'),
+                choices=book_authors,
+                userGetValTextFuncName=None,
+                )
+        self.fields['authors'].queryset = authors.objects.all()
+        #self.fields['authors'].required = False
+        #self.fields['authors'].widget.choices = book_authors
+        
+        #self.fields['publicationDate'].widget = widgets.SelectDateWidget()  # years=years_tuple
+        self.fields['publicationDate'].widget = widgets.DateInput()  # format=('%Y-%m-%d',)
+        
+        # https://stackoverflow.com/questions/46094811/change-django-required-form-field-to-false
+        for field_name in ('new_description','isbn10','isbn13','subject','publisher', 'publicationDate',
+                           'created', 'updated'):
+            self.fields[field_name].required = False
+
+        #self.fields['created'].widget = widgets.DateInput() # BUT not to be edited, readonly
+        #self.fields['updated'].value = datetime.now()
+
+
+    def clean(self):
+        isbn10_value = self.cleaned_data.get('isbn10')
+        isbn13_value = self.cleaned_data.get('isbn13')
+        isbn10 = isbn10_value and Isbn10(isbn10_value)
+        isbn13 = isbn13_value and Isbn13(isbn13_value)
+        if isbn13:
+            if isbn10 != isbn13.convert():
+                self.add_error('isbn10', 'does not match value for ISBN13')
+        
+        return self.cleaned_data
+    
+    def clean_title(self):
+        data = self.cleaned_data['title']
+        if not data:
+            self.add_error('title', 'must have title')
+        return data
+    
+    def clean_isbn13(self):
+        data = self.cleaned_data['isbn13']
+        if not data:
+            return None
+        try:
+            isbn13 = Isbn13(data)
+        except IsbnError as err:
+            raise ValidationError("not a valid ISBN13 - %s" % err)
+        if not isbn13.validate():
+            self.add_error('isbn13', 'ISBN13 not valid')
+        return data
+        
+    def clean_isbn10(self):
+        data = self.cleaned_data['isbn10']
+        if not data:
+            return None
+        try:
+            isbn10 = Isbn10(data)
+        except IsbnError as err:
+            raise ValidationError("not a valid ISBN10 - %s" % err)
+        if not isbn10.validate():
+            self.add_error('isbn10', 'ISBN10 not valid')
+        #if data and len(data) < 10:
+        #    raise ValidationError('Invalid value for ISBN10, expect 10 digits')
+        return data
+    
+    def clean_updated(self):
+        data = self.cleaned_data['updated']
+        if data is None:
+            data = datetime.now()
+        return data
+    
+    def clean_created(self):
+        data = self.cleaned_data['created']
+        if data is None:
+            data = datetime.now()
+        return data
+    
+    def clean_new_description(self):
+        data = self.cleaned_data['new_description']
+        if self.instance.description == data:
+            return None  # not changed
+        return data
+    
+    def orig_description(self):
+        data = self.cleaned_data['orig_description']
+        if not data:
+            self.add_error('orig_description', 'must have description')
+        return data or ''
 
 
 class BookUpdateForm(forms.ModelForm):
@@ -63,10 +249,13 @@ class BookUpdateForm(forms.ModelForm):
         #self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'lb-sm'
         #self.helper.field_class = 'col-lg-8'
+        
+        # TODO show validation messages (when returning after save failed)
+        
         self.helper.layout = Layout(
             # Alert(...)
             Fieldset(
-                'edit book details',
+                '',
                 Field('title'),
                 Div(
                     Div(Field('updated', readonly=True), css_class='col-md-4',),
@@ -88,9 +277,14 @@ class BookUpdateForm(forms.ModelForm):
                     Field('orig_description', readonly=True, title='imported description')
                     ),
                 ),
-            'subject',
+            Div(
+                'authors',
+                'subject',
+                ),
             FormActions(
                 Submit('save', 'Save changes'),
+                Button( 'cancel', 'Cancel', css_class = 'btn btn-default',
+                        onclick="window.history.back()")
             )
         )
 
@@ -107,11 +301,12 @@ class BookUpdateForm(forms.ModelForm):
                     #'data-width': 'auto', # / '50em' / ...
                     },
                 #dependent_fields=,
-                data_url = reverse('authors_book'),
+                data_url = reverse('bookshelf:authors_book'),
                 choices=book_authors,
                 userGetValTextFuncName=None,
                 )
         self.fields['authors'].queryset = authors.objects.all()
+        #self.fields['authors'].required = False
         #self.fields['authors'].widget.choices = book_authors
         
         #self.fields['publicationDate'].widget = widgets.SelectDateWidget()  # years=years_tuple
