@@ -35,15 +35,17 @@
   }
 </style>
 
+{% block extra_js%}
 <!-- already loaded by base_generic.html: 
 <script src="/static/jquery/dist/jquery.js"></script>
 <script src="/static/bootstrap4/dist/js/bootstrap.js"></script>
 <script src="{% static "/popper.js/umd/popper.js" %}"></script>
 -->
 <script src="/static/js-cookie/js.cookie.js"></script>
-<script src="{% static "bootstrap-table/bootstrap-table.js" %}"></script>
+<script src="{% static "/bootstrap-table/bootstrap-table.js" %}"></script>
 <script src="{% static "/bootstrap3-editable/js/bootstrap-editable.js" %}"></script>
 
+<script src="{% static "/jquery-form/jquery.form.js" %}"></script>
 
 <!-- 
 https://github.com/wenzhixin/bootstrap-table/blob/master/src/extensions/filter-control/README.md
@@ -53,6 +55,7 @@ filterControl
 <script src="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.js"></script>
 <script src="/static/bootstrap-table/extensions/cookie/bootstrap-table-cookie.js"></script>
 <script src="/static/bootstrap-table/extensions/editable/bootstrap-table-editable.js"></script>
+{% endblock %}
 
 <script>
 var rating_values = {
@@ -88,7 +91,7 @@ var have_read_values = {
     data-cookie="true"
     data-cookie-id-table="books"
     data-cookie-storage="cookieStorage"
-    data-detail-view="false" 
+    data-detail-view="true" 
     data-detail-formatter="detailFormatterBook" 
     data-editable-url="{% url 'bookshelf:editable-update'%}"
   >
@@ -145,6 +148,12 @@ var have_read_values = {
     <!-- table body generated, see view search_book -->
   </table>
 </div>
+
+<div class="modal fade" id="states-modal"></div>
+
+<script>
+var url_status_base = "{% url 'bookshelf:book-status-update' pk=987654321 %}";
+</script>
 
 <script src="{% static 'js/bookslist_table.js' %}"></script>
     

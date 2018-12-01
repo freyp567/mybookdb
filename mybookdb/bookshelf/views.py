@@ -11,9 +11,11 @@ from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext as _
 from django.views.decorators.csrf import csrf_exempt  # csrf_protect
 
 # from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.mixins import PermissionRequiredMixin
 
 from django_filters.views import FilterView
@@ -526,4 +528,37 @@ def getAuthors(request):
     results = {"results": data, "pagination": {"more": False}}
     #return JsonResponse(results, safe=False)
     return HttpResponse(json.dumps(results), content_type="application/json;charset=utf-8")
+
+
+
+class BookStatusUpdateView(SuccessMessageMixin, PermissionRequiredMixin, generic.edit.UpdateView):
+    """
+    Edit book status.
+    """
+    model = states
+    permission_required = 'bookshelf.can_edit'
+    # form_class = BookStatusUpdateForm
+    template_name = 'bookshelf/bookstatus_update.html'
+    form_class = StateUpdateForm
+    
+    def __init__(self, *args, **kwargs):
+        super(BookStatusUpdateView, self).__init__(*args, *kwargs)
+
+    def get_success_url(self):
+        success_url = reverse('bookshelf:book-status-update', args=(self.object.id,))
+        return success_url
+    
+    def get_success_message(self, cleaned_data):
+        return _('Status updated for book %(book_title)s') % {'book_title': self.object.book.title}
+
+    def get_context_data(self, **kwargs):
+        context = super(BookStatusUpdateView,
+                        self).get_context_data(**kwargs)
+        #context['is_paginated'] = False  # avoid KeyError
+        if self.request.POST:
+            # if "cancel" in request.POST:
+            pass  # book info is read-only
+        else:
+            context['bookinfo_form'] = BookInfoForm(instance=self.object.book)
+        return context 
 

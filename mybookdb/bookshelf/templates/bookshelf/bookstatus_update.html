@@ -1,0 +1,77 @@
+{% load i18n %}
+<div class="modal-dialog modal-lg" role="document">
+    <form method="post" 
+        action="{% url 'bookshelf:book-status-update' pk=form.instance.id %}"
+        id="book-status-update" class="form">{% csrf_token %}
+        <!-- form.instance.id -- TemplateSyntaxError 
+        
+        -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Book Status Update</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                    <span class="sr-only">Close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                {{ form.media }}
+                
+                {% if messages %}
+                <div class="alert alert-success">
+                    {% for m in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ m }}</li>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                
+                book '{{ form.instance.book.title }}'
+                <br/><br/>
+                
+                {% for field in form.visible_fields %}
+                    <!-- fieldset class="form-group" 
+https://getbootstrap.com/docs/4.0/components/forms/
+  <div class="form-check">
+    <input type="checkbox" class="form-check-input" id="exampleCheck1">
+    <label class="form-check-label" for="exampleCheck1">Check me out</label>
+  </div>               
+  
+https://django-crispy-forms.readthedocs.io/en/latest/layouts.html#bootstrap-layout-objects
+InlineCheckboxes / PrependedText
+
+                    -->
+                    <div class="form-check">
+                        {{ field.errors }}
+                        {{ field.label_tag }}
+                        {{ field }}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <input type="submit" class="btn btn-primary" value="Save changes" />
+            </div>
+        </div><!-- /.modal-content -->
+    </form>
+</div><!-- /.modal-dialog -->
+<script>
+    var form_options = { 
+        target: '#states-modal', 
+        success: function(response) {
+            console.debug("states-modal signaled success"); 
+            } 
+        };
+    try {
+        $('#book-status-update').ajaxForm(form_options);
+    } catch(err) {
+        console.error(err);
+        // bootbox.alert(...)
+        alert('failed to initialize bookstatus update modal');
+    }
+</script>

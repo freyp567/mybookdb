@@ -364,6 +364,11 @@ class BookInfoForm(forms.ModelForm):
     
 #BookInfoFormSet = inlineformset_factory(states, books, extra=0)
 
+
+#class BookStatusUpdateForm(forms.ModelForm):
+    
+    
+
 class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for book
     """
     update book state
@@ -399,14 +404,25 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
         model = states
         fields = (
             'favorite',
+            'toBuy',  # = on wishlist
             'toRead',
             'readingNow',
             'haveRead',
             # 'wantRead',
+            'iOwn',   # = stopped reading / not read
+            
             )
 
     def __init__(self, *args, **kwargs):
         super(StateUpdateForm, self).__init__(*args, **kwargs)
+        
+        for field_name in self.fields:
+            #self.fields[field_name].widget = CheckboxInput()
+            #self.fields[field_name].widget.attrs['class'] = 'form-control form-control-lg'
+            pass
+        
+        self.fields['toBuy'].label = 'on wishlist'
+        self.fields['iOwn'].label = 'not read/stopped'
 
     def clean(self):
         cleaned_data = super(StateUpdateForm, self).clean()
@@ -419,9 +435,9 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
         toBuy = cleaned_data.get('toBuy')
         toRead = cleaned_data.get('toRead')
         if haveRead and readingNow:
-            raise ValidationError("either read or currently reading")
+            raise ValidationError("either have read or currently reading")
         if haveRead and toRead:
             raise ValidationError("either read or to be read")
         if readingNow and toRead:
             raise ValidationError("either currently reading or to be read")
-        # return cleaned_data
+        return cleaned_data

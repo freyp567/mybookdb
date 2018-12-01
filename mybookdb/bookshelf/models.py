@@ -266,6 +266,10 @@ class states(models.Model):
             elif value is None:
                 state_value.append("(%s?)" % key)
         return 'states(%s)' % (' '.join(state_value),)
+
+    @property
+    def book_title(self):
+        return self.books.title
         
     @property
     def state_info(self):
