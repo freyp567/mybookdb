@@ -1,5 +1,6 @@
 {% load i18n %}
-<div class="modal-dialog modal-lg" role="document">
+
+<div class="modal-dialog modal-lg" role="document"> <!--   -->
     <form method="post" 
         action="{% url 'bookshelf:book-status-update' pk=form.instance.id %}"
         id="book-status-update" class="form">{% csrf_token %}
@@ -10,7 +11,7 @@
             <div class="modal-header">
                 <h4 class="modal-title">Book Status Update</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">×</span>
+                    <span aria-hidden="true">&times;</span>
                     <span class="sr-only">Close</span>
                 </button>
             </div>
@@ -54,7 +55,7 @@ InlineCheckboxes / PrependedText
                 {% endfor %}
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary close" data-dismiss="modal" id="states-modal-close">{% trans 'Close' %}</button>
                 <input type="submit" class="btn btn-primary" value="Save changes" />
             </div>
         </div><!-- /.modal-content -->
@@ -74,4 +75,31 @@ InlineCheckboxes / PrependedText
         // bootbox.alert(...)
         alert('failed to initialize bookstatus update modal');
     }
+
+    $("#states-modal-close").click(function(e) {
+        console.debug("closing states-modal-dlg");
+        //$('#states-modal').hide();
+        // https://getbootstrap.com/docs/4.0/components/modal/
+        //$('states-modal').modal('hide'); // does not work as expected
+        
+        //$('#states-modal').modal('dispose');
+        //$("#states-modal").removeClass("in");
+        //$(".modal-backdrop").remove();
+        ////$('body').removeClass('modal-open');
+        ////$('body').css('padding-right', '');
+        //$('#states-modal').hide();
+        
+        //$('.modal.in').modal('hide');
+        $('.modal').modal('hide');
+        
+        //e.stopPropagation();
+        return false;
+    });
+    $('#states-modal').on('hide.bs.modal', function (e) {
+        console.debug("hide.bs.modal");
+    })
+    $('#states-modal').on('hidden.bs.modal', function (e) {
+        console.debug("hidden.bs.modal");
+    })
+    
 </script>

@@ -51,6 +51,10 @@ TODO status onleihe:
 TODO update more fields for onleihe page 
 TODO resolve problems with bootstrap-table / editable / x-edit 
 
+TODO ChoiceField / bootstrap and validation / clean handling (django_select2?)
+TODO django x-edit support 
+TODO 
+
 ***
 troublesome
 

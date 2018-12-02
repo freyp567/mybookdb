@@ -559,6 +559,6 @@ class BookStatusUpdateView(SuccessMessageMixin, PermissionRequiredMixin, generic
             # if "cancel" in request.POST:
             pass  # book info is read-only
         else:
-            context['bookinfo_form'] = BookInfoForm(instance=self.object.book)
+            context['bookinfo_form'] = BookInfoForm(instance=self.object.book)        
         return context 
 
