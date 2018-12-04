@@ -180,7 +180,7 @@ BOOTSTRAP4 = {
     #'javascript_url': STATIC_URL +'bootstrap/js/bootstrap.js',
     'javascript_url': STATIC_URL +'bootstrap4/dist/js/bootstrap.js',
     #'use_i18n': False,
-    'popper_url': STATIC_URL +'popper.js/dist/popper.js',
+    'popper_url': STATIC_URL +'popper.js/umd/popper.min.js',
     
     # not available (yet) but overridden to prevent inclusion of external resources
     'jquery_slim_url': STATIC_URL +'jquery/dist/jquery.slim.js',
