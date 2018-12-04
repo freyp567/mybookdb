@@ -13,7 +13,10 @@ from django.views.generic import RedirectView
 
 from graphene_django.views import GraphQLView
 
+favicon_view = RedirectView.as_view(url='/static/favicon.ico', permanent=True)
+
 urlpatterns = [
+    url(r'^favicon\.ico$', favicon_view),
     path('admin/', admin.site.urls),
 ]
 
