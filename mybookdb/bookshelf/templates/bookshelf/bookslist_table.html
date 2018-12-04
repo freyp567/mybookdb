@@ -92,13 +92,16 @@ var have_read_values = {
     data-cookie-id-table="books"
     data-cookie-storage="cookieStorage"
     data-detail-view="true" 
-    data-detail-formatter="detailFormatterBook" 
     data-editable-url="{% url 'bookshelf:editable-update'%}"
   >
    <!-- 
-   TODO data-detail-view="true" 
+   TODO selectively show detail-view
+    data-detail-formatter="detailFormatterBook" 
+    
    but need to handle click on rating columns
    detailFormatterBook see view getBooksListDetails 
+   
+  
    -->
   <!-- 
     data-toolbar= 
@@ -113,6 +116,7 @@ var have_read_values = {
       <th id="col-title" class="book_title" 
         data-field="title" 
         data-filter-control="input" 
+        data-formatter="format_book_title"
         scope="col"
         >Title</th>
       <th id="col-created" class="book_added"
@@ -130,7 +134,6 @@ var have_read_values = {
       <th id="col-state" class="book_state"
         data-field="state"
         data-filter-control="select" 
-        data-filter-data="var:have_read_values"
         data-sortable="false" 
         data-formatter="format_state"
         scope="col"
@@ -149,12 +152,16 @@ var have_read_values = {
   </table>
 </div>
 
-<div class="modal fade" id="states-modal" role="dialog"></div>
+<div class="modal" id="states-modal" tabindex="-1" role="dialog"></div>
 
 <script>
 var url_status_base = "{% url 'bookshelf:book-status-update' pk=987654321 %}";
 </script>
 
 <script src="{% static 'js/bookslist_table.js' %}"></script>
+
+<script>
+//$('#bookslist').detailFormatter = detailFormatterBook;
+</script>
     
 {% endblock %}

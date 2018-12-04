@@ -560,5 +560,7 @@ class BookStatusUpdateView(SuccessMessageMixin, PermissionRequiredMixin, generic
             pass  # book info is read-only
         else:
             context['bookinfo_form'] = BookInfoForm(instance=self.object.book)        
+        if not 'non_field_errors' in context:
+            context['non_field_errors'] = []
         return context 
 
