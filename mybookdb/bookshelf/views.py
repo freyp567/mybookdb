@@ -5,7 +5,7 @@ import os
 import logging
 import json
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views import generic
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
@@ -529,6 +529,17 @@ def getAuthors(request):
     #return JsonResponse(results, safe=False)
     return HttpResponse(json.dumps(results), content_type="application/json;charset=utf-8")
 
+
+def createUpdateBookStatus(request, pk):
+    book_obj = books.objects.get(pk=pk)
+    if not hasattr(book_obj, 'states'):
+        states_obj = states.objects.create(book=book_obj)
+        states_obj.save()
+    else:
+        states_obj = book_obj.states
+    
+    to_url = reverse('bookshelf:status-update', args=(states_obj.id,))
+    return redirect(to_url)
 
 
 class BookStatusUpdateView(SuccessMessageMixin, PermissionRequiredMixin, generic.edit.UpdateView):

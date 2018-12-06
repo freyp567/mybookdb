@@ -5,6 +5,7 @@ http://bootstrap-table.wenzhixin.net.cn/documentation/
 */
 
 let book_id = 987654321;
+let book_id_expanded = null;
 
 function format_book_link(value, row, index) {
   return "<a href='/bookshelf/book/"+row.id+"'>"+value+"</a>";
@@ -46,7 +47,12 @@ function show_book_details(index, id) {
   // TODO search in bootstrap-table examples repo for usage samples
   const $table = $('#bookslist');
   $table.bootstrapTable('collapseAllRows');
-  $table.bootstrapTable('expandRow', index);
+  if (book_id_expanded != id) {
+    $table.bootstrapTable('expandRow', index);
+    book_id_expanded = id;
+  } else {
+    book_id_expanded = null;
+  }
   // collapseRow(index), 
 }  
 
@@ -76,7 +82,8 @@ function open_status_modal(id) {
         modal.html(response);
     }).fail(function( jqXHR, textStatus, errorThrown ) {
         console.error("open_status_modal failed", textStatus);
-        bootbox.alert("failed to load status modal");
+        alert("failed to load status modal");
+        // TODO discard model
     });
   })
   */
@@ -92,6 +99,7 @@ $('#states-modal').on('click-cell.bs.table', function (field, value, row, $eleme
 $('#states-modal').on('show.bs.modal', function (event) {
     var status_url = url_status_base.replace(/987654321/, book_id);
     var modal = $(this);
+    modal.html('<p>loading ...</p>');
     $.ajax({
         url: status_url,
         context: document.body
@@ -99,7 +107,8 @@ $('#states-modal').on('show.bs.modal', function (event) {
         modal.html(response);
     }).fail(function( jqXHR, textStatus, errorThrown ) {
         console.error("open_status_modal failed", textStatus);
-        bootbox.alert("failed to load status modal");
+        alert("failed to load status modal");
+        modal.modal('hide');
     });
 })
 

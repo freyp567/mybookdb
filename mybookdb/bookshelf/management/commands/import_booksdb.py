@@ -14,6 +14,61 @@ ATTN current implementation assumes that author names are unique (or made unique
 hopefully case same author name matches several authors will be very seldom
 and can be solved by 'discriminating' the author names with a suffix
 
+TODO fix for id / sequence problem
+use uuid mybookdb internally instead of id? see 
+id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+alternatively set sequence counter on states, googleBooks, ... to a high value
+so there is no collision between books and related objects created in mybookdroid and mybookdb
+
+"""
+"""
+after initial create of database / before adding own books in mybookdb make sure to adjust
+the autoincrement values of all tables, to avoid collisions when resyncing mybookdroid backup
+with database later on; e.g.
+
+python manage.py dbshell
+mysql> ALTER TABLE books AUTO_INCREMENT = 5000;
+# Error: near "AUTO_INCREMENT": syntax error
+...
+
+ALTER TABLE `table` AUTO_INCREMENT = number;
+
+sqlite> select max(id) from bookshelf_books;
+679
+
+sqlite> select name,seq from sqlite_sequence where name = 'bookshelf_books';
+bookshelf_books|679
+
+sqlite> update sqlite_sequence set seq = 5000 where name = 'bookshelf_books';
+
+update sqlite_sequence set seq = 5000 where name = 'bookshelf_authors';
+update sqlite_sequence set seq = 50000 where name = 'bookshelf_comments';
+update sqlite_sequence set seq = 5000 where name = 'bookshelf_googlebooks';
+update sqlite_sequence set seq = 5000 where name = 'bookshelf_grbooks';
+update sqlite_sequence set seq = 20000 where name = 'bookshelf_groups';
+update sqlite_sequence set seq = 5000 where name = 'bookshelf_reviews';
+update sqlite_sequence set seq = 5000 where name = 'bookshelf_states';
+update sqlite_sequence set seq = 500000 where name = 'bookshelf_books_authors';
+
+sqlite> select name,seq from sqlite_sequence;
+django_migrations|28
+django_admin_log|3
+django_content_type|15
+auth_permission|48
+auth_user|2
+bookshelf_groups|20000
+bookshelf_books_authors|500000
+bookshelf_googlebooks|5000
+bookshelf_grbooks|5000
+bookshelf_reviews|5000
+bookshelf_comments|50000
+auth_user_user_permissions|4
+bookshelf_authors|5000
+bookshelf_books|5000
+bookshelf_states|5000
+bookshelf_onleihebooks|24
+
 """
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
@@ -29,7 +84,7 @@ import sqlite3
 
 
 class Command(BaseCommand):
-    help = 'Closes the specified poll for voting'
+    help = 'Imports backup from mybookdroid app'
 
     def add_arguments(self, parser):
         parser.add_argument('dbpath', type=str) # nargs='+', 

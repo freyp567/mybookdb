@@ -78,7 +78,9 @@ var have_read_values = {
   <div id="toolbarBooks"></div>
   <table class="table table-sm books" id="bookslist"
     data-toggle="table"
+    data-id-field="id"
     data-show-columns="true"
+    data-show-toggle="false"
     data-url="/bookshelf/books/search"
     data-pagination="true"
     data-side-pagination="server"
@@ -109,12 +111,16 @@ var have_read_values = {
   -->
     <thead>
     <tr>
+      <th class="row_state"
+        data-checkbox="true">
+        </th>
       <th class="book_id" 
         data-field="id"
         data-formatter="format_book_link"
-        >#</th>
+        >ID</th>
       <th id="col-title" class="book_title" 
         data-field="title" 
+        data-switchable="false"
         data-filter-control="input" 
         data-formatter="format_book_title"
         scope="col"
