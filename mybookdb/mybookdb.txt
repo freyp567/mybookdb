@@ -1,6 +1,6 @@
 My Bookshelf
 implementation notes / index to views
-2018-11-24  updated
+2018-12-07  updated
 
 ***
 Book list  /bookshelf/books/v1/?sort=
@@ -18,13 +18,18 @@ All books  /bookshelf/books/
 
 ***
 Search books  /bookshelf/books/v2/
-   bootstrap-table with filter controls
+   bootstrap-table bookslist
+      using filter controls
    view: BooksListTableView, generic.TemplateView
    template: bookslist_table.html
    
 
 ***
 Search authors
+  bootstrap-table authorslist
+    url="/bookshelf/authors/search", views.search_author
+  view: AuthorsListTableView, generic.TemplateView
+  template: authors_table.html
 
 ***
 Currently Reading
@@ -45,15 +50,35 @@ Book Details  /bookshelf/book/27
 	template: books_detail.html
 	
 
-***	
+***
+TODO author, list of URLs to author detail pages (histocouch, goodreads, ...)  as 1:n relationship, qualified by site name?
+TODO book, list of URLs to book detail pages (onleihe, histocouch, amazon, audible, goodreads, librarythings, ...) - 1:n too
+TODO edit book state - update cell after save / close
+TODO new book, publicationDate - DateInput ?  handle date precision year vs year-month-day
+TODO new book, show validation errors on form (testing!)
+TODO new book, add new author inline while adding book 
+TODO new book, disallow to enter new tags not matching existing authors
+TODO authorslist handle column click vs open detail view - see books list
 TODO use FormView / Crispy Forms to edit book details and book status on one page
-TODO status onleihe: 
+TODO status onleihe
+  ++ fix broken onleihe search client
 TODO update more fields for onleihe page 
-TODO resolve problems with bootstrap-table / editable / x-edit 
+TODO resolve problems with bootstrap-table / editable / x-edit  / bootstrap4 / popper
+  ++ update javascript libraries to newer versions (fixes, compatibility issues)
+  ++ fix problem with bootstrap4 / x-editor / popper
 
 TODO ChoiceField / bootstrap and validation / clean handling (django_select2?)
 TODO django x-edit support 
-TODO 
+TODO bootstrap-table and + (show details) icon in first column
+
+***
+TODO to be resolved: (at various places)
+
+Traceback (most recent call last):
+  File "c:\Users\pifre\.virtualenvs\mybookdb-yEP07JDa\lib\site-packages\django\template\base.py", line 841, in _resolve_lookup
+    if isinstance(current, BaseContext) and getattr(type(current), bit):
+AttributeError: type object 'RequestContext' has no attribute 'is_paginated'
+
 
 ***
 troublesome
