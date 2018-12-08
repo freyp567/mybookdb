@@ -1,0 +1,29 @@
+{% extends "base_generic.html" %}
+
+{% load bootstrap4 %}
+
+{% block title %}
+    Edit Book Details
+{% endblock %}
+
+{% block content %}
+    {{ form.media.css }}
+    {{ form.media.js }}
+
+    {% for message in messages %}
+        <div class="{{ message|bootstrap_message_classes }} alert-dismissable">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&#215;</button>
+            {{ message|safe }}
+        </div>
+    {% endfor %}
+    
+    <form role="form" method="post"> <!-- action="/update_book" -->
+        <!-- legend>Update book entry:</legend -->
+        {% csrf_token %}
+        
+        {% load crispy_forms_tags %}
+        {% crispy form %}
+
+    </form>
+    
+{% endblock %}

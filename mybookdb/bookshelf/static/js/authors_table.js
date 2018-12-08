@@ -8,6 +8,10 @@ https://jsfiddle.net/dabros/6ony6cs2/1/
 
 */
 
+function format_author_link(value, row, index) {
+  return "<a href='/bookshelf/author/"+row.id+"'>"+value+"</a>";
+}
+
 // workaround for issue with bootstrap-table filter-control and cookie 
 const filter_control = Cookies.get('authors.bs.table.filterControl');
 if (!filter_control) {
@@ -39,6 +43,11 @@ if ($('#authorslist').length !== 0) {
   $table.bootstrapTable({
     url: '/bookshelf/authors/search',
   });
+  
+  $table.on('load-error.bs.table', function(cause, status, res) {
+    console.error("load authorslist failed status=" +status);
+    show_table_loaderror('#authorslist_error', res.responseText);
+ });
 
   $table.on('expand-row.bs.table', function(e, index, row, $detail) {
     //var res = $("#desc" + index).html();

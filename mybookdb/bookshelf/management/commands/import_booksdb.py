@@ -14,15 +14,12 @@ ATTN current implementation assumes that author names are unique (or made unique
 hopefully case same author name matches several authors will be very seldom
 and can be solved by 'discriminating' the author names with a suffix
 
-TODO fix for id / sequence problem
-use uuid mybookdb internally instead of id? see 
-id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-alternatively set sequence counter on states, googleBooks, ... to a high value
-so there is no collision between books and related objects created in mybookdroid and mybookdb
+TODO readjust authors if added both in mybookdb and mybookdroid, avoid duplication
 
 """
 """
+usage notes:
+
 after initial create of database / before adding own books in mybookdb make sure to adjust
 the autoincrement values of all tables, to avoid collisions when resyncing mybookdroid backup
 with database later on; e.g.
@@ -219,6 +216,9 @@ class Command(BaseCommand):
             updated += 1
             
         assert updated > 0, "failed to update book authors"
+        
+        # TODO merge new authors created directly in mybookdb with new authors from mybookdb 
+        # if same name
 
     def load_books(self):
         self.stdout.write(f"loading data for table books ...")
@@ -327,6 +327,7 @@ class Command(BaseCommand):
                 book_obj.save()
                 for author in book_authors:  
                     book_obj.authors.add(author.id)
+                book_obj.updated = datetime.now(tz=timezone.utc)
                 book_obj.save()
                 
                 updated += 1

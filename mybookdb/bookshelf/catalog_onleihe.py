@@ -20,6 +20,8 @@ from django.views import generic
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils import timezone
+
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
 
@@ -67,7 +69,7 @@ def lookup_book_isbn(book_obj):
     assert isinstance(book_obj, books)
     result = {}
     result['error'] = None
-    result['updated'] = datetime.now().isoformat()
+    result['updated'] = datetime.now(tz=timezone.utc).isoformat()
     
     # use cached onleihe data to reduce impact
     cached_path = get_cached_details_path(book_obj)
@@ -110,11 +112,11 @@ def lookup_book_isbn(book_obj):
         onleihe_book = onleiheBooks(
             book=book_obj,
             status = 'lookupfailed',
-            updated = datetime.now(),
+            updated = datetime.now(tz=timezone.utc),
             comment = "lookup in Onleihe not successful"
             )
         onleihe_book.save()
-        book_obj.updated = datetime.now()
+        book_obj.updated = datetime.now(tz=timezone.utc)
         book_obj.save()
         result['error'] = 'lookup failed'
         cached_path.write_text(json.dumps(result))
@@ -174,11 +176,11 @@ class OnleiheView(generic.TemplateView):
                 onleihe_book = onleiheBooks(
                     book=book_obj,
                     status = 'notfound',
-                    updated = datetime.now(),
+                    updated = datetime.now(tz=timezone.utc),
                     comment = "none of the books found in onleihe matches"
                     )
                 onleihe_book.save()
-                book_obj.updated = datetime.now()
+                book_obj.updated = datetime.now(tz=timezone.utc)
                 book_obj.save()
             else:
                 onleihe_book = book_obj.onleihebooks
@@ -210,7 +212,7 @@ class OnleiheView(generic.TemplateView):
                     change.add(key)
             if changed:
                 onleihe_book.save()
-                book_obj.updated = datetime.now()
+                book_obj.updated = datetime.now(tz=timezone.utc)
                 book_obj.save()
             else:
                 LOGGER.info("no changes for onleihe book info detected for %s" % book_obj.id)
@@ -223,7 +225,7 @@ class OnleiheView(generic.TemplateView):
                 book=book_obj,
                 onleiheId = media_url,
                 status = 'confirmed',
-                updated = datetime.now(),
+                updated = datetime.now(tz=timezone.utc),
                 
                 )
             CACHE_FIELDS = (
@@ -270,7 +272,7 @@ class OnleiheView(generic.TemplateView):
             book_obj.updated = datetime.now()
             if not book_obj.new_description:
                 description = onleihe_book.book_description
-                now_date = datetime.now().date()
+                now_date = datetime.now().date(tz=timezone.utc)
                 description += "\n[from onleihe %s]" % now_date.isoformat()
                 book_obj.new_description = description
             book_obj.save()

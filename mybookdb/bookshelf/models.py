@@ -28,6 +28,14 @@ class authors(models.Model):
         return b and b[0].title or None
         
     @property
+    def last_book_update(self):
+        updated = None
+        b = self.books_set.all().order_by('-updated')[:1]
+        if b and b[0].updated:
+            updated = b[0].updated 
+        return updated
+        
+    @property
     def book_count(self):
         b = self.books_set.all()
         return len(b)

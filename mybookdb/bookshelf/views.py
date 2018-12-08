@@ -8,6 +8,8 @@ import json
 from django.shortcuts import render, redirect
 from django.views import generic
 from django.http import HttpResponse, JsonResponse
+#from django.http import iri_to_uri
+from django.utils.encoding import iri_to_uri
 from django.urls import reverse
 
 from django.utils.decorators import method_decorator
@@ -23,12 +25,21 @@ from django_tables2 import RequestConfig
 from django_tables2.views import SingleTableMixin
 
 from bookshelf.models import books, authors, comments, states
-from bookshelf.forms import BookCreateForm, BookUpdateForm, StateUpdateForm, BookInfoForm
+from bookshelf.forms import BookCreateForm, BookUpdateForm, StateUpdateForm, BookInfoForm, \
+    AuthorCreateForm, AuthorUpdateForm
 from bookshelf.bookstable import BooksTable, BooksTableFilter, MinimalBooksTable
 from bookshelf.authorstable import AuthorsTable, AuthorsTableFilter  # , MinimalAuthorsTable
 
 LOGGER = logging.getLogger(name='mybookdb.bookshelf.views')
 
+
+class HttpResponseTemporaryRedirect(HttpResponse):
+    status_code = 307
+
+    def __init__(self, redirect_to):
+        HttpResponse.__init__(self)
+        self['Location'] = iri_to_uri(redirect_to)
+        
 
 def index(request):
     """
@@ -120,10 +131,12 @@ class BooksListTableView(generic.TemplateView):
     #content_type = "text/html"
     
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        context = super(BooksListTableView, self).get_context_data(**kwargs)
         #books_count = books.objects.count()
-        #context['books'] = [ books.objects.last() ]
-        context['is_paginated'] = False
+        #context['last_book'] = [ books.objects.last() ]
+        if not 'is_paginated' in context:
+            context['is_paginated'] = False
+            # SET TO avoid. ValueError: invalid literal for int() with base 10: 'is_paginated'
         return context
 
 
@@ -136,6 +149,7 @@ def search_book(request):
     if sort_order == 'desc':
         sort_field = '-' + sort_field
     
+    LOGGER.debug("search_book query=%s" % query)
     qs = books.objects.all()
     
     qs = qs.select_related("states")
@@ -212,12 +226,12 @@ class MaintainBooks(PermissionRequiredMixin, generic.View):
     """
     Maintenance of book database.
     """
-    def get(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):  # TODO should not override
         # self.object = self.get_object()
         #return super(MaintainBooks, self).get(request, *args, **kwargs)
         raise NotImplementedError("MaintainBooks.get")
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):  # TODO should not override
         # self.object = self.get_object()
         #return super(MaintainBooks, self).post(request, *args, **kwargs)
         raise NotImplementedError("MaintainBooks.post")
@@ -231,13 +245,15 @@ class BookCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     model = books
     form_class = BookCreateForm
     
-    def clean_title(self, form):
+    def clean_title(self, form):  # TODO right place? see form
+        assert False
         raise ValidationError("test validation")
     
-    def clean(self):
+    def clean(self):  # TODO right place? see form
+        assert False
         cleaned_data = super().clean()
         autnors = cleaned_data.get("authors")
-    
+        return cleaned_data
         
     def get_initial(self):
         initial_data = super(BookCreateView, self).get_initial()
@@ -361,7 +377,7 @@ class AuthorListView(generic.ListView):
 
 def author_obj_to_dict(obj):
     data = {}
-    for key in ('id', 'name', 'latest_book', 'book_rating_avg', 'book_count'):
+    for key in ('id', 'name', 'latest_book', 'updated', 'last_book_update', 'book_rating_avg', 'book_count'):
         data[key] = getattr(obj, key)
     return data
 
@@ -374,6 +390,7 @@ def search_author(request):
     if sort_order == 'desc':
         sort_field = '-' + sort_field
     
+    LOGGER.debug("search_author query=%s" % query)
     qs = authors.objects.all()
     
     if query.get('filter'):
@@ -406,11 +423,34 @@ class AuthorsListTableView(generic.TemplateView):
     template_name = "bookshelf/authors_table.html"
     
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        context = super(AuthorsListTableView, self).get_context_data(**kwargs)
         authors_count = authors.objects.count()
         context['authors_count'] = authors_count
-        context['is_paginated'] = False
+        context['is_paginated'] = False  # ???
         return context
+
+
+class AuthorsCreateView(PermissionRequiredMixin, generic.edit.CreateView):
+    """
+    add new author
+    """
+    permission_required = 'bookshelf.can_create'
+    model = authors
+    form_class = AuthorCreateForm
+
+    def get_success_url(self): 
+        success_url = reverse('bookshelf:author-detail', args=(self.object.id,))
+        return success_url
+
+
+class AuthorUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
+    """
+    update author details
+    """
+    permission_required = 'bookshelf.can_create'
+    model = authors
+    form_class = AuthorUpdateForm
+
 
 class AuthorDetailView(generic.DetailView):
     """
@@ -422,7 +462,9 @@ class AuthorDetailView(generic.DetailView):
         context = super().get_context_data(**kwargs)
         return context 
 
+
 def getBooksListDetails(request, pk=None):
+    """ detail view row for bootstrap-table """
     assert pk
     LOGGER.debug("details for book %s", pk)
     book = books.objects.get(pk=pk)
@@ -466,12 +508,13 @@ def getBooksListDetails(request, pk=None):
     html = '\n'.join(result)
     return HttpResponse(content=html)
 
+
 def getAuthorsListDetails(request, pk=None):
     assert pk 
     LOGGER.debug("details for author %s", pk)
     author = authors.objects.get(pk=pk)
     result = []
-    author_books = books.objects.filter(authors__id=pk)
+    author_books = books.objects.filter(authors__id=pk).order_by('-updated')
     if author_books:
         result.append("<ul>")
         for book_item in author_books:
@@ -539,7 +582,11 @@ def createUpdateBookStatus(request, pk):
         states_obj = book_obj.states
     
     to_url = reverse('bookshelf:status-update', args=(states_obj.id,))
-    return redirect(to_url)
+    if request.POST:
+        # forward POST request
+        return HttpResponseTemporaryRedirect(to_url)
+    else:
+        return redirect(to_url)
 
 
 class BookStatusUpdateView(SuccessMessageMixin, PermissionRequiredMixin, generic.edit.UpdateView):

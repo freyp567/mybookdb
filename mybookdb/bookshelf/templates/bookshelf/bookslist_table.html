@@ -55,6 +55,7 @@ filterControl
 <script src="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.js"></script>
 <script src="/static/bootstrap-table/extensions/cookie/bootstrap-table-cookie.js"></script>
 <script src="/static/bootstrap-table/extensions/editable/bootstrap-table-editable.js"></script>
+<script src="{% static "/js/bookshelf.js" %}"></script>
 {% endblock %}
 
 <script>
@@ -75,13 +76,19 @@ var have_read_values = {
 </script>
 
 <div class="container">
-  <div id="toolbarBooks"></div>
+  <div id="bookslist_error" style="hidden" class="alert alert-danger collapse" role="alert">
+    (TODO message here)
+  </div>
+  <div id="toolbarBooks">
+    <a target='new-book' href="{% url 'bookshelf:book-create' %}">add new Book</a>
+  </div>
   <table class="table table-sm books" id="bookslist"
     data-toggle="table"
     data-id-field="id"
     data-show-columns="true"
     data-show-toggle="false"
     data-url="/bookshelf/books/search"
+    data-toolbar="#toolbarBooks"
     data-pagination="true"
     data-side-pagination="server"
     data-search="false"

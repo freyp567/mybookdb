@@ -138,6 +138,10 @@ if ($('#bookslist').length !== 0) {
     url: '/bookshelf/books/search',
   });
 
+  $table.on('load-error.bs.table', function(cause, status, res) {
+    console.error("load bookslist failed", res);
+    show_table_loaderror('#bookslist_error', res.responseText);
+  });
 
   $table.on('expand-row.bs.table', function(e, index, row, $detail) {
     console.info("expand-row.bs.table index=" +index);

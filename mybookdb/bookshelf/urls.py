@@ -55,8 +55,10 @@ urlpatterns += [
     #path('authors/', views.AuthorListView.as_view(), name='authors'),
     #path('authors/', views.FilteredAuthorsListView.as_view(), name='authors'),
     path('authors/', views.AuthorsListTableView.as_view(), name='authors'),
-    path('authors/search/', views.search_author, name='authors-search'),    
+    path('authors/search/', views.search_author, name='authors-search'),
+    path('authors/create', views.AuthorsCreateView.as_view(), name='author-create'),
     path('author/<int:pk>', views.AuthorDetailView.as_view(), name='author-detail'),
+    path('author/<int:pk>/update', views.AuthorUpdateView.as_view(), name='author-update'),
     path('author/<int:pk>/listdetails', views.getAuthorsListDetails, name='authors-list-details'),
-    path('authors_book', views.getAuthors, name='authors_book'),
+    path('authors/book', views.getAuthors, name='authors_book'),
 ]

@@ -7,6 +7,7 @@ from django import forms
 from django.forms import widgets
 #from django.forms.models import inlineformset_factory
 from django.utils.translation import gettext as _
+from django.utils import timezone
 
 from bookshelf.models import books, authors, states
 from bookshelf.widgets import AuthorsTagWidget
@@ -60,8 +61,6 @@ class BookCreateForm(forms.ModelForm):
         
         self.helper = FormHelper()
         self.helper.label_class = 'lb-sm'
-        
-        # TODO show validation messages (when returning after save failed)
         
         self.helper.layout = Layout(
             # Alert(...)
@@ -129,7 +128,7 @@ class BookCreateForm(forms.ModelForm):
             self.fields[field_name].required = False
 
         #self.fields['created'].widget = widgets.DateInput() # BUT not to be edited, readonly
-        #self.fields['updated'].value = datetime.now()
+        #self.fields['updated'].value = datetime.now(tz=timezone.utc)
 
 
     def clean(self):
@@ -138,7 +137,9 @@ class BookCreateForm(forms.ModelForm):
         isbn10 = isbn10_value and Isbn10(isbn10_value)
         isbn13 = isbn13_value and Isbn13(isbn13_value)
         if isbn13:
-            if isbn10 != isbn13.convert():
+            if isbn10 is None:
+                self.cleaned_data['isbn10'] = isbn13.convert()
+            elif isbn10 != isbn13.convert():
                 self.add_error('isbn10', 'does not match value for ISBN13')
         
         return self.cleaned_data
@@ -178,19 +179,26 @@ class BookCreateForm(forms.ModelForm):
     def clean_updated(self):
         data = self.cleaned_data['updated']
         if data is None:
-            data = datetime.now()
+            data = datetime.now(tz=timezone.utc)
         return data
     
     def clean_created(self):
         data = self.cleaned_data['created']
         if data is None:
-            data = datetime.now()
+            data = datetime.now(tz=timezone.utc)
         return data
     
     def clean_new_description(self):
         data = self.cleaned_data['new_description']
         if self.instance.description == data:
             return None  # not changed
+        return data
+
+    def clean_publicationDate(self):
+        data = self.cleaned_data['publicationDate']
+        #if data and len(data) == 4 and data.isdigit():
+        #    # numeric value e.g. '2018', but expect date 
+        #   data += '-01-01'
         return data
     
     def orig_description(self):
@@ -318,7 +326,7 @@ class BookUpdateForm(forms.ModelForm):
             self.fields[field_name].required = False
 
         #self.fields['created'].widget = widgets.DateInput() # BUT not to be edited, readonly
-        #self.fields['updated'].value = datetime.now()
+        #self.fields['updated'].value = datetime.now(tz=timezone.utc)
 
 
     #def clean(self):
@@ -331,7 +339,7 @@ class BookUpdateForm(forms.ModelForm):
     
     def clean_updated(self):
         data = self.cleaned_data['updated']
-        data = datetime.now()
+        data = datetime.now(tz=timezone.utc)
         return data
     
     def clean_new_description(self):
@@ -366,8 +374,64 @@ class BookInfoForm(forms.ModelForm):
 
 
 #class BookStatusUpdateForm(forms.ModelForm):
+
+
+class AuthorCreateForm(forms.ModelForm):
     
-    
+    class Meta:
+        model = authors
+        fields = (
+            'name', 
+            'updated', 
+            ) 
+
+    name = forms.CharField(max_length=255, label='Vorname Name')
+    #familyName = forms.CharField(max_length=255, label='Familienname')
+    updated = forms.DateField(disabled=True)    
+        
+    def __init__(self, *args, **kwargs):
+        super(AuthorCreateForm, self).__init__(*args, **kwargs)
+        
+        self.helper = FormHelper()
+        self.helper.label_class = 'lb-sm'
+
+        self.helper.layout = Layout(
+            # Alert(...)
+            Fieldset(
+                '',
+                Field('name'),
+                Field('familyName'),
+                ),
+            Div(
+                Div(Field('updated', readonly=True), css_class='col-md-4',),
+                css_class='row',
+            ),            
+            FormActions(
+                Submit('save', 'Save changes'),
+                Button( 'cancel', 'Cancel', css_class = 'btn btn-default',
+                        onclick="window.history.back()")
+            )            
+        )
+        
+        self.fields['updated'].initial = datetime.now(tz=timezone.utc)
+
+
+    def clean(self):
+        return self.cleaned_data
+
+    def clean_updated(self):
+        data = self.cleaned_data['updated']
+        if data is None:
+            data = datetime.now(tz=timezone.utc)
+        return data
+        
+        
+class AuthorUpdateForm(AuthorCreateForm):
+    # TODO differentiate create / update? if, then factor out validations ... to shared base class
+
+    def __init__(self, *args, **kwargs):
+        super(AuthorUpdateForm, self).__init__(*args, **kwargs)
+
 
 class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for book
     """

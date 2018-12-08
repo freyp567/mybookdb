@@ -163,6 +163,8 @@ class OnleiheClient:
         if book_title:
             book_title = urllib.parse.quote(book_title)
         match = re.search('<title>die OnleiheRegio. Suchergebnis :  Ihre Suche nach (.*?)</title>', html)
+        if match is None:
+            raise ValueError("troubles with Onleihe search / search result")
         found = match.group(1)
         # '[ Titel: Rosenthal] ergab 3 Titeltreffer. S. 1 (1 bis 3)'
         LOGGER.info("search result: %s" % found)

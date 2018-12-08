@@ -1,0 +1,21 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+<!-- button type="button" class="btn btn-primary" ... -->
+<a class="btn btn-primary btn-sm" role="button" 
+  href="{% url 'bookshelf:author-update' authors.pk %}">Edit Author Details</a>
+
+<h1>{{ authors.name }}</h1>
+
+<p><strong>Details:</strong><br/> 
+  (currently no additional description for author -- future)
+</p>
+<hr/>
+<p class="detail_brief">Updated: {{ authors.updated|date:"c" }}</p>
+<p class="detail_brief">Last Book Update: {{ authors.last_book_update|date:"c" }}</p>
+
+<br/>
+<hr/>
+</div>
+{% endblock %}
+
