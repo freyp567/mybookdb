@@ -4,10 +4,12 @@ client to access german Onleihe website
 """
 
 import re
+import io
 import requests
 from pathlib import Path
 import urllib.parse
 from django.utils.translation import gettext as _
+from django.conf import settings
 
 from bookshelf.onleihe_bookdetails_parser import OnleiheBookDetailsParser
 
@@ -55,14 +57,18 @@ for item in ONLEIHE_DETAIL_FIELDS:
         item.append(field_title_loc)
 
 
-class OnleiheClient:
+if settings.ONLEIHE_URL:
+    BASEURL = settings.ONLEIHE_URL
+    assert settings.ONLEIHE_START, "missing ONLEIHE_START"
+    STARTURL = f'{BASEURL}/{settings.ONLEIHE_START}'  # welcome ?
+    assert settings.ONLEIHE_SEARCH, "missing ONLEIHE_SEARCH"
+    SEARCHURL = f'{BASEURL}/{settings.ONLEIHE_SEARCH}'
+else:
+    STARTURL = None
+    SEARCHURL = None
+    
 
-    onleihe = 'www4.onleihe.de'
-    baseurl = f'{onleihe}/onleiheregio/frontend'
-    starturl = f'http://{baseurl}/welcome,51-0-0-100-0-0-1-0-0-0-0.html'
-    #searchurl = f'http://{baseurl}/search,0-0-0-100-0-0-0-0-0-0-0.html'
-    searchurl = f'http://{baseurl}/search,0-0-0-0-0-0-0-0-0-0-0.html'
-    # TODO derive from settings.ONLEIHE_URL
+class OnleiheClient:
 
     def __init__(self):
         # Start a session so we can have persistant cookies
@@ -82,13 +88,16 @@ class OnleiheClient:
 
     def connect(self):
         """ connect to onleihe website emulating Chrome browser """
-        response = self.session.get(self.starturl)
+        response = self.session.get(STARTURL)
         LOGGER.debug("got cookies: %s" % self.session.cookies)  # a RequestsCookieJar
         LOGGER.debug("JSESSIONID='%s'" % (response.cookies.get('JSESSIONID')))
         assert self.session.cookies.get(
             'JSESSIONID') == response.cookies.get('JSESSIONID')
         html = response.content.decode('utf-8')
-        assert '<title>die OnleiheRegio. Startseite</title>' in html
+        #if not '<title>die OnleiheRegio. Startseite</title>' in html:
+        if not 'title="die OnleiheRegio"' in html or 'An unexpected error has occurred!' in html:
+            open('onliehe_start_bad.html', 'w').write(html)
+            raise ValueError("unexpected response from onleihe url=%s." % STARTURL)
         # <img .*?src="(?url [^"]*)".*?/>
         """
         # see 'var lwa = trackPage()' embedded in html
@@ -97,8 +106,9 @@ class OnleiheClient:
         #    function lgSet_Cookie
         # http://statistik.onleihe.de/statistics/includes/trackPage.php?conf=LWA_p93&lwa_id=LWA_p93&referrer=&visitorid=18998590032&sessionid=25879500810&newses=1&trackermode=undefined&w=1920&h=1080&cd=24&docTitle=die%20OnleiheRegio.%20Startseite
         # request Cookie: Logaholic_Screenres=50284383836
-
         """
+        return
+    
 
     def extract_mediainfo(self, html):
         media_info = []
@@ -136,11 +146,13 @@ class OnleiheClient:
 
 
     def get_search_headers(self):
+        parts = urllib.parse.urlparse(BASEURL)
+        ONLEIHE_ORIGIN = f"{parts.scheme}://{parts.netloc}"
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "Cache-Control": "max-age=0",
-            "Origin": f"http://{self.onleihe}",
-            "Referer": self.searchurl,
+            "Origin": ONLEIHE_ORIGIN,
+            "Referer": SEARCHURL,
             # - Pragma: no-cache
         }
         return headers
@@ -149,17 +161,17 @@ class OnleiheClient:
         assert book_title or isbn, "either book_title or isbn must be specified for search"
         data = f"""cmdId=701&sK=1000&pText=&pTitle={book_title}&pAuthor=&pKeyword=&pisbn={isbn}&ppublishdate=&pMediaType=-1&pLang=-1&pPublisher=-1&pCategory=-1&SK=1000&pPageLimit=20&Suchen=Suchen"""
         # session_id = self.session.cookies.get('JSESSIONID')
-        self.session.cookies.set(name='test', value='1')
+        # self.session.cookies.set(name='test', value='1')
 
         response = self.session.post(
-            self.searchurl, 
+            SEARCHURL, 
             data=data.encode('utf-8'), 
             headers=self.get_search_headers(),
             )
         html = response.content.decode('utf-8')
-        if not '<title>die OnleiheRegio. Suchergebnis :  Ihre Suche nach ' in html:
-            self.dump_html('check_search_result.html', html, "check")
-        # ... Suche nach [ Titel: Rosenthal] ergab 3 Titeltreffer. S. 1 (1 bis 3)</title>
+        if not '<title>die OnleiheRegio. Suchergebnis :  Ihre Suche nach ' in html or DUMP_RESPONSE:
+            self.dump_html('search_result_bad.html', html, "check")
+        # ... Suche nach [ Titel: xxx] ergab 3 Titeltreffer. S. 1 (1 bis 3)</title>
         if book_title:
             book_title = urllib.parse.quote(book_title)
         match = re.search('<title>die OnleiheRegio. Suchergebnis :  Ihre Suche nach (.*?)</title>', html)
@@ -168,8 +180,8 @@ class OnleiheClient:
         found = match.group(1)
         # '[ Titel: Rosenthal] ergab 3 Titeltreffer. S. 1 (1 bis 3)'
         LOGGER.info("search result: %s" % found)
-        if False: # DEBUG:
-            Path('./search_result.html').write_text(html)
+        if DUMP_RESPONSE: # DEBUG:
+            Path('./search_result_ok.html').write_text(html)
 
         # extract mediaItem info from html response
         return self.extract_mediainfo(html)
@@ -180,14 +192,13 @@ class OnleiheClient:
         LOGGER.debug("HTML (%s) dumped to %s" % (info, dump_path))
             
     def get_book_details(self, book_ref):
-        book_url = f'http://{self.baseurl}/{book_ref}'
+        book_url = f'{BASEURL}/{book_ref}'
         response = self.session.get(book_url)
         assert response.status_code == 200, \
           "lookup %s failed: %s %s" % (book_ref, response.status_code, response.text)
         html = response.content.decode('utf-8')
-        assert '<title>die OnleiheRegio. ' in html
-        if DUMP_RESPONSE:
-            self.dump_html('book_details.html', html, 'book_details')
+        if not '<title>die OnleiheRegio. ' in html or DUMP_RESPONSE:
+            self.dump_html('book_details_bad.html', html, 'book_details')
             
         # extract book details
         try:

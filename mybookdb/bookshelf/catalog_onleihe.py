@@ -272,7 +272,7 @@ class OnleiheView(generic.TemplateView):
             book_obj.updated = datetime.now()
             if not book_obj.new_description:
                 description = onleihe_book.book_description
-                now_date = datetime.now().date(tz=timezone.utc)
+                now_date = datetime.now(tz=timezone.utc).date()
                 description += "\n[from onleihe %s]" % now_date.isoformat()
                 book_obj.new_description = description
             book_obj.save()
