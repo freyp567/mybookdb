@@ -60,8 +60,6 @@ TODO new book, add new author inline while adding book
 TODO new book, disallow to enter new tags not matching existing authors
 TODO authorslist handle column click vs open detail view - see books list
 TODO use FormView / Crispy Forms to edit book details and book status on one page
-TODO status onleihe
-  ++ fix broken onleihe search client
 TODO update more fields for onleihe page 
 TODO resolve problems with bootstrap-table / editable / x-edit  / bootstrap4 / popper
   ++ update javascript libraries to newer versions (fixes, compatibility issues)
