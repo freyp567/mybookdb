@@ -34,7 +34,9 @@ class BookCreateForm(forms.ModelForm):
     
     subject = forms.CharField(max_length=255)
     publisher = forms.CharField(max_length=128)
-    publicationDate = forms.DateInput()
+    publicationDate = forms.fields.DateField(  # input_formats
+        widget=forms.widgets.DateInput(attrs={'type': 'date'}),
+    )
     
     created = forms.DateField(disabled=True)
     updated = forms.DateField(disabled=True)
