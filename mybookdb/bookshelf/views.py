@@ -377,7 +377,8 @@ class AuthorListView(generic.ListView):
 
 def author_obj_to_dict(obj):
     data = {}
-    for key in ('id', 'name', 'latest_book', 'updated', 'last_book_update', 'book_rating_avg', 'book_count'):
+    for key in ('id', 'name', 'latest_book', 'updated', 'last_book_update', 
+                'book_rating_avg', 'book_count', 'books_read'):
         data[key] = getattr(obj, key)
     return data
 

@@ -1,4 +1,5 @@
 {% extends "base_generic.html" %}
+{% load bookmarks_tags %}
 
 {% block content %}
 <!-- button type="button" class="btn btn-primary" ... -->
@@ -15,6 +16,9 @@
 <p class="detail_brief">Last Book Update: {{ authors.last_book_update|date:"c" }}</p>
 
 <br/>
+
+{% show_bookmarks authors %}
+
 <hr/>
 </div>
 {% endblock %}

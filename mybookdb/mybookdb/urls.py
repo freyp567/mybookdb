@@ -22,8 +22,8 @@ urlpatterns = [
 
 urlpatterns += [
     path('bookshelf/', include('bookshelf.urls', namespace="bookshelf")),
+    path('bookmarks/', include('bookmarks.urls', namespace="bookmarks")),
 ]
-
 
 
 # Use static() to add url mapping to serve static files during development (only)
@@ -34,7 +34,6 @@ urlpatterns+= static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += [
     path('', RedirectView.as_view(url='/bookshelf/', permanent=True)),
 ]
-
 
 
 # Django site authentication urls (for login, logout, password management)

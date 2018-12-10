@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'bookshelf.apps.BookshelfConfig',
+    'bookmarks.apps.BookmarksConfig',
     'bootstrap4',
     'django_tables2',
     'django_filters',
