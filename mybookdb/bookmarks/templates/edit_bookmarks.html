@@ -1,4 +1,9 @@
 <!-- show_bookmarks -->
 <table>
-<tr><td>TEST show_bookmarks</td><td>#={{ links }}</td></tr>
+  {% for link in links %}
+  <tr>
+    <td>{{ link.link_site }}</td>
+    <td><a href="{{ link.url }}">{{ link.name }}</a></td>
+  </tr>
+  {% endfor %}
 </table>

@@ -1,9 +1,20 @@
 <!-- show_bookmarks -->
+{% if link_infos %}
+<p><strong>bookmarks:</strong></p>
 <table>
-  {% for link in links %}
   <tr>
-    <td>{{ link.link_target }}</td>
-    <td><a href="{{ link.url }}">{{ link.name }}</a></td>
+    <td></td>
+    <td>Site</td>
+    <td>Bookmark</td>
+    <td>created/updated</td>
+  </tr>  
+  {% for info in link_infos %}
+  <tr>
+    <td>*</td>
+    <td>{{ info.site_name }}</td>
+    <td><a target="bookmark" href="{{ info.link.link_uri }}">{{ info.link.link_name }}</a></td>
+    <td>{{ info.link.updated|date:"c" }}</td>
   </tr>
   {% endfor %}
 </table>
+{% endif %}

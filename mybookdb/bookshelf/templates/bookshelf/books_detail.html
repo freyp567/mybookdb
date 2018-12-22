@@ -1,4 +1,6 @@
 {% extends "base_generic.html" %}
+{% load bookmarks_tags %}
+
 
 {% block content %}
 <!-- button type="button" class="btn btn-primary" ... -->
@@ -32,6 +34,12 @@
 <p><strong>ISBN:</strong> 
 {% if books.isbn10 %}{{ books.isbn10 }}&nbsp;&nbsp;{% endif %}
 {% if books.isbn13 %}{{ books.isbn13 }}{% endif %}
+
+<br/><br/>
+<a href="{% url "bookmarks:bookmark-create" objtype='books' pk=books.id %}">add bookmark</a>
+
+{% show_bookmarks books %}
+<br/>
 
 <p><strong>Description:</strong><br/> 
 {% if not books.new_description %}

@@ -1,11 +1,7 @@
 {% extends "base_generic.html" %}
 
+{% load static %}
 {% load bootstrap4 %}
-{% load bookmarks_tags %}
-
-{% block title %}
-    Edit Book Details
-{% endblock %}
 
 {% block content %}
     {{ form.media.css }}
@@ -17,18 +13,23 @@
             {{ message|safe }}
         </div>
     {% endfor %}
-    
-    <form role="form" method="post"> <!-- action="/update_book" -->
-        <!-- legend>Update book entry:</legend -->
+
+    <h3>create Bookmark</h3>
+    <p>for {{objtype}}: {{title}}</p>
+
+    <form role="form" method="post">
         {% csrf_token %}
         
         {% load crispy_forms_tags %}
         {% crispy form %}
 
-        <a href="{% url "bookmarks:bookmark-create" objtype='authors' pk=authors.id %}">add bookmark</a>
-        <br/>
-        {% edit_bookmarks authors %}
-
     </form>
+
+
+<script>
+var bookmarks_url_parseuri = "{% url 'bookmarks:parse_uri' %}";
+</script>
+
+<script src="{% static 'js/bookmarks_form.js' %}"></script>
     
 {% endblock %}

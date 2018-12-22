@@ -42,7 +42,7 @@ class authors(models.Model):
     
     @property
     def books_read(self):
-        b = self.books_set.filter(states__read = True)
+        b = self.books_set.filter(states__haveRead = True)
         return len(b)
         
     @property

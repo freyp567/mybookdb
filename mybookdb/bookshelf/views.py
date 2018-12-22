@@ -245,16 +245,6 @@ class BookCreateView(PermissionRequiredMixin, generic.edit.CreateView):
     model = books
     form_class = BookCreateForm
     
-    def clean_title(self, form):  # TODO right place? see form
-        assert False
-        raise ValidationError("test validation")
-    
-    def clean(self):  # TODO right place? see form
-        assert False
-        cleaned_data = super().clean()
-        autnors = cleaned_data.get("authors")
-        return cleaned_data
-        
     def get_initial(self):
         initial_data = super(BookCreateView, self).get_initial()
         return initial_data
@@ -348,7 +338,7 @@ class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
             context['bookinfo_form'] = BookInfoForm(instance=self.object.book)
         return context
     
-    def get_success_url(self): 
+    def get_success_url(self):
         success_url = reverse('bookshelf:book-detail', args=(self.object.id,))
         return success_url
     
