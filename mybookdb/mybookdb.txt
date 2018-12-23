@@ -1,6 +1,6 @@
 My Bookshelf
 implementation notes / index to views
-2018-12-07  updated
+2018-12-23  updated
 
 ***
 Book list  /bookshelf/books/v1/?sort=
@@ -51,10 +51,10 @@ Book Details  /bookshelf/book/27
 	
 
 ***
-TODO author, list of URLs to author detail pages (histocouch, goodreads, ...)  as 1:n relationship, qualified by site name?
-TODO book, list of URLs to book detail pages (onleihe, histocouch, amazon, audible, goodreads, librarythings, ...) - 1:n too
+
 TODO edit book state - update cell after save / close
 TODO new book, publicationDate - DateInput ?  handle date precision year vs year-month-day
+TODO verify use of DateRangeField / https://github.com/vitalets/bootstrap-datepicker
 TODO new book, show validation errors on form (testing!)
 TODO new book, add new author inline while adding book 
 TODO new book, disallow to enter new tags not matching existing authors
