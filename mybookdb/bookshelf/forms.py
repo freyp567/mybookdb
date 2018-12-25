@@ -475,8 +475,7 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
             'readingNow',
             'haveRead',
             # 'wantRead',
-            'iOwn',   # = stopped reading / not read
-            
+            'iOwn',   # = not read / suspended (stopped reading / partially read)            
             )
 
     def __init__(self, *args, **kwargs):
@@ -487,8 +486,8 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
             #self.fields[field_name].widget.attrs['class'] = 'form-control form-control-lg'
             pass
         
-        self.fields['toBuy'].label = 'on wishlist'
-        self.fields['iOwn'].label = 'not read/stopped'
+        self.fields['toBuy'].label = 'on wishlist (to buy)'
+        self.fields['iOwn'].label = 'not read/stopped (I own)'
 
     def clean(self):
         cleaned_data = super(StateUpdateForm, self).clean()

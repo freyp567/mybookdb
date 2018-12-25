@@ -23,6 +23,16 @@ def get_bookmarks_stats(request):
     }
     return JsonResponse(stats)
 
+def get_linkname_from_path(path):
+    pathsteps = path.split('/')
+    name = pathsteps.pop()
+    while not name.strip(): 
+        # empty if url endswith '/', e.g. for lovelybooks.de
+        name = pathsteps.pop()
+    if name.endswith('.html'):
+        name = name[:-5]
+    return name
+    
 def parse_uri(request):
     # e.g. https://de.wikipedia.org/wiki/Aharon_Appelfeld
     uri = request.GET['uri']
@@ -40,7 +50,7 @@ def parse_uri(request):
         assert site, "missing host part in URL"
         path = parts.path
         assert path, "missing path in URL"
-        name = path.split('/')[-1]
+        name = get_linkname_from_path(path)
         nurl = urllib.parse.urlsplit(uri)
         npath = nurl.geturl()
         qs = None

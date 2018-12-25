@@ -11,6 +11,7 @@ from django.http import HttpResponse, JsonResponse
 #from django.http import iri_to_uri
 from django.utils.encoding import iri_to_uri
 from django.urls import reverse
+from django.db.models import Q
 
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -137,6 +138,15 @@ class BooksListTableView(generic.TemplateView):
         if not 'is_paginated' in context:
             context['is_paginated'] = False
             # SET TO avoid. ValueError: invalid literal for int() with base 10: 'is_paginated'
+        book_states = {
+            "haveRead": "have read",
+            "haveRead+favorite": "have read/+",
+            "readingNow": "reading",
+            "toBuy": "want read",
+            "iOwn": "unfinished",
+            "": "not read",
+        }
+        context['book_states'] = json.dumps(book_states);
         return context
 
 
@@ -163,20 +173,26 @@ def search_book(request):
             elif key == 'userRating':
                 search_filter["userRating__gte"] = value
             elif key == 'state':
-                if value == 'read':
+                if value == 'haveRead':
                     search_filter["states__haveRead"] = True
-                elif value == 'reading':
+                elif value == 'haveRead+favorite':
+                    cond = Q(states__haveRead=True) & Q(states__favorite=True)
+                    qs = qs.filter(cond)
+                elif value == 'readingNow':
                     search_filter["states__readingNow"] = True
-                elif value == 'not_read':
-                    search_filter["states__haveRead"] = False
-                    search_filter["states__readingNow"] = False
-                elif value == 'want_read':
+                elif value == 'iOwn':  # unfinished
+                    search_filter["states__iOwn"] = True                    
+                #elif value == 'not_read':
+                #    search_filter["states__haveRead"] = False
+                #    search_filter["states__readingNow"] = False
+                elif value == 'toBuy':  # want read
                     search_filter["states__toBuy"] = True
                 else:
                     LOGGER.warn("unrecognized filter value for vield state: %s" % value)
             else:
                 search_filter[key] = value  # TODO other cols?
-        qs = qs.filter(**search_filter)
+        if search_filter:
+            qs = qs.filter(**search_filter)
         
     row_count = qs.count()
     """
@@ -193,7 +209,7 @@ def search_book(request):
     data = []
     fields = (
         'id', 'title', 'created', 'updated', 'userRating', 
-        'states__haveRead', 'states__readingNow', 'states__toRead', 'states__toBuy'
+        'states__haveRead', 'states__readingNow', 'states__toRead', 'states__toBuy', 'states__iOwn'
     )
     for row in qs.values(*fields):
         row_data = {}

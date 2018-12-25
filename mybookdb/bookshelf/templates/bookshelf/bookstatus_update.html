@@ -4,9 +4,7 @@
     <form method="post" 
         action="{% url 'bookshelf:book-status-update' pk=form.instance.id %}"
         id="book-status-update" class="form">{% csrf_token %}
-        <!-- form.instance.id -- TemplateSyntaxError 
         
-        -->
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title">Book Status Update</h4>
@@ -32,7 +30,9 @@
                 </div>
                 {% endif %}
                 
-                book '{{ form.instance.book.title }}' id={{ form.instance.book.id }}
+                book '{{ form.instance.book.title }}' 
+                id={{ form.instance.book.id }}
+                <input type="hidden" name="states_book_id", id="states_book_id" value="{{ form.instance.book.id }}" />                
                 <br/><br/>
                 
                 {% for field in form.visible_fields %}

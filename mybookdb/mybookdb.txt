@@ -49,9 +49,25 @@ Book Details  /bookshelf/book/27
 	view: BookDetailView, generic.DetailView
 	template: books_detail.html
 	
+      
+      
+***
+Book Status Update
+    bootstrap modal 
+    modal anchored on booklist_table.html, #states-modal
+    loaded by BookStatusUpdateView from bookstatus_update.html
+    bookshelf\static\js\bookslist_table.js
+      open_status_modal 
+    choices see StateUpdateForm
+    
+state display: have_read_values  -- wiring, used where?
+filter values see book_states
 
 ***
+***
 
+TODO new book, authors selection, prevent auto tag creation
+TODO link from search authors, details book list item to book details page
 TODO edit book state - update cell after save / close
 TODO new book, publicationDate - DateInput ?  handle date precision year vs year-month-day
 TODO verify use of DateRangeField / https://github.com/vitalets/bootstrap-datepicker

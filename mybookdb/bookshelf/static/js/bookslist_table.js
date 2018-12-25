@@ -11,27 +11,41 @@ function format_book_link(value, row, index) {
   return "<a href='/bookshelf/book/"+row.id+"'>"+value+"</a>";
 }
 
-function format_state(value, row, index){
-  let status = "";
+function describe_state(row) {
+  /*
+  model states, inherited from MyBookDroid
+      favorite
+      haveRead
+      readingNow
+      iOwn
+      toBuy
+      toRead
+  */    
   if (row.states__haveRead) {
-    status += "have read";
-  } else {
-    if (row.states__readingNow) {
-      status += "reading";
-    } else {
-      if (row.states__toBuy) {
-        status += "want read";
-      }
-      else {
-        status += "NOT read";
-      }
+    if (row.states__favorite) {
+      return "have read/+";
     }
+    return "have read";
   }
+  if (row.states__readingNow) {
+      return "reading";
+  }
+  if (row.states__toBuy) {
+      return "want read";
+  }
+  if (row.states__iOwn) {
+      return "unfinished";  
+      // suspended, stopped reading (if not readingNow/haveRead)
+  }
+  return "not read";
+}
+
+function format_state(value, row, index){
+  let status = describe_state(row);
   
   var status_url = url_status_base.replace(/987654321/, row.id);
-  // status = '<a data-toggle="modal" data-target="#states-modal" data-backdrop=true keyboard=true href="' +status_url +'" >' +status +'</a>';
-  var id = row["id"];
-  status = '<a class="link" onclick="open_status_modal(' +id +')" >' +status +'</a>';
+  status = '<a data-toggle="modal" data-target="#states-modal" data-book-id="' +row.id +'" data-backdrop=true keyboard=true href="' +status_url +'" >' +status +'</a>';
+  // status = '<a class="link" onclick="open_status_modal(' +id +')" >' +status +'</a>';
   return status;
 
 }
@@ -67,12 +81,13 @@ function detailFormatterBook(index, row, element) {
     return '<p>TODO book details</p>'
 }
 
+/*
 function open_status_modal(id) {
   //var status_url = url_status_base.replace(/987654321/, book_id);
   book_id = id;
   var modal = $('#states-modal'), modalBody = $('#states-modal .modal-body');  
   modal.modal({backdrop: true, keyboard: true});
-  /*
+  / *
   .on('show.bs.modal', function() {
     console.debug("show status from url=" +status_url);
     $.ajax({
@@ -86,8 +101,9 @@ function open_status_modal(id) {
         // TODO discard model
     });
   })
-  */
+  * /
 }
+*/
 
 
 $('#states-modal').on('click-cell.bs.table', function (field, value, row, $element) {
@@ -97,8 +113,9 @@ $('#states-modal').on('click-cell.bs.table', function (field, value, row, $eleme
 
 
 $('#states-modal').on('show.bs.modal', function (event) {
-    var status_url = url_status_base.replace(/987654321/, book_id);
     var modal = $(this);
+    var book_id = $(event.relatedTarget).data('book-id');
+    var status_url = url_status_base.replace(/987654321/, book_id);
     modal.html('<p>loading ...</p>');
     $.ajax({
         url: status_url,
@@ -111,6 +128,17 @@ $('#states-modal').on('show.bs.modal', function (event) {
         modal.modal('hide');
     });
 })
+
+$('#states-modal').on('hide.bs.modal', (event) => {
+    console.debug("hide states-modal dialog");
+    let book_id = $("#states_book_id").val();
+    const $table = $('#bookslist');
+    if ($table.length > 0) {
+      // trigger update on book list status (show in case changed)
+      console.debug("refresh row for book_id=" +book_id);
+      $table.bootstrapTable('refresh');
+    }
+});
 
 // workaround for issue with bootstrap-table filter-control and cookie 
 const filter_control = Cookies.get('books.bs.table.filterControl');
@@ -157,7 +185,7 @@ if ($('#bookslist').length !== 0) {
   });
 
     
-  $table.on("xxx.click-row.bs.table.xxx", function(e, row, $tr) {
+  $table.on("xxx.click-row.bs.table.xxx", function(e, row, $tr) {  // TODO obsolete?
     console.debug("clicked on table row/cell: " + $(e.target).attr('class'), [e, row, $tr]);
     //let row_num = $tr.index() + 1;
     book_id = row["id"];

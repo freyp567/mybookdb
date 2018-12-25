@@ -71,8 +71,17 @@ var have_read_values = {
   "read": "have read",
   "reading": "reading",
   "want_read": "want read",
-  "not_read": "NOT read",
+  "not_read": "not read/suspended",
 };
+/*
+model states, inherited from MyBookDroid
+    favorite
+    haveRead
+    readingNow
+    iOwn
+    toBuy
+    toRead
+*/
 </script>
 
 <div class="container">
@@ -147,6 +156,7 @@ var have_read_values = {
       <th id="col-state" class="book_state"
         data-field="state"
         data-filter-control="select" 
+        data-filter-data="var:book_states"
         data-sortable="false" 
         data-formatter="format_state"
         scope="col"
@@ -169,6 +179,8 @@ var have_read_values = {
 
 <script>
 var url_status_base = "{% url 'bookshelf:book-status-update' pk=987654321 %}";
+// defaults for filter select book_state, ...
+var book_states = {{book_states|safe}}; 
 </script>
 
 <script src="{% static 'js/bookslist_table.js' %}"></script>
