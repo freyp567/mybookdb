@@ -44,13 +44,18 @@ Maintenance
 ***
 Book Details  /bookshelf/book/27
     show book details
-    TODO show onleihe status, states, user rating
-	TODO optimize layout, style for <p> (bootstrap !)
-	view: BookDetailView, generic.DetailView
-	template: books_detail.html
-	
-      
-      
+    view: BookDetailView, generic.DetailView
+    template: books_detail.html
+
+***
+New Book
+    BookCreateForm
+
+***
+Edit Book
+  URL /books/<book_id>/update/
+  view BookUpdateView, form BookUpdateForm
+
 ***
 Book Status Update
     bootstrap modal 
@@ -67,13 +72,16 @@ filter values see book_states
 ***
 
 TODO new book, authors selection, prevent auto tag creation
+TODO new book, disallow to enter new tags not matching existing authors
+
+TODO book description with bold, italic, ... (inline HTML editor, TinyMCE)
+TODO book details, show onleihe status, states, user rating
+TODO book details, optimize layout, style for <p> (bootstrap !)
 TODO link from search authors, details book list item to book details page
-TODO edit book state - update cell after save / close
 TODO new book, publicationDate - DateInput ?  handle date precision year vs year-month-day
 TODO verify use of DateRangeField / https://github.com/vitalets/bootstrap-datepicker
 TODO new book, show validation errors on form (testing!)
-TODO new book, add new author inline while adding book 
-TODO new book, disallow to enter new tags not matching existing authors
+TODO new book, add new author inline while adding book
 TODO authorslist handle column click vs open detail view - see books list
 TODO use FormView / Crispy Forms to edit book details and book status on one page
 TODO update more fields for onleihe page 

@@ -29,8 +29,15 @@ def get_linkname_from_path(path):
     while not name.strip(): 
         # empty if url endswith '/', e.g. for lovelybooks.de
         name = pathsteps.pop()
+    orig_name = name
     if name.endswith('.html'):
         name = name[:-5]
+    if name.startswith('mediaInfo,0-0-'):
+        # for onleihe-regio
+        name = name[14:]
+        while name.endswith('-0'):
+            name = name[:-2]
+            
     return name
     
 def parse_uri(request):

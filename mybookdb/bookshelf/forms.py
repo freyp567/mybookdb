@@ -31,6 +31,7 @@ class BookCreateForm(forms.ModelForm):
     authors = forms.ModelMultipleChoiceField(
         queryset=authors.objects.none(), 
     )
+
     
     subject = forms.CharField(max_length=255)
     publisher = forms.CharField(max_length=128)
@@ -56,7 +57,7 @@ class BookCreateForm(forms.ModelForm):
             'publisher',
             'publicationDate',
             ) 
-        # 'userrating', 'authors'
+        # 'userrating',
         
     def __init__(self, *args, **kwargs):
         super(BookCreateForm, self).__init__(*args, **kwargs)
@@ -107,10 +108,10 @@ class BookCreateForm(forms.ModelForm):
         book_authors = []
         self.fields['authors'].widget = AuthorsTagWidget(
                 attrs={
-                    # 'data-tags': 'true',
                     'data-placeholder': 'search for book authors',
                     'data-minimum-input-length': 2,
-                    #'data-width': 'auto', # / '50em' / ...
+                    'data-tags': False,  # prevent dynamic tag creation
+                    'data-width': '50%',  # 'auto' / '50em' / ...
                     },
                 #dependent_fields=,
                 data_url = reverse('bookshelf:authors_book'),
@@ -305,10 +306,10 @@ class BookUpdateForm(forms.ModelForm):
         book_authors = [ (o.id, o.name) for o in instance.authors.all() ]
         self.fields['authors'].widget = AuthorsTagWidget(
                 attrs={
-                    # 'data-tags': 'true',
+                    'data-tags': False,
                     'data-placeholder': 'search for book authors',
                     'data-minimum-input-length': 2,
-                    #'data-width': 'auto', # / '50em' / ...
+                    'data-width': '50%',  # auto' / '50em' / ...
                     },
                 #dependent_fields=,
                 data_url = reverse('bookshelf:authors_book'),
@@ -416,6 +417,7 @@ class AuthorCreateForm(forms.ModelForm):
         )
         
         self.fields['updated'].initial = datetime.now(tz=timezone.utc)
+
 
 
     def clean(self):

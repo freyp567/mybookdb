@@ -267,6 +267,7 @@ class BookCreateView(PermissionRequiredMixin, generic.edit.CreateView):
  
     def get_context_data(self, **kwargs):
         context = super(BookCreateView, self).get_context_data(**kwargs)
+        context['tag'] = "div"
         return context
 
     def get_form(self, form_class=None):
@@ -323,6 +324,7 @@ class BookUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     def get_context_data(self, **kwargs):
         context = super(BookUpdateView, self).get_context_data(**kwargs)
         context['is_paginated'] = False  # avoid KeyError
+        context['tag'] = "div"
         return context 
         
 
