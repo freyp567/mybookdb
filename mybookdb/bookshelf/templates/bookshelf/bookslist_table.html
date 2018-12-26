@@ -9,14 +9,20 @@
 <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
 <link rel="stylesheet" type="text/css" href="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.css">
 
-<link rel="stylesheet" href="{% static "bootstrap3-editable/css/bootstrap-editable.css" %}" />
+<link rel="stylesheet" href="{% static "bootstrap4-editable/css/bootstrap-editable.css" %}" />
 
 <style>
+
+  /* fix for editable type number positioning */
+  .popover{
+    left:-20px!important
+  } 
+
   table.books {
-    table-layout: fixed;
+    /*table-layout: fixed;*/
   }
   th.book_id {
-    width: 48px;
+    width: 40px;
   }
   th.book_title {
     background-color: rgba(201, 76, 76, 0.1);
@@ -33,6 +39,9 @@
   th.user_rating {
     width: 40px;
   }
+  th.col_isbn {
+    width: 10px;
+  }
 </style>
 
 {% block extra_js%}
@@ -43,7 +52,7 @@
 -->
 <script src="/static/js-cookie/js.cookie.js"></script>
 <script src="{% static "/bootstrap-table/bootstrap-table.js" %}"></script>
-<script src="{% static "/bootstrap3-editable/js/bootstrap-editable.js" %}"></script>
+<script src="{% static "/bootstrap4-editable/js/bootstrap-editable.js" %}"></script>
 
 <script src="{% static "/jquery-form/jquery.form.js" %}"></script>
 
@@ -141,18 +150,6 @@ model states, inherited from MyBookDroid
         data-formatter="format_book_title"
         scope="col"
         >Title</th>
-      <th id="col-created" class="book_added"
-        data-field="created" 
-        data-filter-control="input" 
-        data-sortable="true" 
-        scope="col"
-        >Added</th>
-      <th id="col-updated" class="book_updated"
-        data-field="updated" 
-        data-filter-control="input" 
-        data-sortable="true" 
-        scope="col"
-        >Updated</th>
       <th id="col-state" class="book_state"
         data-field="state"
         data-filter-control="select" 
@@ -167,8 +164,26 @@ model states, inherited from MyBookDroid
         data-filter-control="select"
         data-filter-data="var:rating_values"
         data-editable="true"
+        data-editable-type="number"
+        data-editable-url="/bookshelf/books/0/update-userrating/"
+        data-editable-emptytext="(not rated)" 
         scope="col"
         >Rating</th>
+      <!-- th id="col-sbn" class="col_isbn"
+        data-field="isbn13"
+      >ISBN</th -->
+      <th id="col-created" class="book_added"
+        data-field="created" 
+        data-filter-control="input" 
+        data-sortable="true" 
+        scope="col"
+        >Added</th>
+      <th id="col-updated" class="book_updated"
+        data-field="updated" 
+        data-filter-control="input" 
+        data-sortable="true" 
+        scope="col"
+        >Updated</th>
     </tr>
     </thead>
     <!-- table body generated, see view search_book -->

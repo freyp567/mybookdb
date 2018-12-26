@@ -1,8 +1,12 @@
 {% extends "base_generic.html" %}
+{% load static %}
 {% load bookmarks_tags %}
 
-
 {% block content %}
+
+<link rel="stylesheet" href="{% static "bootstrap4-editable/css/bootstrap-editable.css" %}" />
+<script src="{% static "/bootstrap4-editable/js/bootstrap-editable.js" %}"></script>
+
 <!-- button type="button" class="btn btn-primary" ... -->
 <a class="btn btn-primary btn-sm" role="button" 
   href="{% url 'bookshelf:book-update' books.pk %}">Edit Book Details</a>
@@ -26,16 +30,37 @@
 
 <h1>{{ books.title }}</h1>
 
-<p><strong>Author(s):</strong>
+<p class="mb-0"><strong>Author(s):</strong>
 {% for author in books.authors.all %}
   <a href="{% url 'bookshelf:author-detail' author.pk %}">{{ author.name }}</a>{% if not forloop.last %}, {% endif %}
 {% endfor %}
 </p>
-<p><strong>ISBN:</strong> 
-{% if books.isbn10 %}{{ books.isbn10 }}&nbsp;&nbsp;{% endif %}
-{% if books.isbn13 %}{{ books.isbn13 }}{% endif %}
+<p class="m-0"><strong>ISBN:</strong> 
+{% if books.isbn13 %}
+  {{ books.isbn13 }}
+{% else %}
+  {% if books.isbn10 %}
+    {{ books.isbn10 }}
+  {% else %}
+    <i>(ISBN?)</i>
+  {% endif %}
+{% endif %}
+</p>
 
-<br/><br/>
+<p class="m-0">
+<strong>Rating:</strong> 
+<a href="#" class="userrating" data-name="userRating" data-type="number" 
+  data-pk="{{books.id}}" data-url="/bookshelf/books/{{books.id}}/update-userrating/" 
+  data-title="rate this book" data-value="{{books.userRating|default:'3'}}">
+{% if books.userRating %}
+  {{ books.userRating }}
+{% else %}
+  (no rating)
+{% endif %}
+</a>
+</p>
+
+<br/>
 <a href="{% url "bookmarks:bookmark-create" objtype='books' pk=books.id %}">add bookmark</a>
 
 {% show_bookmarks books %}
@@ -89,5 +114,18 @@
 <br/>
 <hr/>
 </div>
+
+<script>
+// $(document).ready(() => {
+console.debug("setup editable for userrating field");
+$('.userrating').editable({
+  // mode: 'inline',
+  type: 'number',
+  min: '1',
+  max: '5',
+  step: '1'
+});
+</script>
+
 {% endblock %}
 

@@ -4,12 +4,14 @@ views on bookshelf (books, authors, ...)
 import os
 import logging
 import json
+from datetime import datetime
 
 from django.shortcuts import render, redirect
 from django.views import generic
-from django.http import HttpResponse, JsonResponse
-#from django.http import iri_to_uri
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 from django.utils.encoding import iri_to_uri
+from django.utils import timezone
+
 from django.urls import reverse
 from django.db.models import Q
 
@@ -209,7 +211,8 @@ def search_book(request):
     data = []
     fields = (
         'id', 'title', 'created', 'updated', 'userRating', 
-        'states__haveRead', 'states__readingNow', 'states__toRead', 'states__toBuy', 'states__iOwn'
+        'states__haveRead', 'states__readingNow', 'states__toRead', 'states__toBuy', 'states__iOwn',
+        'isbn13'
     )
     for row in qs.values(*fields):
         row_data = {}
@@ -544,12 +547,15 @@ def getAuthorsListDetails(request, pk=None):
                     comment_info.append('...')
                     break
             book_info = ''
+            book_title = "<b>%s</b>" % book_item.title
+            book_details_url = reverse('bookshelf:book-detail', args=(book_item.id,))
+            book_title = '<a target="details" href="%s">%s</a>' % (book_details_url, book_title)
             if book_item.userRating:
                 # highlight if book has a rating - assume have read
-                book_info += "<b>%s</b>" % book_item.title
+                book_info += "<b>%s</b>" % book_title
                 book_info += " [Rating: %s]" % book_item.userRating
             else:
-                book_info += book_item.title
+                book_info += book_title
                 book_info += " [no rating]"
             if comment_info:
                 book_info += '<br>'
@@ -631,3 +637,37 @@ class BookStatusUpdateView(SuccessMessageMixin, PermissionRequiredMixin, generic
             context['non_field_errors'] = []
         return context 
 
+
+
+class BookUserRatingUpdate(generic.UpdateView):  # PermissionRequiredMixin
+    """
+    handles update requests from userrating editable
+    """
+    
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(BookUserRatingUpdate, self).dispatch(request, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        book_id = kwargs['pk']
+        if book_id == 0:
+            # when called from bookslist cell / field col-rating, have id in POST data
+            book_id = request.POST['pk']
+            
+        rating = request.POST['value']
+        return self.update(request, book_id, rating)
+    
+    def update(self, request, book_id, rating):
+        try:
+            rating_value = int(rating)
+            assert rating_value > 0 and rating_value <= 5, "bad rating value %s" % repr(rating)
+            LOGGER.info("update userRating for book_id=%s to %s", book_id, rating_value)
+            book_obj = books.objects.get(pk=book_id)
+            book_obj.userRating = rating_value
+            book_obj.updated = datetime.now(tz=timezone.utc)
+            book_obj.save()
+        except BaseException:
+            LOGGER.exception("update userRating failed")
+            return HttpResponseBadRequest('update FAILED')
+        else:
+            return HttpResponse('updated')

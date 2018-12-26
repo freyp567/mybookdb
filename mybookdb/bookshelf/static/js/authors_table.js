@@ -9,7 +9,7 @@ https://jsfiddle.net/dabros/6ony6cs2/1/
 */
 
 function format_author_link(value, row, index) {
-  return "<a href='/bookshelf/author/"+row.id+"'>"+value+"</a>";
+  return "<a target=\"details\" href='/bookshelf/author/"+row.id+"'>"+value+"</a>";
 }
 
 // workaround for issue with bootstrap-table filter-control and cookie 

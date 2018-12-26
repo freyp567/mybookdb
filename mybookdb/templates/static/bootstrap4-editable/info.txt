@@ -1,0 +1,7 @@
+
+https://github.com/Talv/x-editable/tree/develop/dist/bootstrap4-editable
+latest commit 2018-01-13
+
+see discussion in 
+https://stackoverflow.com/questions/46926354/x-editable-and-bootstrap-4
+

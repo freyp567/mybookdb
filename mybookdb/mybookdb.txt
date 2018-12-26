@@ -29,7 +29,12 @@ Search authors
   bootstrap-table authorslist
     url="/bookshelf/authors/search", views.search_author
   view: AuthorsListTableView, generic.TemplateView
-  template: authors_table.html
+  template: authors_table.html, authors_table.js
+  click on row -> Authors Details
+  
+Authors Details
+  URL: `/bookshelf/author/${author_id}/listdetails`
+  view: getAuthorsListDetails
 
 ***
 Currently Reading
@@ -42,7 +47,8 @@ Maintenance
 ***
 
 ***
-Book Details  /bookshelf/book/27
+Book Details  
+    URL /bookshelf/book/<book_id>
     show book details
     view: BookDetailView, generic.DetailView
     template: books_detail.html
@@ -71,23 +77,25 @@ filter values see book_states
 ***
 ***
 
-TODO new book, authors selection, prevent auto tag creation
-TODO new book, disallow to enter new tags not matching existing authors
+TODO resolve problems with bootstrap-table / editable / x-edit  / bootstrap4 / popper
+  ++ update javascript libraries to newer versions (fixes, compatibility issues)
+  ++ use packaging mechanism to include external libraries (bower, ...)
+  ++ fix problem with bootstrap4 / x-editor / popper  - switch to inline mode?
+  bootstrap-editable.js  .containerDataName bs.popover
+  TypeError: Cannot read property 'addClass' of undefined
+  https://stackoverflow.com/questions/46926354/x-editable-and-bootstrap-4
+TODO https://github.com/Talv/x-editable/tree/develop/dist/bootstrap4-editable
+  
+TODO edit user rating on book detail site using x-editable
+  (see https://stackoverflow.com/questions/46926354/x-editable-and-bootstrap-4)
 
 TODO book description with bold, italic, ... (inline HTML editor, TinyMCE)
-TODO book details, show onleihe status, states, user rating
-TODO book details, optimize layout, style for <p> (bootstrap !)
-TODO link from search authors, details book list item to book details page
+TODO book details, show onleihe status
 TODO new book, publicationDate - DateInput ?  handle date precision year vs year-month-day
-TODO verify use of DateRangeField / https://github.com/vitalets/bootstrap-datepicker
 TODO new book, show validation errors on form (testing!)
 TODO new book, add new author inline while adding book
 TODO authorslist handle column click vs open detail view - see books list
-TODO use FormView / Crispy Forms to edit book details and book status on one page
 TODO update more fields for onleihe page 
-TODO resolve problems with bootstrap-table / editable / x-edit  / bootstrap4 / popper
-  ++ update javascript libraries to newer versions (fixes, compatibility issues)
-  ++ fix problem with bootstrap4 / x-editor / popper
 
 TODO ChoiceField / bootstrap and validation / clean handling (django_select2?)
 TODO django x-edit support 
