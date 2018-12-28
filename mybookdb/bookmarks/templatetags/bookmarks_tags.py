@@ -35,5 +35,8 @@ def show_bookmarks(obj):
 
 @register.inclusion_tag('edit_bookmarks.html')
 def edit_bookmarks(obj):
-    links = obj.author_links.all()
+    if obj:
+        links = obj.author_links.all()
+    else:
+        links = []
     return {'obj': obj, 'links': links}

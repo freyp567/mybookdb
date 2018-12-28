@@ -25,7 +25,9 @@
         {% load crispy_forms_tags %}
         {% crispy form %}
 
+        {% if authors|default:nothing %}
         <a href="{% url "bookmarks:bookmark-create" objtype='authors' pk=authors.id %}">add bookmark</a>
+        {% endif %}
         <br/>
         {% edit_bookmarks authors %}
 
