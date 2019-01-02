@@ -1,6 +1,6 @@
 My Bookshelf
 implementation notes / index to views
-2018-12-23  updated
+2019-01-02  updated
 
 ***
 Book list  /bookshelf/books/v1/?sort=
@@ -41,6 +41,7 @@ Authors List Details
 Author Details
   URL /bookshelf/author/<author_id>
   view: AuthorDetailView (generic.DetailView)
+  Template: authors_detail.html
   
 
 ***
@@ -94,19 +95,16 @@ TODO
   ++ update javascript libraries to newer versions (fixes, compatibility issues)
   ++ use packaging mechanism to include external libraries (bower, ...)
   
-TODO edit user rating on book detail site using x-editable
-  (see https://stackoverflow.com/questions/46926354/x-editable-and-bootstrap-4)
+TODO fix bug with user rating, default value
 
 TODO book description with bold, italic, ... (inline HTML editor, TinyMCE)
 TODO book details, show onleihe status
 TODO new book, publicationDate - DateInput ?  handle date precision year vs year-month-day
 TODO new book, show validation errors on form (testing!)
-TODO new book, add new author inline while adding book
 TODO authorslist handle column click vs open detail view - see books list
 TODO update more fields for onleihe page 
 
 TODO ChoiceField / bootstrap and validation / clean handling (django_select2?)
-TODO django x-edit support 
 TODO bootstrap-table and + (show details) icon in first column
 
 ***
@@ -125,3 +123,5 @@ mutiple titles for search in onleihe,
 but none does match:
  bookhttp://127.0.0.1:8000/bookshelf/book/27/onleihe
 allow to set state notfound
+
+duplicates to be detected / resolved 

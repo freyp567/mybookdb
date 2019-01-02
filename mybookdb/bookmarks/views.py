@@ -32,6 +32,8 @@ def get_linkname_from_path(path):
     orig_name = name
     if name.endswith('.html'):
         name = name[:-5]
+    if '%' in name:  # URL encoded?
+        name = urllib.parse.unquote(name)
     if name.startswith('mediaInfo,0-0-'):
         # for onleihe-regio
         name = name[14:]

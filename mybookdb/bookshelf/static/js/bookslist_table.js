@@ -8,7 +8,7 @@ let book_id = 987654321;
 let book_id_expanded = null;
 
 function format_book_link(value, row, index) {
-  return "<a href='/bookshelf/book/"+row.id+"'>"+value+"</a>";
+  return '<a target="book" href="/bookshelf/book/'+row.id+'">'+value+"</a>";
 }
 
 function describe_state(row) {
