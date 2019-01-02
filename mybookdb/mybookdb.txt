@@ -32,9 +32,16 @@ Search authors
   template: authors_table.html, authors_table.js
   click on row -> Authors Details
   
-Authors Details
+Authors List Details
   URL: `/bookshelf/author/${author_id}/listdetails`
   view: getAuthorsListDetails
+  template: authors_detail.html
+  
+***
+Author Details
+  URL /bookshelf/author/<author_id>
+  view: AuthorDetailView (generic.DetailView)
+  
 
 ***
 Currently Reading
@@ -75,16 +82,17 @@ state display: have_read_values  -- wiring, used where?
 filter values see book_states
 
 ***
+User Rating Update  (xeditable)
+    /books/<book_id>/update-userrating/
+    view BookUserRatingUpdate
+    
+
+***
 ***
 
-TODO resolve problems with bootstrap-table / editable / x-edit  / bootstrap4 / popper
+TODO 
   ++ update javascript libraries to newer versions (fixes, compatibility issues)
   ++ use packaging mechanism to include external libraries (bower, ...)
-  ++ fix problem with bootstrap4 / x-editor / popper  - switch to inline mode?
-  bootstrap-editable.js  .containerDataName bs.popover
-  TypeError: Cannot read property 'addClass' of undefined
-  https://stackoverflow.com/questions/46926354/x-editable-and-bootstrap-4
-TODO https://github.com/Talv/x-editable/tree/develop/dist/bootstrap4-editable
   
 TODO edit user rating on book detail site using x-editable
   (see https://stackoverflow.com/questions/46926354/x-editable-and-bootstrap-4)

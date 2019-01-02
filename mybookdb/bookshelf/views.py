@@ -472,6 +472,12 @@ class AuthorDetailView(generic.DetailView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        authors_books = books.objects.filter(authors__id = self.object.id)
+        authors_books = authors_books.order_by('-created')
+        context['books_read'] = authors_books.filter(states__haveRead = True)
+        context['books_other'] = authors_books.filter(states__haveRead = False)
+        
         return context 
 
 
