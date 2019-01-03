@@ -5,6 +5,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 from django.urls import reverse 
+import datetime
 
 
 class authors(models.Model):
@@ -154,6 +155,20 @@ class comments(models.Model):
     
     class Meta:
         ordering = ['-dateCreated']
+        
+    @property
+    def datetime_created(self):
+        """ dateCreated is only date (with tz shift) """
+        created = datetime.datetime.utcfromtimestamp(self.dateCreatedInt/1000)
+        return created.strftime("%Y-%m-%dT%H:%M")
+    
+    @property
+    def clean_text(self):
+        comment_date = self.dateCreated.date().isoformat()
+        comment_text = self.text
+        if comment_date in comment_text:
+            comment_text = comment_text.replace(comment_date, '')
+        return comment_text
 
 
 class onleiheBooks(models.Model):

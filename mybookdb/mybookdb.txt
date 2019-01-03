@@ -1,6 +1,6 @@
 My Bookshelf
 implementation notes / index to views
-2019-01-02  updated
+2019-01-03  updated
 
 ***
 Book list  /bookshelf/books/v1/?sort=
@@ -90,6 +90,9 @@ User Rating Update  (xeditable)
 
 ***
 ***
+TODO
+  ++ show and edit book notes -- but how to handle sync with mybookdroid ?
+  ++ field date read with uncertainty (before, approx)
 
 TODO 
   ++ update javascript libraries to newer versions (fixes, compatibility issues)

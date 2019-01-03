@@ -239,6 +239,9 @@ class BookDetailView(generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super(BookDetailView, self).get_context_data(**kwargs)
         context['is_paginated'] = False  # avoid KeyError
+        book_comments = self.object.comments_set.all()
+        book_comments = book_comments.order_by('-dateCreatedInt')
+        context['books_comments'] = book_comments
         return context 
     
 class MaintainBooks(PermissionRequiredMixin, generic.View):
