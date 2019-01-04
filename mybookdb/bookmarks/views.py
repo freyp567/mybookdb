@@ -23,13 +23,26 @@ def get_bookmarks_stats(request):
     }
     return JsonResponse(stats)
 
-def get_linkname_from_path(path):
+def get_linkname_from_path(path, site):
     pathsteps = path.split('/')
-    name = pathsteps.pop()
-    while not name.strip(): 
+        
+    name = pathsteps.pop().strip()
+    while pathsteps and not name: 
         # empty if url endswith '/', e.g. for lovelybooks.de
         name = pathsteps.pop()
+        name = name.strip()
     orig_name = name
+
+    if not name:
+        name = site
+        if name.startswith('www.'):
+            name = name[4:]
+            
+        for suffix in ('.com', '.de'):
+            if name.endswith(suffix):
+                name = name[:-len(suffix)]
+        return name
+    
     if name.endswith('.html'):
         name = name[:-5]
     if '%' in name:  # URL encoded?
@@ -59,7 +72,7 @@ def parse_uri(request):
         assert site, "missing host part in URL"
         path = parts.path
         assert path, "missing path in URL"
-        name = get_linkname_from_path(path)
+        name = get_linkname_from_path(path, site)
         nurl = urllib.parse.urlsplit(uri)
         npath = nurl.geturl()
         qs = None

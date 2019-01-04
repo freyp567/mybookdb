@@ -646,6 +646,8 @@ class UpdateBookComment(PermissionRequiredMixin, generic.edit.UpdateView):
             book_obj.save()
         else:
             comment_obj = comments.objects.get(pk=comment_id)
+            assert comment_obj.book_id == book_obj.id, "wrong book id"
+            
         if comment_obj.text != new_text:
             if not new_text:
                 comment_obj.delete()

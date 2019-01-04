@@ -91,8 +91,9 @@ User Rating Update  (xeditable)
 ***
 ***
 TODO
-  ++ show and edit book notes -- but how to handle sync with mybookdroid ?
-  ++ field date read with uncertainty (before, approx)
+  ++ handle sync of comments with mybookdroid
+  ++ field date-read with uncertainty (before, approx)
+     https://pypi.org/project/django-partial-date/
 
 TODO 
   ++ update javascript libraries to newer versions (fixes, compatibility issues)
@@ -100,15 +101,17 @@ TODO
   
 TODO fix bug with user rating, default value
 
-TODO book description with bold, italic, ... (inline HTML editor, TinyMCE)
-TODO book details, show onleihe status
-TODO new book, publicationDate - DateInput ?  handle date precision year vs year-month-day
-TODO new book, show validation errors on form (testing!)
-TODO authorslist handle column click vs open detail view - see books list
-TODO update more fields for onleihe page 
+TODO 
+  + book description with bold, italic, ... (inline HTML editor, TinyMCE)
+  + book details, show onleihe status
+  + new book, publicationDate - DateInput ?  handle date precision year vs year-month-day
+  + new book, show validation errors on form (testing!)
+  + authorslist handle column click vs open detail view - see books list
+  + update more fields for onleihe page 
 
-TODO ChoiceField / bootstrap and validation / clean handling (django_select2?)
-TODO bootstrap-table and + (show details) icon in first column
+TODO 
+  + ChoiceField / bootstrap and validation / clean handling (django_select2?)
+  + bootstrap-table and + (action, e.g. show details) icon in first column
 
 ***
 TODO to be resolved: (at various places)
@@ -128,3 +131,5 @@ but none does match:
 allow to set state notfound
 
 duplicates to be detected / resolved 
+for books, authors 
+
