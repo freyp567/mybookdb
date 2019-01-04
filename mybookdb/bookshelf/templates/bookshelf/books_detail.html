@@ -4,8 +4,39 @@
 
 {% block content %}
 
+<link rel="stylesheet" href="/static/bootstrap4/dist/css/bootstrap.css" />
+<link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
 <link rel="stylesheet" href="{% static "bootstrap4-editable/css/bootstrap-editable.css" %}" />
+
+<style>
+/* use !important to override width of form-control inside editable-container */
+.editable_bookscomment {
+  width: 800px !important;
+  /* TODO compute width from table column .editable-note */
+}
+
+.editable_bookscomment_new {
+  width: 800px !important;
+  color: read;
+  font-style: italic; 
+}
+
+.editable-click, a.editable-click {
+    text-decoration: none;
+    color: #428bca;
+    border-bottom: none
+}
+/* to remove underline / dashed border-bottom, dropped:
+   border-bottom: dashed 1px #428bca
+*/
+.comment-date {
+    width: 120px;
+}
+</style>
+
+<script src="{% static "/bootstrap-table/bootstrap-table.js" %}"></script>
 <script src="{% static "/bootstrap4-editable/js/bootstrap-editable.js" %}"></script>
+<script src="/static/bootstrap-table/extensions/editable/bootstrap-table-editable.js"></script>
 
 <!-- button type="button" class="btn btn-primary" ... -->
 <a class="btn btn-primary btn-sm" role="button" 
@@ -90,24 +121,50 @@
 {% if books.comments_set.count %}
 <table class="table table-sm booksdetail" id="bookscomments"
     data-toggle="table"
-    data-id-field="id"
+    data-id-field="comment_id"
     data-show-columns="false"
-    data-show-toggle="true"
+    data-show-toggle="false"
 >
 <thead>
   <tr>
-    <th>Date</th>
-    <th>Note</th>
+    <th
+      data-field="comment_id" 
+      data-visible="false"
+    >Id</th>
+    <th
+      id="comment_date"
+    >Date</th>
+    <th
+        class="editable-note"
+        data-editable="true"
+        data-editable-mode="inline"
+        data-editable-type="text"
+        data-editable-inputclass="editable_bookscomment"
+        data-editable-url="/bookshelf/books/{{books.id}}/update-comment/"
+        style="width:100%"
+    >Note</th>
+<!-- 
+-->
   </tr>
 </thead>
 <tbody>
 
 {% for comment in books_comments %}
 <tr>
+<td class="comment-id small">{{ comment.id }}</td>
 <td class="comment-date small">{{ comment.datetime_created }}</td>
 <td class="comment-text">{{ comment.clean_text }}</td>
 </tr>
 {% endfor %}
+
+<tr>
+<td class="comment-id small">0</td>
+<td class="comment-date small">{{comment_now}}</td>
+<td 
+    class="comment-text" 
+    data-editable-inputclass="editable_bookscomment_new"
+>(new comment)</td>
+</tr>
 
 </tbody>
 </table>
@@ -121,15 +178,17 @@
 </div>
 
 <script>
-// $(document).ready(() => {
-console.debug("setup editable for userrating field");
 $('.userrating').editable({
-  // mode: 'inline',
+  // mode: 'inline',  
   type: 'number',
   min: '1',
   max: '5',
   step: '1'
 });
+
+//TODO change input width using inputclass or tpl
+//$('.editable-note').editable({});
+
 </script>
 
 {% endblock %}

@@ -242,6 +242,7 @@ class BookDetailView(generic.DetailView):
         book_comments = self.object.comments_set.all()
         book_comments = book_comments.order_by('-dateCreatedInt')
         context['books_comments'] = book_comments
+        context['comment_now'] = datetime.now().strftime("%Y-%m-%dT%H:%M")
         return context 
     
 class MaintainBooks(PermissionRequiredMixin, generic.View):
@@ -613,6 +614,51 @@ def createUpdateBookStatus(request, pk):
         return redirect(to_url)
 
 
+class UpdateBookComment(PermissionRequiredMixin, generic.edit.UpdateView):
+    
+    permission_required = 'bookshelf.can_edit'    
+    
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(UpdateBookComment, self).dispatch(request, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            book_id = kwargs['pk']
+            comment_id = request.POST['pk']
+            new_text = request.POST['value']
+            return self.save(book_id, comment_id, new_text)
+        except BaseException:
+            LOGGER.exception("update comment failed id=%s" % comment_id)
+            return HttpResponseBadRequest('update failed')
+    
+    def save(self, book_id, comment_id, new_text):
+        book_obj = books.objects.get(pk=book_id)
+        if comment_id == '0':  # new comment
+            comment_obj = comments()
+            comment_obj.book = book_obj
+            comment_obj.bookTitle = book_obj.title
+            now = datetime.now()
+            comment_obj.dateCreatedInt = int(now.timestamp() *1000)
+            comment_obj.dateCreated = now
+            book_obj.updated = datetime.now(tz=timezone.utc)
+            comment_obj.save()            
+            book_obj.save()
+        else:
+            comment_obj = comments.objects.get(pk=comment_id)
+        if comment_obj.text != new_text:
+            if not new_text:
+                comment_obj.delete()
+            else:
+                comment_obj.text = new_text
+                comment_obj.save()
+            return HttpResponse('updated')
+        else:
+            LOGGER.info("comment unchanged id=%s value='%s'" % (comment_id, new_text))
+            return HttpResponse('unchanged')
+    
+
+    
 class BookStatusUpdateView(SuccessMessageMixin, PermissionRequiredMixin, generic.edit.UpdateView):
     """
     Edit book status.

@@ -26,6 +26,7 @@ urlpatterns = [
 
 urlpatterns += [
     path('books/editable-update/', views.BookEditableUpdate.as_view(), name='editable-update'),
+    path('books/<int:pk>/update-comment/', views.UpdateBookComment.as_view(), name='update-comment'),
     path('books/create/', views.BookCreateView.as_view(), name='book-create'),
     path('books/<int:pk>/update/', views.BookUpdateView.as_view(), name='book-update'),
     path('books/<int:pk>/update-userrating/', views.BookUserRatingUpdate.as_view(), name='book-update-userrating'),
