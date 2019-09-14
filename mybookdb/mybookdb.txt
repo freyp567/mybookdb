@@ -1,6 +1,6 @@
 My Bookshelf
 implementation notes / index to views
-2019-01-03  updated
+2019-01-26  updated
 
 ***
 Book list  /bookshelf/books/v1/?sort=
@@ -92,6 +92,7 @@ User Rating Update  (xeditable)
 ***
 TODO
   ++ handle sync of comments with mybookdroid
+  ++ edit comment for anonymous (or login lost), no error but rejected
   ++ field date-read with uncertainty (before, approx)
      https://pypi.org/project/django-partial-date/
 
@@ -103,7 +104,7 @@ TODO fix bug with user rating, default value
 
 TODO 
   + book description with bold, italic, ... (inline HTML editor, TinyMCE)
-  + book details, show onleihe status
+  + book details, show onleihe status, allow to rate book (currently only in search view)
   + new book, publicationDate - DateInput ?  handle date precision year vs year-month-day
   + new book, show validation errors on form (testing!)
   + authorslist handle column click vs open detail view - see books list
@@ -133,3 +134,15 @@ allow to set state notfound
 duplicates to be detected / resolved 
 for books, authors 
 
+
+add bookmark, Der Tuchhaendler (Dübell)
+https://www.histo-couch.de/richard-duebell-der-tuchhaendler.html
+Error bookmark does already exist
+
+missing book 
+see http://127.0.0.1:8000/bookshelf/author/156
+missed: http://127.0.0.1:8000/bookshelf/book/5010
+but have duplicates
+http://127.0.0.1:8000/bookshelf/books/285
+http://127.0.0.1:8000/bookshelf/books/286
+renaned, appended [duplicate] to title to differentiate

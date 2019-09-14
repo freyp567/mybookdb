@@ -118,7 +118,6 @@
 <div style="margin-left:20px;margin-top:20px">
 <h4>Comments</h4>
 
-{% if books.comments_set.count %}
 <table class="table table-sm booksdetail" id="bookscomments"
     data-toggle="table"
     data-id-field="comment_id"
@@ -168,10 +167,6 @@
 
 </tbody>
 </table>
-
-{% else %}
-    (no notes)
-{% endif %}
 
 <br/>
 <hr/>

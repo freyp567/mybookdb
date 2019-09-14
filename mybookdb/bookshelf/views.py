@@ -13,7 +13,7 @@ from django.utils.encoding import iri_to_uri
 from django.utils import timezone
 
 from django.urls import reverse
-from django.db.models import Q
+from django.db.models import Count, Max, Avg, Q
 
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -403,8 +403,6 @@ def search_author(request):
     limit = int(query['limit'])
     sort_field = query['sort']
     sort_order = query['order']
-    if sort_order == 'desc':
-        sort_field = '-' + sort_field
     
     LOGGER.debug("search_author query=%s" % query)
     qs = authors.objects.all()
@@ -419,7 +417,29 @@ def search_author(request):
         qs = qs.filter(**search_filter)
         
     row_count = qs.count()
-    qs = qs.order_by(sort_field)
+    if sort_field == 'book_count':
+        qs = qs.annotate(book_count_agg=Count('books'))
+        sort_field = 'book_count_agg'
+    elif sort_field == 'books_read':
+        qs = qs.annotate(
+            book_read_agg=Count('books',
+                                 filter=Q(books__states__haveRead=True)))
+        sort_field = 'book_read_agg'
+    elif sort_field == 'last_book_update':
+        qs = qs.annotate(
+            last_bk_upd_agg=Max('books__updated'))
+        sort_field = 'last_bk_upd_agg'
+    elif sort_field == 'book_rating_avg':
+        qs = qs.annotate(
+            book_rating_avg_agg=Avg('books__userRating'))
+        sort_field = 'book_rating_avg_agg'
+        
+    if sort_order == 'desc':
+        sort_spec = '-' + sort_field
+    else:
+        sort_spec = sort_field
+        
+    qs = qs.order_by(sort_spec)
     data = [ author_obj_to_dict(obj) for obj in qs[offset:offset+limit] ]
     result = {
         "total": row_count,
@@ -479,8 +499,14 @@ class AuthorDetailView(generic.DetailView):
         
         authors_books = books.objects.filter(authors__id = self.object.id)
         authors_books = authors_books.order_by('-created')
-        context['books_read'] = authors_books.filter(states__haveRead = True)
-        context['books_other'] = authors_books.filter(states__haveRead = False)
+        context['is_paginated'] = False
+        books_read = list(authors_books.filter(states__haveRead = True))
+        context['books_read'] = books_read
+        #context['books_other'] = authors_books.filter(states__haveRead = False)  # some missing
+        #context['books_other'] = authors_books.exclude(states__naveRead = True)
+        # django.core.exceptions.FieldError: Related Field got invalid lookup: naveRead
+        other_books = [ book for book in authors_books if book not in books_read ]
+        context['books_other'] = other_books
         
         return context 
 
