@@ -13,4 +13,6 @@ def export_vars(request):
         data['USE_LIBRARYTHING'] = '1'
     if os.environ.get("ONLEIHE_URL"):
         data['USE_ONLEIHE'] = '1'
+    if 1:  # TODO if app timeline is available
+        data['SUPPORT_TIMELINE'] = '1'
     return data

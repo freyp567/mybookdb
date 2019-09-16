@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
-import logging
+#import logging
 #from django.templatetags.static import static
 
 
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'bookshelf.apps.BookshelfConfig',
     'bookmarks.apps.BookmarksConfig',
+    'timeline.apps.TimelineConfig',
     'bootstrap4',
     'django_tables2',
     'django_filters',
@@ -51,6 +52,9 @@ INSTALLED_APPS = [
     'django_extensions',
     'crispy_forms',
 ]
+if DEBUG:
+    INSTALLED_APPS.append('debug_toolbar')
+    
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
@@ -67,6 +71,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+if DEBUG:
+    # https://django-debug-toolbar.readthedocs.io/en/latest/installation.html#enabling-middleware
+    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'mybookdb.urls'
 
@@ -218,6 +226,10 @@ GRAPHIQL_DEFAULT_QUERY = """
   }
 }
 """
+
+INTERNAL_IPS = [  # for debug_toolbar
+    '127.0.0.1',
+]
 
 
 assert TEMPLATES[0]['BACKEND'] == 'django.template.backends.django.DjangoTemplates'

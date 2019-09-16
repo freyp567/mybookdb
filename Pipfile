@@ -17,11 +17,13 @@ requests = "*"
 pyisbn = "*"
 lxml = "*"
 django-crispy-forms = "*"
+django_partial_date = "*"
 
 [dev-packages]
 "flake8" = "*"
 "autopep8" = "*"
 pylint = "*"
+django-debug-toolbar = "*"
 
 [requires]
 python_version = "3.7"

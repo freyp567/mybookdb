@@ -44,6 +44,13 @@
 <a class="btn btn-secondary btn-sm" role="button" 
   href="{% url 'bookshelf:state-update' books.pk %}">Update Book State</a>
 
+{% if SUPPORT_TIMELINE == "1" %}
+<a class="btn btn-secondary btn-sm" role="button" 
+  title="timeline events for current book"
+  href="{% url 'timeline:show-timeline' pk=books.pk %}"
+  >Timline events</a>
+{% endif %}
+
 {% if USE_LIBRARYTHING == "1" %}
 <a class="btn btn-secondary btn-sm" role="button" 
   title="book details and reviews on LibraryThing"
