@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'graphene_django',
     'django_extensions',
     'crispy_forms',
+    'django_prometheus',
 ]
 if DEBUG:
     INSTALLED_APPS.append('debug_toolbar')
@@ -62,14 +63,16 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 # and replaced completely by graphene_django
 # use graphene-django to integrate GraphiQL into Django project
 
-MIDDLEWARE = [
+MIDDLEWARE = [  # MIDDLEWARE_CLASSES =
     'django.middleware.security.SecurityMiddleware',
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 if DEBUG:
@@ -77,6 +80,7 @@ if DEBUG:
     MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'mybookdb.urls'
+#ROOT_URLCONF = "graphite.urls_prometheus_wrapper" ?
 
 TEMPLATES = [
     {
@@ -103,7 +107,8 @@ WSGI_APPLICATION = 'mybookdb.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
+        # 'ENGINE': 'django.db.backends.sqlite3',
+        'ENGINE': 'django_prometheus.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }

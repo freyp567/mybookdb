@@ -107,6 +107,9 @@ class books(models.Model):
             return self.new_description
         return self.orig_description
 
+    def has_states(self):
+        return hasattr(self, 'states')
+    
     @property
     def state_info(self):
         return self.states.state_info
@@ -285,6 +288,9 @@ class states(models.Model):
     toBuy = models.BooleanField(default=False)
     toRead = models.BooleanField(default=False)
     
+    def __init__(self, *args, **kwargs):
+        return super(states, self).__init__(*args, **kwargs)
+        
     def __str__(self):
         state_value = []
         for key in ('favorite', 'readingNow', 'haveRead', 'toRead', 'toBuy', 'iOwn'):

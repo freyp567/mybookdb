@@ -481,6 +481,7 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
             )
 
     def __init__(self, *args, **kwargs):
+        assert 'instance' in kwargs, "missing state obj"  # always need state obj to update (create is implicit)
         super(StateUpdateForm, self).__init__(*args, **kwargs)
         
         for field_name in self.fields:
@@ -488,7 +489,7 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
             #self.fields[field_name].widget.attrs['class'] = 'form-control form-control-lg'
             pass
         
-        self.fields['toBuy'].label = 'on wishlist (to buy)'
+        self.fields['toBuy'].label = 'on wishlist (to buy)'  # TODO toBuy vs wantRead, have both in form
         self.fields['iOwn'].label = 'not read/stopped (I own)'
 
     def clean(self):

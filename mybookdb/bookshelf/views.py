@@ -8,7 +8,7 @@ from datetime import datetime
 
 from django.shortcuts import render, redirect
 from django.views import generic
-from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest, Http404
 from django.utils.encoding import iri_to_uri
 from django.utils import timezone
 
@@ -32,6 +32,7 @@ from bookshelf.forms import BookCreateForm, BookUpdateForm, StateUpdateForm, Boo
     AuthorCreateForm, AuthorUpdateForm
 from bookshelf.bookstable import BooksTable, BooksTableFilter, MinimalBooksTable
 from bookshelf.authorstable import AuthorsTable, AuthorsTableFilter  # , MinimalAuthorsTable
+from bookshelf import metrics
 
 LOGGER = logging.getLogger(name='mybookdb.bookshelf.views')
 
@@ -280,24 +281,14 @@ class BookCreateView(PermissionRequiredMixin, generic.edit.CreateView):
         context['tag'] = "div"
         return context
 
-    def get_form(self, form_class=None):
-        form = super(BookCreateView, self).get_form(form_class)
-        return form
-        
-
-    def get_form_kwargs(self, **kwargs):
-        kwargs = super(BookCreateView, self).get_form_kwargs(**kwargs)
-        #if 'xxxdata' in kwargs:
-            #form = BookCreateForm(self.request.POST)
-            ### form.instance.title not yet set, must save
-            ### this will trigger validation, too
-            #instance = form.save(commit=False)
-            #kwargs.update({'instance': instance})
-            #pass
-        return kwargs
-    
-    def form_valid(self, form):
-        return super(BookCreateView, self).form_valid(form)    
+    def post(self, request, *args, **kwargs):
+        # super(BookCreateView, self).post(*args, **kwargs)
+         form = self.get_form()
+         if form.is_valid():
+             metrics.books_count.inc()
+             return self.form_valid(form)
+         else:
+             return self.form_invalid(form)
 
 
 # @method_decorator(csrf_exempt, name='dispatch')
@@ -346,6 +337,7 @@ class BookDeleteView(PermissionRequiredMixin, generic.edit.DeleteView):
     fields = '__all__'
     permission_required = 'bookshelf.can_delete'
 
+
 class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     """
     Edit book state.
@@ -355,7 +347,56 @@ class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     form_class = StateUpdateForm
     
     def __init__(self, *args, **kwargs):
+        self.book_obj = None
         super(StateUpdateView, self).__init__(*args, *kwargs)
+
+    def _get_book(self, book_id):
+        assert book_id is not None, "book unknown"
+        book_obj = books.objects.get(pk=book_id)
+        if book_obj is None:
+            LOGGER.error("missing book for state: %s", book_id)
+            raise Http404(_("No book found for book_id=%(book_id)s") % 
+                          {'book_id': book_id})
+        return book_obj
+        
+    def get(self, request, *args, **kwargs):
+        book_id =kwargs.get('pk')
+        self.book_obj = self._get_book(book_id)
+        if not self.book_obj.has_states(): 
+            # new books and books imported do not have a state obj assigned, auto-create
+            states_obj = states(pk=book_id)
+            states_obj.book = self.book_obj
+            states_obj.save()
+        else:
+            # ATTN ensure pk / id and book_id to be equal
+            others =states.objects.filter(book_id = self.book_obj.pk)
+            others = [obj for obj in others if obj.pk != book_id]
+            if others:
+                raise ValueError("detected states %s for book %s" % ([obj.pk for obj in others], book_id))
+
+        return super().get(request, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        book_id = kwargs.get('pk')
+        self.book_obj = self._get_book(book_id)
+        self.object = states.objects.get(pk=book_id)
+        form = self.get_form()
+        if form.is_valid():
+            if self.object.haveRead:
+                metrics.books_read_count.inc()
+            else:
+                LOGGER.debug("update book %s state %s", book_id, self.object) 
+                # state haveRead True before? form.changed_data / .cleaned_data
+                # TODO handle transition haveRead back to False if checked by mistake
+                pass
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def get_form_kwargs(self):  # TODO cleanup after debugging
+        kwargs = super(StateUpdateView, self).get_form_kwargs()
+        # TODO passing instance to update to form??
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super(StateUpdateView, self).get_context_data(**kwargs)
@@ -363,7 +404,7 @@ class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
             # if "cancel" in request.POST:
             pass  # book info is read-only
         else:
-            context['bookinfo_form'] = BookInfoForm(instance=self.object.book)
+            context['bookinfo_form'] = BookInfoForm(instance=self.book_obj)  # TODO refactor this
         return context
     
     def get_success_url(self):

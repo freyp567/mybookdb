@@ -12,6 +12,7 @@ from django.conf.urls import url
 from django.views.generic import RedirectView
 
 from graphene_django.views import GraphQLView
+import django_prometheus
 
 favicon_view = RedirectView.as_view(url='/static/favicon.ico', permanent=True)
 
@@ -63,3 +64,7 @@ urlpatterns += [
     path(r'graphiql', GraphQLView.as_view(graphiql=True)),
 ]
 
+urlpatterns += [
+    # url('^prometheus/', include('django_prometheus.urls')),
+    url('', include('django_prometheus.urls')),
+]
