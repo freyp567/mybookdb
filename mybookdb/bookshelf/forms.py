@@ -441,15 +441,13 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
     """
     update book state
     """
-    # TODO correlate state with book (OneToOne relationship)
-    # see https://stackoverflow.com/questions/27832076/modelform-with-onetoonefield-in-django
-    #
+    # TODO
     # inline formset 
     # https://docs.djangoproject.com/en/dev/topics/forms/modelforms/#inline-formsets
     # https://stackoverflow.com/questions/1113047/creating-a-model-and-related-models-with-inline-formsets
     #
     # or implement as new standalone form
-    # TODO fix initialization
+
     favorite = forms.BooleanField(
         required=False, initial=False, 
         label=_("my Favorite"),
@@ -457,7 +455,7 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
     toRead = forms.BooleanField(
         required=False, initial=False, 
         label=_("to read"),
-        help_text='book on wishlist, to read')
+        help_text='candidate to read, and available')
     readingNow = forms.BooleanField(
         required=False, 
         initial=False, 
@@ -489,8 +487,8 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
             #self.fields[field_name].widget.attrs['class'] = 'form-control form-control-lg'
             pass
         
-        self.fields['toBuy'].label = 'on wishlist (to buy)'  # TODO toBuy vs wantRead, have both in form
-        self.fields['iOwn'].label = 'not read/stopped (I own)'
+        self.fields['toBuy'].label = 'wishlist (to buy)'  # TODO toBuy vs wantRead, have both in form
+        self.fields['iOwn'].label = 'not read or stopped reading (I own)'
 
     def clean(self):
         cleaned_data = super(StateUpdateForm, self).clean()

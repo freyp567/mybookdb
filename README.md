@@ -26,7 +26,7 @@ and take care that you fullfill the licensing requirments listed in LibraryThing
 For details see https://wiki.librarything.com/index.php/LibraryThing_APIs.
 
 ## TODOs
-+ show states in book-detail
++ state handling cleanup, make cancel button work
 + cleanup of imported data (from MyBookDroid sqllite backup) - umlaute, incomplete info, groups, ...
 + login and user access (currently only limited to editing book details)
 + editing book details: more fields to add
