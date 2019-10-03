@@ -104,6 +104,9 @@ class BookListGenericView(generic.ListView):
                 elif ordering == 'onleihe_unkown':
                     ordering = ['states__toBuy', 'userRating', '-updated']
                     qs = qs.filter(onleihebooks=None)
+                elif ordering == 'missing_timeline':
+                    ordering = [ '-updated' ]
+                    qs = qs.filter(timelineevent__isnull=True)
                 else:
                     ordering = (ordering,)
             qs = qs.order_by(*ordering)
@@ -119,7 +122,7 @@ class BookListGenericView(generic.ListView):
             ordering = [ '-created' ]
         elif sort == 'updated':
             ordering = [ '-updated' ]
-        elif sort in ('wishlist', 'onleihe_unkown',):
+        elif sort in ('wishlist', 'onleihe_unkown', 'missing_timeline'):
             ordering = sort  # mapped by get_queryset
         else:
             ordering = [] # use default / unordered

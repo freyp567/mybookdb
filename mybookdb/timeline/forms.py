@@ -8,7 +8,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Field, Div, Button
 from crispy_forms.bootstrap import FormActions, TabHolder, Tab
 
-from timeline.models import bookevent
+from timeline.models import timelineevent
 
 
 class BookEventCreateForm(forms.ModelForm):
@@ -22,7 +22,7 @@ class BookEventCreateForm(forms.ModelForm):
     comment = forms.CharField(widget=forms.Textarea(), required=False)  # columns=60, rows=5
 
     class Meta:
-        model = bookevent
+        model = timelineevent
         fields = (
             "book_id", "date", "location", "comment"
         )

@@ -1,0 +1,28 @@
+
+{% extends "base_generic.html" %}
+{% load timeline_tags %}
+
+{% block title %}
+    Timeline
+{% endblock %}
+
+
+{% block content %}
+    <h1>Timeline</h1>
+    
+    {% if timelineevent_list %}
+    <ul>
+
+      {% for event in timelineevent_list %}
+      <li>
+        {{ event.date }}:  {{ event.location }}  --- 
+        {% timeline_book_link event %}
+      </li>
+      {% endfor %}
+
+    </ul>
+
+    {% else %}
+      <p>There are no timeline event.</p>
+    {% endif %}    
+{% endblock %}

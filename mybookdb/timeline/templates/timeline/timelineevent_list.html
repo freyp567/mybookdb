@@ -1,0 +1,28 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+    <h1>"{{book_title}}", timeline events</h1>
+    navigate 
+    <a href="{{ request.path }}?nav=up">up</a>, 
+    <a href="{{ request.path }}?nav=down">down</a>, 
+    <br/>
+    <a href="{% url 'timeline:add-event' pk=book_id %}">add timeline event</a>
+    <br/>
+    <br/>
+
+    {% if timelineevent_list %}
+    <ul>
+
+      {% for event in timelineevent_list %}
+      <li>
+        {{ event.date }}:  {{ event.location }}  [{{ event.comment }}]
+      </li>
+      {% endfor %}
+
+    </ul>
+
+    {% else %}
+      <p>There are no timeline event for this book.</p>
+    {% endif %}
+{% endblock %}
+
