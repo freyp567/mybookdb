@@ -4,7 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-Django = ">=2.1.11,<2.2"
+#Django = ">=2.1.13,<2.2"
+Django = "==2.1.13"
 "django-tables2" = "*"
 django-filter = "*"
 "django-bootstrap4" = "*"
