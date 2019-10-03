@@ -106,7 +106,7 @@ class BookListGenericView(generic.ListView):
                     qs = qs.filter(onleihebooks=None)
                 elif ordering == 'missing_timeline':
                     ordering = [ '-updated' ]
-                    qs = qs.filter(timelineevent__isnull=True)
+                    qs = qs.filter(timelineevent__isnull=True, states__haveRead=True)
                 else:
                     ordering = (ordering,)
             qs = qs.order_by(*ordering)

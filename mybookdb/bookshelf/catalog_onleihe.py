@@ -361,6 +361,9 @@ class OnleiheView(generic.TemplateView):
                 row['field_title'] = field_title_loc or field_title
                 for pos, item in enumerate(details):
                     value = item.get(field_name)
+                    if value is None:
+                        LOGGER.warning("missing field %s", field_name)
+                        continue
                     if field_name == 'book_url':
                         value = [value, img_covers[pos]]
                     if field_name in ('title','book_description'):
