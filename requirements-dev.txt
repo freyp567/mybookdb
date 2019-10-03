@@ -10,17 +10,8 @@
 # `Pipfile.lock` and then regenerate `requirements*.txt`.
 ################################################################################
 
-django-bootstrap4
-django-crispy-forms
-django-extensions
-django-filter
-django-partial-date
-django-select2
-django-tables2
-django>=2.1.11,<2.2
-graphene-django>=2.0
-graphene>=2.0
-lxml
-pyisbn
-requests
-werkzeug
+autopep8
+django-debug-toolbar
+flake8
+pipenv-to-requirements
+pylint
