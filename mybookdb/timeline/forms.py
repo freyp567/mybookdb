@@ -24,7 +24,7 @@ class BookEventCreateForm(forms.ModelForm):
     class Meta:
         model = timelineevent
         fields = (
-            "book_id", "date", "location", "comment"
+            "book_id", "date", "is_bc", "location", "comment"
         )
 
     def __init__(self, *args, **kwargs):
@@ -39,6 +39,7 @@ class BookEventCreateForm(forms.ModelForm):
             Fieldset(
                 '',
                 Field('date'),
+                Field('is_bc'),
                 Field('location'),
                 Field('comment', label=_('comment')) #title='comment'
             ),

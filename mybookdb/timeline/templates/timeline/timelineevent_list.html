@@ -15,7 +15,7 @@
 
       {% for event in timelineevent_list %}
       <li>
-        {{ event.date }}:  {{ event.location }}  [{{ event.comment }}]
+        {{ event.date }}{% if event.is_bc %} vChr{% endif %}:  {{ event.location }}  [{{ event.comment }}]
       </li>
       {% endfor %}
 

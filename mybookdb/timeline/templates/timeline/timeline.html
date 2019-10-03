@@ -15,7 +15,7 @@
 
       {% for event in timelineevent_list %}
       <li>
-        {{ event.date }}:  {{ event.location }}  --- 
+        {{ event.date }}{% if event.is_bc %} vChr{% endif %}:  {{ event.location }}  --- 
         {% timeline_book_link event %}
       </li>
       {% endfor %}
