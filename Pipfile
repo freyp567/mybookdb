@@ -20,6 +20,7 @@ lxml = "*"
 django-crispy-forms = "*"
 django_partial_date = "*"
 django-prometheus = "*"
+django-allow-cidr = "*"
 
 [dev-packages]
 "flake8" = "*"

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "84812a815825d17ca98ab5b6e7d0fa5f8e679418eefcba427c31e0906f7f9749"
+            "sha256": "89b78779aab31fcb29b0dbc91d9516c6b8d904546c640e8998d7cda70d2b7c9e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -25,11 +25,10 @@
         },
         "beautifulsoup4": {
             "hashes": [
-                "sha256:05668158c7b85b791c5abde53e50265e16f98ad601c402ba44d70f96c4159612",
-                "sha256:25288c9e176f354bf277c0a10aa96c782a6a18a17122dba2e8cec4a97e03343b",
-                "sha256:f040590be10520f2ea4c2ae8c3dae441c7cfff5308ec9d58a0ec0c1b8f81d469"
+                "sha256:5279c36b4b2ec2cb4298d723791467e3000e5384a43ea0cdf5d45207c7e97169",
+                "sha256:dcdef580e18a76d54002088602eba453eec38ebbcafafeaabd8cab12b6155d57"
             ],
-            "version": "==4.8.0"
+            "version": "==4.8.1"
         },
         "certifi": {
             "hashes": [
@@ -52,6 +51,14 @@
             ],
             "index": "pypi",
             "version": "==2.1.13"
+        },
+        "django-allow-cidr": {
+            "hashes": [
+                "sha256:d9a3b22c14e91c26ddd010c278ddf7e2c69a5421c862a3a3cd448ae57fd833e8",
+                "sha256:e8708c0511a78b80d9b74f718ee46685a1425e6d3520143bd00c773fdca56cc7"
+            ],
+            "index": "pypi",
+            "version": "==0.3.1"
         },
         "django-appconf": {
             "hashes": [
@@ -187,6 +194,13 @@
             ],
             "index": "pypi",
             "version": "==4.4.1"
+        },
+        "netaddr": {
+            "hashes": [
+                "sha256:38aeec7cdd035081d3a4c306394b19d677623bf76fa0913f6695127c7753aefd",
+                "sha256:56b3558bd71f3f6999e4c52e349f38660e54a7a8a9943335f73dfc96883e08ca"
+            ],
+            "version": "==0.7.19"
         },
         "prometheus-client": {
             "hashes": [

@@ -24,3 +24,7 @@ lxml
 pyisbn
 requests
 werkzeug
+
+#----
+django-prometheus
+django-allow-cidr
