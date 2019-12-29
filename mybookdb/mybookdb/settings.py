@@ -29,9 +29,16 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", False)
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1").split(',')
-#ALLOWED_HOSTS = ['*']
+ALLOWED_CIDR_NETS = os.environ.get('ALLOWED_CIDR_NETS')
+if not ALLOWED_CIDR_NETS:
+    ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1").split(',')
+    #ALLOWED_HOSTS = ['*']
+else:
+    ALLOWED_CIDR_NETS = ALLOWED_CIDR_NETS.split(',')
 
+
+PROMETHEUS_METRICS_EXPORT_PORT = 8001
+#PROMETHEUS_METRICS_EXPORT_ADDRESS = os.environ.get('PROMETHEUS_METRICS_EXPORT_ADDRESS') or ''
 
 # Application definition
 
@@ -64,7 +71,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 # and replaced completely by graphene_django
 # use graphene-django to integrate GraphiQL into Django project
 
-MIDDLEWARE = [  # MIDDLEWARE_CLASSES =
+MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -73,6 +80,7 @@ MIDDLEWARE = [  # MIDDLEWARE_CLASSES =
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allow_cidr.middleware.AllowCIDRMiddleware',
     'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
