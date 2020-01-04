@@ -53,6 +53,10 @@ def get_linkname_from_path(path, site):
         while name.endswith('-0'):
             name = name[:-2]
             
+    if site.endswith('.onleihe.de'):
+        name = 'onleihe-' + name
+    if 'wikipedia.org' in site:
+        name = 'wikipedia-' + name
     return name
     
 def parse_uri(request):
@@ -181,5 +185,6 @@ class BookmarkCreate(generic.edit.CreateView):  # TODO fix permissions -- declar
         context['objtype'] = obj_type
         context['title'] = title
         context['is_paginated'] = False
+        context['tag'] = context.get('tag') or 'div'  # missing tag ...
         return context
     

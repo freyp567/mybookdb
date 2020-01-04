@@ -72,6 +72,7 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 
 from bookshelf.models import books, authors, comments, grBooks, googleBooks, groups, states
+from bookmarks.models import book_links
 
 import os
 import io
@@ -83,6 +84,11 @@ import sqlite3
 class Command(BaseCommand):
     help = 'Imports backup from mybookdroid app'
 
+    def __init__(self, stdout=None, stderr=None, no_color=False):
+        self._conflicts_books = []
+        self._conflicts_authors = []
+        super().__init__(stdout, stderr, no_color)
+        
     def add_arguments(self, parser):
         parser.add_argument('dbpath', type=str) # nargs='+', 
 
@@ -198,23 +204,28 @@ class Command(BaseCommand):
         delta_new = authors_new_ids - authors_set_ids
         for author_id in delta_new:
             author = authors.objects.get(pk=author_id)
-            self.stderr.write(f"book {id} with author added: {author.name} id={author.id}")
+            self.stderr.write(f"book {id} '{book_obj.title}' with author added: {author.name} id={author.id}")
             author.updated = datetime.now(tz=timezone.utc)
-            author.save()
             book_obj.authors.add(author_id)
             book_obj.save()
-            updated += 1
-                
-        delta_dropped = authors_set_ids - authors_new_ids 
-        for author_id in delta_dropped:
-            author = authors.objects.get(pk=author_id)
-            self.stderr.write(f"book {id} with author removed: {author.name} id={author.id}")
-            author.updated = datetime.now(tz=timezone.utc)
             author.save()
-            book_obj.authors.remove(author.id)
-            book_obj.save()
             updated += 1
-            
+        
+        delta_dropped = authors_set_ids - authors_new_ids 
+        if len(authors_new_ids) == 0:
+            # do not remove authors if there is none left
+            self.stderr.write(f"book {id} '{book_obj.title}' author(s) not removed: {authors_set_ids}")
+            updated += 1
+        else:
+            for author_id in delta_dropped:
+                author = authors.objects.get(pk=author_id)
+                self.stderr.write(f"book {id} '{book_obj.title}' with author removed: {author.name} id={author.id}")
+                author.updated = datetime.now(tz=timezone.utc)
+                book_obj.authors.remove(author)
+                book_obj.save()
+                author.save()
+                updated += 1
+                
         assert updated > 0, "failed to update book authors"
         
         # TODO merge new authors created directly in mybookdb with new authors from mybookdb 
@@ -263,9 +274,13 @@ class Command(BaseCommand):
                             self.stdout.write(f"lookup author {author_name!r} unknown, auto-create for book {id} {book_title!r}")
                             obj_authors = authors.objects.create(name=author_name)
                             obj_authors.save()
-                        else:
-                            assert len(obj_author) == 1, "trouble with author %s" % author_name
+                        elif len(obj_author) == 1:
                             book_authors.add(obj_author[0])
+                        else:
+                            self.stdout.write(f"duplicate author name:{author_name!r}")
+                            for author_obj in obj_author:
+                                book_authors.add(author_obj)
+                                
                             
                 elif col_name in ('reviewsFetchedDate', 'offersFetchedDate', 'created', 'publicationDate'):
                     # MyBookDroid stores dates as time_t values, need to convert for Django ORM
@@ -322,6 +337,19 @@ class Command(BaseCommand):
                     pass # no changes
                     
             else:
+                found_by_title = books.objects.filter(title=book_title)
+                if found_by_title:
+                    if not books.objects.filter(id=id):
+                        other_book = found_by_title[0]
+                        # extract book_links, if any
+                        # links = book_links.objects.find(id=other_book.id)
+                        # save title if edited 
+                        # diffing ?
+                        self.stdout.write(f"already in mybooksdb with different id than {id}: {data['title']!r}")
+                        data['new_description'] = other_book.description  # retain (edited) description
+                        self._conflicts_books.add("%s '%s'" % (id, book_title))
+                    else:
+                        assert False, "duplicate in mybooksdb: {data['title']!r}"  # or id collision
                 self.stdout.write(f"new book {id}: {data['title']!r}")
                 book_obj = books(**data)
                 book_obj.save()
@@ -336,6 +364,12 @@ class Command(BaseCommand):
         self.stdout.write(f"books: total {updated} rows updated (of total {rowcount})")
         return updated
         
+        
+    def output_sqllite(self, *args, **kwards):
+        if args[0].startswith('SELECT '):
+            return 
+        # attempt to suppress verbose logging by sqllite, but in vain
+        return
 
     def handle(self, *args, **options):
         dbpath = options['dbpath']
@@ -343,7 +377,8 @@ class Command(BaseCommand):
         assert os.path.isfile(dbpath), "missing dbpath"
         
         # https://docs.python.org/3/library/sqlite3.html
-        conn = sqlite3.connect(dbpath)
+        conn = sqlite3.connect(dbpath)  # TODO reduce verbosity
+        conn.set_trace_callback(self.output_sqllite)
         self._c = conn.cursor()
         
         self.load_table('authors', authors)
@@ -359,4 +394,15 @@ class Command(BaseCommand):
         self.load_table('comments', comments)
         
         self.stdout.write(self.style.SUCCESS(f"import books.db succeeded"))
+
+        if self._conflicts_books:
+            self.stderr.write("conflicts for books:\n")
+            self.stderr.write("%s\n" % "\n".join(self._conflicts_books))
+            self.stderr.write(".\n")
+            
+        if self._conflicts_authors:
+            self.stderr.write("conflicts for authors:\n")
+            self.stderr.write("%s\n" % "\n".join(self._conflicts_authors))
+            self.stderr.write(".\n")
+
         

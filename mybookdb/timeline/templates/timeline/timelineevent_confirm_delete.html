@@ -1,0 +1,18 @@
+{% block content %}
+{% load static %}
+
+    <h1>"{{book.title}}", delete timeline event</h1>
+
+    <form action="" method="post">
+    {% csrf_token %}
+
+    {{ timelineevent.date }}{% if timelineevent.is_bc %} vChr{% endif %}<br/>
+    {{ timelineevent.location }}<br/>
+    <br/>
+    
+    <p>Do you want to delete this timeline event?<p/>
+    <input type="submit" value="Confirm">
+    
+    </form>
+    
+{% endblock %}

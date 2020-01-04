@@ -1,6 +1,8 @@
 {% extends "base_generic.html" %}
 
 {% block content %}
+{% load static %}
+
     <h1>"{{book_title}}", timeline events</h1>
     navigate 
     <a href="{{ request.path }}?nav=up">up</a>, 
@@ -15,7 +17,11 @@
 
       {% for event in timelineevent_list %}
       <li>
-        {{ event.date }}{% if event.is_bc %} vChr{% endif %}:  {{ event.location }}  [{{ event.comment }}]
+        {{ event.date }}{% if event.is_bc %} vChr{% endif %}:  {{ event.location }}  
+        {% if event.comment %}[{{ event.comment }}]{% endif %}
+        <a target="_self" href="{% url 'timeline:delete-event' book_id=book_id pk=event.id %}">
+          <img src="{% static "images/droplink.png" %}" alt="drop timeline event"/>
+        </a>
       </li>
       {% endfor %}
 

@@ -1,7 +1,7 @@
 #from django.shortcuts import render
 from timeline.models import timelineevent
 
-from timeline.forms import BookEventCreateForm
+from timeline.forms import BookEventCreateForm, BookEventDeleteForm
 
 from django.views import generic
 from django.urls import reverse
@@ -10,11 +10,16 @@ from django.views.decorators.csrf import csrf_exempt  # csrf_protect
 
 
 def get_book(book_id):
+    # decouple timeline view from bookshelf model
     from bookshelf.models import books
-    # TODO how to decouple timeline view from bookshelf model?
     book_obj = books.objects.get(pk=book_id)
     return book_obj
     
+def get_timeline_event(book_id, event_id):    
+    from timeline.models import timelineevent
+    event_obj = timelineevent.objects.get(id=event_id)
+    # assert event_obj.xxx == book_id  # book is a ForwardManyToOneDescriptor
+    return event_obj
 
 class BookEventListView(generic.ListView):
     """
@@ -84,6 +89,37 @@ class BookEventCreateView(generic.CreateView):
         success_url = reverse('timeline:show-timeline', args=(self.book_id,))
         return success_url
  
+ 
+class BookEventDeleteView(generic.DeleteView):
+
+    permission_required = 'bookshelf.can_create'
+    model = timelineevent
+    # form_class = BookEventDeleteForm
+
+    #def get(self, request, *args, **kwargs):
+    #    book_id = kwargs['book_id']
+    #    self.book_obj = get_book(book_id)
+    #    # self.event_obj = get_timeline_event(book_id, event_id) # see BaseDetailView.get
+    #    return super(BookEventDeleteView, self).get(request, *args, **kwargs)
+
+    #def post(self, request, *args, **kwargs):  # TODO use delete
+    #    book_id = kwargs['pk']
+    #    self.book_obj = get_book(book_id)
+    #    return super().post(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        """ update context dict, add book object """
+        context = {}
+        context['object'] = self.object
+        context['timelineevent'] = self.object
+        context['book'] = self.object.book
+        return context
+
+    def get_success_url(self): 
+        event_obj = self.object
+        book_id = event_obj.book_id        
+        success_url = reverse('timeline:show-timeline', args=(book_id,))
+        return success_url
 
 
 class TimelineView(generic.ListView):

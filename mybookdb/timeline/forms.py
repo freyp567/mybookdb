@@ -14,9 +14,7 @@ from timeline.models import timelineevent
 class BookEventCreateForm(forms.ModelForm):
     """ add timeline event to current book """
 
-    # book_id = # hidden field to pass on by submit -- set below
     date = partial_date.PartialDateField()
-    # TODO optional indicator on date precision (day, month, year, century)
     book_id = forms.CharField(widget=forms.HiddenInput())    
     location = forms.CharField(required=False)
     comment = forms.CharField(widget=forms.Textarea(), required=False)  # columns=60, rows=5
@@ -34,14 +32,12 @@ class BookEventCreateForm(forms.ModelForm):
         self.helper.label_class = 'lb-sm'
         
         self.helper.layout = Layout(
-            # Alert(...)
-            # TODO form !?
             Fieldset(
                 '',
                 Field('date'),
                 Field('is_bc'),
                 Field('location'),
-                Field('comment', label=_('comment')) #title='comment'
+                Field('comment', label=_('comment'))
             ),
             ButtonHolder(
                 Submit('save', 'Save timeline event'),
@@ -55,4 +51,32 @@ class BookEventCreateForm(forms.ModelForm):
                         onclick="window.history.back()")
             )
 
-"""            
+"""
+
+
+class BookEventDeleteForm(forms.Form):
+    """ delete timeline event to current book """
+
+    book_id = forms.CharField(widget=forms.HiddenInput())    
+
+    class Meta:
+        model = timelineevent
+    
+    def __init__(self, *args, **kwargs):
+        super(BookEventDeleteForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'lb-sm'
+        
+        self.helper.layout = Layout(
+            Fieldset(
+                '',
+                Field('date'),
+                Field('is_bc'),
+                Field('location'),
+                Field('comment', label=_('comment'))
+            ),
+            ButtonHolder(
+                Submit('save', 'Save timeline event'),
+            )
+        )

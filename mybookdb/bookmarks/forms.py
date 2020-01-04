@@ -136,8 +136,8 @@ class BookmarkCreateForm(forms.ModelForm):
             found = book_links.objects.filter(link_uri = uri)
             
         if found:
-            raise ValidationError("bookmark does already exist")
-        
+            pass # bookmark does already exist
+            
         return self.cleaned_data
         
         
