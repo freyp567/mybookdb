@@ -214,7 +214,8 @@ class Command(BaseCommand):
         delta_dropped = authors_set_ids - authors_new_ids 
         if len(authors_new_ids) == 0:
             # do not remove authors if there is none left
-            self.stderr.write(f"book {id} '{book_obj.title}' author(s) not removed: {authors_set_ids}")
+            self.stderr.write(f"book {id} '{book_obj.title}' author(s) not removed: {authors_set_ids}")            
+            self._conflicts_authors.append("%s not removed for %s '%s'" % (authors_set_ids, book_obj.id, book_obj.title))
             updated += 1
         else:
             for author_id in delta_dropped:
@@ -278,6 +279,7 @@ class Command(BaseCommand):
                             book_authors.add(obj_author[0])
                         else:
                             self.stdout.write(f"duplicate author name:{author_name!r}")
+                            self._conflicts_authors.append("%s duplicated" % (author_name,))
                             for author_obj in obj_author:
                                 book_authors.add(author_obj)
                                 

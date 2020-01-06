@@ -121,6 +121,16 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#        'NAME': 'mybookdb',
+#        'USER': 'mybookdbusr',
+#        'PASSWORD': os.environ["DB_PWD"],
+#        'HOST': os.environ.get("DB_HOST", '127.0.0.1'),
+#        'PORT': os.environ.get("DB_PORT", '5432'),
+#    }
+#}
 
 
 # Password validation

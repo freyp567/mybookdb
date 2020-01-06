@@ -265,6 +265,7 @@ class reviews(models.Model):
         )
     grReviewId = models.TextField()
     dateCreated = models.IntegerField()
+    #dateCreated = models.DateTimeField()
     userName = models.TextField()
     userUrl = models.TextField()
     url = models.TextField()
