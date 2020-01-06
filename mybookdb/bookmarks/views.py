@@ -57,6 +57,9 @@ def get_linkname_from_path(path, site):
         name = 'onleihe-' + name
     if 'wikipedia.org' in site:
         name = 'wikipedia-' + name
+    if 'goodreads.com' in site:
+        
+        name = 'gr-' +name
     return name
     
 def parse_uri(request):
