@@ -383,11 +383,11 @@ class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
         form = self.get_form()
         if form.is_valid():
             if self.object.haveRead:
+                # TODO fixthis will update count everytime status is edited - independend if changed or not
+                # state haveRead True before? form.changed_data / .cleaned_data
                 metrics.books_read_count.inc()
             else:
                 LOGGER.debug("update book %s state %s", book_id, self.object) 
-                # state haveRead True before? form.changed_data / .cleaned_data
-                # TODO handle transition haveRead back to False if checked by mistake
                 pass
             return self.form_valid(form)
         else:
