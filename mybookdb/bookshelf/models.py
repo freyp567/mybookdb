@@ -153,7 +153,7 @@ class comments(models.Model):
         )
     text = models.TextField()
     bookTitle = models.TextField()
-    dateCreatedInt = models.IntegerField(null=True)
+    dateCreatedInt = models.BigIntegerField(null=True)
     dateCreated = models.DateTimeField()
     
     class Meta:
@@ -264,7 +264,7 @@ class reviews(models.Model):
         on_delete=models.CASCADE,
         )
     grReviewId = models.TextField()
-    dateCreated = models.IntegerField()
+    dateCreated = models.BigIntegerField()
     #dateCreated = models.DateTimeField()
     userName = models.TextField()
     userUrl = models.TextField()

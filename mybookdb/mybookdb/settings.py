@@ -31,10 +31,10 @@ DEBUG = os.environ.get("DJANGO_DEBUG", False)
 
 ALLOWED_CIDR_NETS = os.environ.get('ALLOWED_CIDR_NETS')
 if not ALLOWED_CIDR_NETS:
-    ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1").split(',')
-    #ALLOWED_HOSTS = ['*']
+    pass #ALLOWED_HOSTS = ['*']
 else:
     ALLOWED_CIDR_NETS = ALLOWED_CIDR_NETS.split(',')
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1").split(',')
 
 
 PROMETHEUS_METRICS_EXPORT_PORT = 8001
@@ -114,23 +114,26 @@ WSGI_APPLICATION = 'mybookdb.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        # 'ENGINE': 'django.db.backends.sqlite3',
-        'ENGINE': 'django_prometheus.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+USE_SQLLITE = False
+if USE_SQLLITE:
+    DATABASES = {
+        'default': {
+            # 'ENGINE': 'django.db.backends.sqlite3',
+            'ENGINE': 'django_prometheus.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
     }
-}
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#        'NAME': 'mybookdb',
-#        'USER': 'mybookdbusr',
-#        'PASSWORD': os.environ["DB_PWD"],
-#        'HOST': os.environ.get("DB_HOST", '127.0.0.1'),
-#        'PORT': os.environ.get("DB_PORT", '5432'),
-#    }
-#}
+else:    
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'mybookdb',
+            'USER': 'mybookdbusr',
+            'PASSWORD': os.environ["DB_PWD"],
+            'HOST': os.environ.get("DB_HOST", '127.0.0.1'),
+            'PORT': os.environ.get("DB_PORT", '5432'),
+        }
+    }
 
 
 # Password validation
