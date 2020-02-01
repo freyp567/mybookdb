@@ -116,6 +116,8 @@ class books(models.Model):
 
     @property
     def onleihe_status(self):
+        if not getattr(self, 'onleihebooks', None):
+            return ''
         status = self.onleihebooks.status
         if status == 'confirmed':
             return 'onleihe'
@@ -162,9 +164,12 @@ class comments(models.Model):
     @property
     def datetime_created(self):
         """ dateCreated is only date (with tz shift) """
-        created = datetime.datetime.utcfromtimestamp(self.dateCreatedInt/1000)
-        return created.strftime("%Y-%m-%dT%H:%M")
-    
+        if self.dateCreatedInt:
+            created = datetime.datetime.utcfromtimestamp(self.dateCreatedInt/1000)
+            return created.strftime("%Y-%m-%dT%H:%M")
+        else:
+            return '(NA)'
+
     @property
     def clean_text(self):
         comment_date = self.dateCreated.date().isoformat()
@@ -172,6 +177,9 @@ class comments(models.Model):
         if comment_date in comment_text:
             comment_text = comment_text.replace(comment_date, '')
         return comment_text
+    
+    def __str__(self):
+        return "comment %s book=%s '%s'" % (self.id, self.book.id, self.book.title)
 
 
 class onleiheBooks(models.Model):

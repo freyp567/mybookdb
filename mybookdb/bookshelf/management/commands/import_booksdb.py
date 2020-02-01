@@ -166,11 +166,16 @@ class Command(BaseCommand):
                 obj = obj[0]
                 diff = {}
                 for key, value in data.items():
-                    if getattr(obj, key) != value:
+                    obj_value = getattr(obj, key)
+                    if isinstance(obj_value, datetime) and not isinstance(value, datetime):
+                        # avoid rounding errors caused by comparing datetime (tz ware) and date (naive) values
+                        value = datetime.combine(value, datetime.min.time())
+                        value = value.astimezone(timezone.utc)                        
+                    if obj_value != value:
                         diff[key] = (getattr(obj, key), value) 
                 if diff:
                     keys = ", ".join(diff.keys())
-                    self.stdout.write(f"update changes to {table_name} {id} keys={keys}")
+                    self.stdout.write(f"update changes to {table_name} {id} keys={keys} - {obj}")
                     # update changed fields
                     for key, value in diff.items():
                         assert key not in ('id',), "not allowed to update %s" % key 
@@ -306,7 +311,7 @@ class Command(BaseCommand):
             if book_obj:
                 # item does already exist
                 book_obj = book_obj[0]
-                self.stdout.write(f"existing book {id}: {data['title']!r}")
+                # self.stdout.write(f"existing book {id}: {data['title']!r}") # blather
                 diff = {}
                 for key, value in data.items():
                     if getattr(book_obj, key) != value:
@@ -323,7 +328,7 @@ class Command(BaseCommand):
                         del diff[key]
                 if diff: # handle other differences
                     keys = ", ".join(diff2.keys())
-                    self.stdout.write(f"detected changes for book {id} keys={keys}")
+                    self.stdout.write(f"detected changes for book {id} '{book_obj.title}' fields={keys}")
                     # update changed fields, e.g. title
                     for key, value in diff2.items():
                         assert not key in ('id',) # disallow update

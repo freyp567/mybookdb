@@ -96,6 +96,7 @@ class BookListGenericView(generic.ListView):
         qs = books.objects.all() #.filter('states__')
         if ordering:
             if isinstance(ordering, str):
+                LOGGER.info("sort book list by custom sort order: %s", ordering)
                 if ordering == 'wishlist':
                     # map ordering to what can be handled by DB
                     ordering = ['states__toBuy', 'userRating', '-updated']
