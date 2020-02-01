@@ -61,7 +61,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'django_prometheus',
 ]
-if DEBUG:
+if os.environ.get("USE_DEBUG_TOOLBAR"):
     INSTALLED_APPS.append('debug_toolbar')
     
 
@@ -84,7 +84,7 @@ MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
-if DEBUG:
+if os.environ.get("USE_DEBUG_TOOLBAR"):
     # https://django-debug-toolbar.readthedocs.io/en/latest/installation.html#enabling-middleware
     MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
@@ -205,18 +205,11 @@ STATIC_URL = '/static/'
 #class StaticWrapper:
 
 
-#BOOTSTRAP3 = {
-#    'css_url': STATIC_URL +'bootstrap4/dist/css/bootstrap.min.css',
-#    'jquery_url': STATIC_URL +'jquery/dist/jquery.min.js',
-#    'javascript_url': STATIC_URL +'bootstrap/dist/js/bootstrap.min.js',
-#}
-
 BOOTSTRAP4 = {
-    'css_url': STATIC_URL +'bootstrap4/dist/css/bootstrap.css',
+    'css_url': STATIC_URL +'bootstrap/dist/css/bootstrap.css',
     'jquery_url': STATIC_URL +'jquery/dist/jquery.js',
-    #'javascript_url': STATIC_URL +'bootstrap/js/bootstrap.js',
-    'javascript_url': STATIC_URL +'bootstrap4/dist/js/bootstrap.js',
-    #'use_i18n': False,
+    'javascript_url': STATIC_URL +'bootstrap/dist/js/bootstrap.js',
+    'use_i18n': False,
     'popper_url': STATIC_URL +'popper.js/umd/popper.min.js',
     
     # not available (yet) but overridden to prevent inclusion of external resources

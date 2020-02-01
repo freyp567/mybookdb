@@ -8,7 +8,7 @@
       Search Authors  
     </h1>
     
-<link rel="stylesheet" href="/static/bootstrap4/dist/css/bootstrap.css" />
+<link rel="stylesheet" href="/static/bootstrap/dist/css/bootstrap.css" />
 <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
 <link rel="stylesheet" type="text/css" href="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.css">
 
@@ -44,7 +44,7 @@
 <script src="{% static "js-cookie/js.cookie.js" %}"></script>
 <script src="{% static "popper.js/umd/popper.js" %}"></script>
 <script src="{% static "jquery/dist/jquery.js" %}"></script>
-<script src="{% static "bootstrap4/dist/js/bootstrap.js" %}"></script>
+<script src="{% static "bootstrap/dist/js/bootstrap.js" %}"></script>
 <script src="{% static "bootstrap-table/bootstrap-table.js" %}"></script>
 
 <script src="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.js"></script>
@@ -53,7 +53,7 @@
 {% endblock %}
 
 
-<div class="container">
+<div class="container-fluid">
   <div id="authorslist_error" style="hidden" class="alert alert-danger collapse" role="alert">
     (TODO message here)
   </div>  
@@ -63,7 +63,7 @@
   <table class="table table-sm authors" id="authorslist"
     data-toggle="table"
     data-show-columns="true"
-    data-url="/bookshelf/authors/search"
+    data-url="/bookshelf/authors/search/"
     data-toolbar="#toolbarAuthors"
     data-pagination="true"
     data-side-pagination="server"

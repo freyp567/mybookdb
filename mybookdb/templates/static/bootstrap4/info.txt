@@ -1,3 +1,0 @@
-2018-08-17
-
-content of dist subfolder from bootstrap-4.0.0.zip

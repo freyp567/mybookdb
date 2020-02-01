@@ -5,7 +5,7 @@
 
 {% load static %}
 
-<link rel="stylesheet" href="/static/bootstrap4/dist/css/bootstrap.css" />
+<link rel="stylesheet" href="/static/bootstrap/dist/css/bootstrap.css" />
 <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
 <link rel="stylesheet" type="text/css" href="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.css">
 
@@ -45,11 +45,7 @@
 </style>
 
 {% block extra_js%}
-<!-- already loaded by base_generic.html: 
-<script src="/static/jquery/dist/jquery.js"></script>
-<script src="/static/bootstrap4/dist/js/bootstrap.js"></script>
-<script src="{% static "/popper.js/umd/popper.js" %}"></script>
--->
+<!-- already loaded by base_generic.html: jquery, bootstrap, popper -->
 <script src="/static/js-cookie/js.cookie.js"></script>
 <script src="{% static "/bootstrap-table/bootstrap-table.js" %}"></script>
 <script src="{% static "/bootstrap4-editable/js/bootstrap-editable.js" %}"></script>
@@ -93,7 +89,7 @@ model states, inherited from MyBookDroid
 */
 </script>
 
-<div class="container">
+<div class="container-fluid">
   <div id="bookslist_error" style="hidden" class="alert alert-danger collapse" role="alert">
     (TODO message here)
   </div>
