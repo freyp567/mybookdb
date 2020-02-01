@@ -14,10 +14,10 @@ django-bootstrap4
 django-crispy-forms
 django-extensions
 django-filter
-django-partial-date
+django-parpitial-date
 django-select2
 django-tables2
-django==2.1.13
+django==2.2.9
 graphene-django>=2.0
 graphene>=2.0
 lxml
