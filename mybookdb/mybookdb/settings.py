@@ -61,7 +61,8 @@ INSTALLED_APPS = [
     'crispy_forms',
     'django_prometheus',
 ]
-if os.environ.get("USE_DEBUG_TOOLBAR"):
+USE_DEBUG_TOOLBAR =os.environ.get("USE_DEBUG_TOOLBAR", False)
+if USE_DEBUG_TOOLBAR:
     INSTALLED_APPS.append('debug_toolbar')
     
 
@@ -84,7 +85,7 @@ MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
-if os.environ.get("USE_DEBUG_TOOLBAR"):
+if USE_DEBUG_TOOLBAR:
     # https://django-debug-toolbar.readthedocs.io/en/latest/installation.html#enabling-middleware
     MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
