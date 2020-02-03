@@ -4,14 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-#Django = ">=2.1.13"
+#Django = ">=2.2.9"
 Django = "<3.0"
 "django-tables2" = "*"
 django-filter = "*"
 "django-bootstrap4" = "*"
 "Django-Select2" = "*"
 graphene = ">=2.0"
-graphene-django = ">=2.0"
+graphene-django = ">=2.8"
 django-extensions = "*"
 werkzeug = "*"
 requests = "*"
