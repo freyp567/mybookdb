@@ -1,0 +1,9 @@
+ https://github.com/wenzhixin/bootstrap-table/
+
+2020-02-01
+
+v1.15.5 
+
+2018-12-08
+
+bootstrap-table 1.12.1
