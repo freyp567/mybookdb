@@ -1,3 +1,4 @@
+staticfiles/
 export/
 books.db*
 db.sqlite3*
