@@ -22,6 +22,7 @@ django_partial_date = "*"
 django-prometheus = "*"
 django-allow-cidr = "*"
 psycopg2-binary = "*"
+#django-yarn = {editable = true,git = "https://github.com/epineda/django-yarn.git"}
 
 [dev-packages]
 "flake8" = "*"
@@ -32,7 +33,6 @@ pipenv-to-requirements = "*"
 #django-compressor = "*"
 #django-compressor-toolkit = "*"
 #django-npm = "*"
-django-yarnpkg = "*"
 
 [requires]
 python_version = "3.7"

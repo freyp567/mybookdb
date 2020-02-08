@@ -5,7 +5,7 @@
 
 {% load static %}
 
-<link rel="stylesheet" href="/static/bootstrap/dist/css/bootstrap.css" />
+<link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" />
 <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
 <link rel="stylesheet" type="text/css" href="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.css">
 
@@ -50,7 +50,7 @@
 <script src="{% static "/bootstrap-table/bootstrap-table.js" %}"></script>
 <script src="{% static "/bootstrap4-editable/js/bootstrap-editable.js" %}"></script>
 
-<script src="{% static "/jquery-form/jquery.form.js" %}"></script>
+<script src="{% static "jquery-form/dist/jquery.form.min.js" %}"></script>
 
 <!-- 
 https://github.com/wenzhixin/bootstrap-table/blob/master/src/extensions/filter-control/README.md

@@ -13,6 +13,11 @@
     "url": "https://github.com/freyp567/mybookdb/issues"
   },
   "homepage": "https://github.com/freyp567/mybookdb#readme",
-  "dependencies": {},
+  "dependencies": {
+    "@popperjs/core": "^2.0.5",
+    "bootstrap": "4.3.1",
+    "jquery": "3.4.1",
+    "jquery-form": "^4.2.2"
+  },
   "private": true
 }

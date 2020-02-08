@@ -8,7 +8,7 @@
       Search Authors  
     </h1>
     
-<link rel="stylesheet" href="/static/bootstrap/dist/css/bootstrap.css" />
+<link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" />
 <link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
 <link rel="stylesheet" type="text/css" href="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.css">
 
@@ -42,7 +42,7 @@
 
 {% block extra_js%}
 <script src="{% static "js-cookie/js.cookie.js" %}"></script>
-<script src="{% static "popper.js/umd/popper.js" %}"></script>
+<script src="{% static "@popperjs/core/dist/umd/popper.js" %}"></script>
 <script src="{% static "jquery/dist/jquery.js" %}"></script>
 <script src="{% static "bootstrap/dist/js/bootstrap.js" %}"></script>
 <script src="{% static "bootstrap-table/bootstrap-table.js" %}"></script>

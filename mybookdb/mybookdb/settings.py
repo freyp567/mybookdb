@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+from pathlib import Path
 #import logging
 #from django.templatetags.static import static
 
@@ -60,7 +61,6 @@ INSTALLED_APPS = [
     'django_extensions',
     'crispy_forms',
     'django_prometheus',
-    'django_yarnpkg',
 ]
 USE_DEBUG_TOOLBAR =os.environ.get("USE_DEBUG_TOOLBAR", False)
 if USE_DEBUG_TOOLBAR:
@@ -74,44 +74,24 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 # use graphene-django to integrate GraphiQL into Django project
 
 STATICFILES_FINDERS = [
-    #'compressor.finders.CompressorFinder',
-    #'npm.finders.NpmFinder',
-    'django_yarnpkg.finders.NodeModulesFinder',
+    'mybookdb.finders.YarnFinder',
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
-"""
-COMPRESS_ROOT =os.path.join(BASE_DIR, 'compressed')
+YARN_ROOT_PATH = os.path.abspath(os.path.join(BASE_DIR, '..'))
+YARN_EXECUTABLE_PATH = os.environ.get("YARN_EXECUTABLE_PATH")
 
-COMPRESS_CSS_FILTERS = [
-    'compressor.filters.css_default.CssAbsoluteFilter',
-    'compressor.filters.cssmin.CSSMinFilter',
-    'compressor.filters.template.TemplateFilter'
-]
-COMPRESS_JS_FILTERS = [
-    'compressor.filters.jsmin.JSMinFilter',
-]
-COMPRESS_PRECOMPILERS = (
-    ('module', 'compressor_toolkit.precompilers.ES6Compiler'),
-    ('css', 'compressor_toolkit.precompilers.SCSSCompiler'),
-)
-COMPRESS_ENABLED = True
-"""
-"""
-NPM_ROOT_PATH = BASE_DIR
-NPM_FILE_PATTERNS = {
-    'jquery': ['jquery.js']
+#YARN_STATIC_FILES_PREFIX = ''
+#YARN_FINDER_USE_CACHE
+
+YARN_FILE_PATTERNS = {
+    'jquery': [Path('dist') / '*'],
+    'jquery-form': [Path('dist') / '*'],
+    'bootstrap': [Path('dist') / '*'],
+    '@popperjs': [Path('core') / 'dist' / '*'],
 }
-NPM_FINDER_USE_CACHE = True
-"""
 
-NODE_MODULES_ROOT = os.path.abspath(os.path.join(BASE_DIR, '..'))
-#YARN_PATH ...
-
-YARN_INSTALLED_APPS = (
-    #'bootstrap@^4.3.1',
-)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -248,17 +228,17 @@ STATIC_URL = '/static/'
 
 
 BOOTSTRAP4 = {
-    'css_url': STATIC_URL +'bootstrap/dist/css/bootstrap.css',
-    'jquery_url': STATIC_URL +'jquery/dist/jquery.js',
-    'javascript_url': STATIC_URL +'bootstrap/dist/js/bootstrap.js',
+    'css_url': STATIC_URL +'js/lib/bootstrap/dist/css/bootstrap.css',
+    'jquery_url': STATIC_URL +'js/lib/jquery/dist/jquery.js',
+    'javascript_url': STATIC_URL +'js/lib/bootstrap/dist/js/bootstrap.js',
     'use_i18n': False,
-    'popper_url': STATIC_URL +'popper.js/umd/popper.min.js',
+    'popper_url': STATIC_URL +'js/lib/@popperjs/core/dist/umd/popper.min.js',
     
     # not available (yet) but overridden to prevent inclusion of external resources
-    'jquery_slim_url': STATIC_URL +'jquery/dist/jquery.slim.js',
+    'jquery_slim_url': STATIC_URL +'js/lib/jquery/dist/jquery.slim.js',
 }
 
-#STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'templates', 'static'),
 ]
