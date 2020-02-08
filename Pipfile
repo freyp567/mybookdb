@@ -22,10 +22,6 @@ django_partial_date = "*"
 django-prometheus = "*"
 django-allow-cidr = "*"
 psycopg2-binary = "*"
-#django-compressor = "*"
-#django-compressor-toolkit = "*"
-#django-npm = "*"
-django-yarnpkg = "*"
 
 [dev-packages]
 "flake8" = "*"
@@ -33,6 +29,10 @@ django-yarnpkg = "*"
 pylint = "*"
 django-debug-toolbar = "*"
 pipenv-to-requirements = "*"
+#django-compressor = "*"
+#django-compressor-toolkit = "*"
+#django-npm = "*"
+django-yarnpkg = "*"
 
 [requires]
 python_version = "3.7"

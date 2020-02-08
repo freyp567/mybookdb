@@ -25,11 +25,15 @@ To untegrate with LibraryThing, you will need to pass the LT API Key by setting 
 and take care that you fullfill the licensing requirments listed in LibraryThing API wiki (non-commercial use, not more than one request per second, ...).
 For details see https://wiki.librarything.com/index.php/LibraryThing_APIs.
 
+## packaging
+Using yarn / django-yarnpkg for packaging Javascript components (bootstrap4, jquery).
+Expect yarn to be installed externally / globally.
+
 ## TODOs
 + state handling cleanup, make cancel button work
 + cleanup of imported data (from MyBookDroid sqllite backup) - umlaute, incomplete info, groups, ...
 + login and user access (currently only limited to editing book details)
 + editing book details: more fields to add
-+ wishlist feature
++ wishlist feature (list of books I want to read - an extended onleihe Merkzettel, covering also Audible)
 + add more features, e.g. to add new books with lookup book catalogues for details
 
