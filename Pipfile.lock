@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d138ad0e1acfd3412afe5b2138394c785fa3d7894a9cad6d1247efd217fe45fe"
+            "sha256": "a834b920a2abd4e3318ddd6073e0c5977451e20127fe9c3bac3bd10496bc3207"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -130,6 +130,13 @@
             ],
             "index": "pypi",
             "version": "==2.2.1"
+        },
+        "django-yarnpkg": {
+            "hashes": [
+                "sha256:aa059347b246c6f242401581d2c129bdcb45aa726be59fe2f288762a9843348a"
+            ],
+            "index": "pypi",
+            "version": "==6.0.1"
         },
         "graphene": {
             "hashes": [

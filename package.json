@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/freyp567/mybookdb/issues"
   },
-  "homepage": "https://github.com/freyp567/mybookdb#readme"
+  "homepage": "https://github.com/freyp567/mybookdb#readme",
+  "dependencies": {
+    "yarn": "^1.22.0"
+  }
 }

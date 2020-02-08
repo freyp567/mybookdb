@@ -60,8 +60,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'crispy_forms',
     'django_prometheus',
-    'compressor',
-    'compressor_toolkit',
+    'django_yarnpkg',
 ]
 USE_DEBUG_TOOLBAR =os.environ.get("USE_DEBUG_TOOLBAR", False)
 if USE_DEBUG_TOOLBAR:
@@ -77,6 +76,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 STATICFILES_FINDERS = [
     #'compressor.finders.CompressorFinder',
     #'npm.finders.NpmFinder',
+    'django_yarnpkg.finders.NodeModulesFinder',
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
@@ -105,6 +105,13 @@ NPM_FILE_PATTERNS = {
 }
 NPM_FINDER_USE_CACHE = True
 """
+
+NODE_MODULES_ROOT = os.path.abspath(os.path.join(BASE_DIR, '..'))
+#YARN_PATH ...
+
+YARN_INSTALLED_APPS = (
+    #'bootstrap@^4.3.1',
+)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

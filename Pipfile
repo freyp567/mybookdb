@@ -25,6 +25,7 @@ psycopg2-binary = "*"
 #django-compressor = "*"
 #django-compressor-toolkit = "*"
 #django-npm = "*"
+django-yarnpkg = "*"
 
 [dev-packages]
 "flake8" = "*"
