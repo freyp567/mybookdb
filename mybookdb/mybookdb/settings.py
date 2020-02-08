@@ -60,6 +60,8 @@ INSTALLED_APPS = [
     'django_extensions',
     'crispy_forms',
     'django_prometheus',
+    'compressor',
+    'compressor_toolkit',
 ]
 USE_DEBUG_TOOLBAR =os.environ.get("USE_DEBUG_TOOLBAR", False)
 if USE_DEBUG_TOOLBAR:
@@ -71,6 +73,38 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 # 2018-10-23 dropped django_graphiql, seems to be deprecated and outdated
 # and replaced completely by graphene_django
 # use graphene-django to integrate GraphiQL into Django project
+
+STATICFILES_FINDERS = [
+    #'compressor.finders.CompressorFinder',
+    #'npm.finders.NpmFinder',
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
+"""
+COMPRESS_ROOT =os.path.join(BASE_DIR, 'compressed')
+
+COMPRESS_CSS_FILTERS = [
+    'compressor.filters.css_default.CssAbsoluteFilter',
+    'compressor.filters.cssmin.CSSMinFilter',
+    'compressor.filters.template.TemplateFilter'
+]
+COMPRESS_JS_FILTERS = [
+    'compressor.filters.jsmin.JSMinFilter',
+]
+COMPRESS_PRECOMPILERS = (
+    ('module', 'compressor_toolkit.precompilers.ES6Compiler'),
+    ('css', 'compressor_toolkit.precompilers.SCSSCompiler'),
+)
+COMPRESS_ENABLED = True
+"""
+"""
+NPM_ROOT_PATH = BASE_DIR
+NPM_FILE_PATTERNS = {
+    'jquery': ['jquery.js']
+}
+NPM_FINDER_USE_CACHE = True
+"""
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
