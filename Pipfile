@@ -22,6 +22,9 @@ django_partial_date = "*"
 django-prometheus = "*"
 django-allow-cidr = "*"
 psycopg2-binary = "*"
+#django-compressor = "*"
+#django-compressor-toolkit = "*"
+#django-npm = "*"
 
 [dev-packages]
 "flake8" = "*"
