@@ -4,9 +4,9 @@
 
 {% block content %}
 
-<link rel="stylesheet" href="/static/bootstrap/dist/css/bootstrap.css" />
-<link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
-<link rel="stylesheet" href="{% static "bootstrap4-editable/css/bootstrap-editable.css" %}" />
+<link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" />
+<link rel="stylesheet" href="{% static 'bootstrap-table/dist/bootstrap-table.min.css' %}" />
+<link rel="stylesheet" href="{% static 'x-editable/dist/bootstrap-editable/css/bootstrap-editable.css' %}" />
 
 <style>
 /* use !important to override width of form-control inside editable-container */
@@ -34,9 +34,9 @@
 }
 </style>
 
-<script src="{% static "/bootstrap-table/bootstrap-table.js" %}"></script>
-<script src="{% static "/bootstrap4-editable/js/bootstrap-editable.js" %}"></script>
-<script src="/static/bootstrap-table/extensions/editable/bootstrap-table-editable.js"></script>
+<script src="{% static '/bootstrap-table/dist/bootstrap-table.min.js' %}"></script>
+<script src="{% static 'x-editable/dist/bootstrap-editable/js/bootstrap-editable.min.js' %}"></script>
+<script src="{% static 'bootstrap-table/dist/extensions/editable/bootstrap-table-editable.min.js' %}"></script>
 
 <!-- button type="button" class="btn btn-primary" ... -->
 <a class="btn btn-primary btn-sm" role="button" 

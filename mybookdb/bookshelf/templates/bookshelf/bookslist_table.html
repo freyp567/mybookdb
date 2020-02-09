@@ -6,10 +6,11 @@
 {% load static %}
 
 <link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" />
-<link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
-<link rel="stylesheet" type="text/css" href="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.css">
+<link rel="stylesheet" href="{% static 'bootstrap-table/dist/bootstrap-table.min.css' %}" />
+<link rel="stylesheet" type="text/css" 
+  href="{% static 'bootstrap-table/dist/extensions/filter-control/bootstrap-table-filter-control.min.css'}">
 
-<link rel="stylesheet" href="{% static "bootstrap4-editable/css/bootstrap-editable.css" %}" />
+<link rel="stylesheet" href="{% static 'x-editable/dist/bootstrap-editable/css/bootstrap-editable.css' %}" />
 
 <style>
 
@@ -46,21 +47,16 @@
 
 {% block extra_js%}
 <!-- already loaded by base_generic.html: jquery, bootstrap, popper -->
-<script src="/static/js-cookie/js.cookie.js"></script>
-<script src="{% static "/bootstrap-table/bootstrap-table.js" %}"></script>
-<script src="{% static "/bootstrap4-editable/js/bootstrap-editable.js" %}"></script>
+<script src={% static 'js.cookie/dst/Cookie.js' %}></script>
+<script src="{% static 'bootstrap-table/dist/bootstrap-table.min.js' %}"></script>
+<script src="{% static 'x-editable/dist/bootstrap-editable/js/bootstrap-editable.min.js' %}"></script>
 
-<script src="{% static "jquery-form/dist/jquery.form.min.js" %}"></script>
+<script src="{% static 'jquery-form/dist/jquery.form.min.js' %}"></script>
 
-<!-- 
-https://github.com/wenzhixin/bootstrap-table/blob/master/src/extensions/filter-control/README.md
-filterControl
--->
-
-<script src="/static/bootstrap-table/extensions/filter-control/bootstrap-table-filter-control.js"></script>
-<script src="/static/bootstrap-table/extensions/cookie/bootstrap-table-cookie.js"></script>
-<script src="/static/bootstrap-table/extensions/editable/bootstrap-table-editable.js"></script>
-<script src="{% static "/js/bookshelf.js" %}"></script>
+<script src="{% static 'bootstrap-table/dist/extensions/filter-control/bootstrap-table-filter-control.min.js' %}"></script>
+<script src="{% static 'bootstrap-table/dist/extensions/cookie/bootstrap-table-cookie.min.js' %}"></script>
+<script src="{% static 'bootstrap-table/dist/extensions/editable/bootstrap-table-editable.min.js' %}"></script>
+<script src="{% static 'js/bookshelf.js' %}"></script>
 {% endblock %}
 
 <script>

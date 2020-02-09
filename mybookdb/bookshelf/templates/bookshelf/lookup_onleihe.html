@@ -10,11 +10,11 @@
 {% block content %}
 {{ form.media.css }}
 
-<link rel="stylesheet" href="/static/bootstrap-table/bootstrap-table.css" />
+<link rel="stylesheet" href="{% static 'bootstrap-table/dist/bootstrap-table.min.css' %}" />
 
 {{ form.media.js }}
 
-<script src="{% static "bootstrap-table/bootstrap-table.js" %}"></script>
+<script src="{% static 'bootstrap-table/dist/bootstrap-table.min.js' %}"></script>
 
 <a href="{{details_url}}">back to book details</a>
 {% for message in messages %}

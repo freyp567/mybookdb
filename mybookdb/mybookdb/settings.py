@@ -87,8 +87,11 @@ YARN_EXECUTABLE_PATH = os.environ.get("YARN_EXECUTABLE_PATH")
 
 YARN_FILE_PATTERNS = {
     'jquery': [Path('dist') / '*'],
+    'js.cookie': [Path('dst') / '*'],
     'jquery-form': [Path('dist') / '*'],
     'bootstrap': [Path('dist') / '*'],
+    'bootstrap-table': [Path('dist') / '*'],
+    'x-editable': [Path('dist') / '*'],
     '@popperjs': [Path('core') / 'dist' / '*'],
 }
 

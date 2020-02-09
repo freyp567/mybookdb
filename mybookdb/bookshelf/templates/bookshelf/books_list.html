@@ -23,7 +23,7 @@
             {{ book.title }}
         </a>
         [{{ book.state_info }}]
-        {{ book.onleihe_status|default:"(onleihe?)" }}
+        {{ book.onleihe_status|default:"" }}
         &ndash; {% for author in book.authors.all|slice:":3" %}
             {{author.name}}{% if not forloop.last %}, {% endif %}
         {% endfor %}
