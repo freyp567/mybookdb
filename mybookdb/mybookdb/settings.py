@@ -35,7 +35,7 @@ if not ALLOWED_CIDR_NETS:
     pass #ALLOWED_HOSTS = ['*']
 else:
     ALLOWED_CIDR_NETS = ALLOWED_CIDR_NETS.split(',')
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1").split(',')
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(',')
 
 
 PROMETHEUS_METRICS_EXPORT_PORT = 8001
@@ -184,7 +184,8 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
 LANGUAGE_CODE = os.environ.get('LANGUAGE_CODE', "en-us")
-LANGUAGES = os.environ.get('LANGUAGES', ('en', 'English'))
+#LANGUAGES = os.environ.get('LANGUAGES', ('en', 'English'))
+LANGUAGES = [('en', 'English'),]
 
 #TIME_ZONE = 'UTC'
 TIME_ZONE = 'Europe/Berlin'

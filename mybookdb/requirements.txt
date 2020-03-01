@@ -1,9 +1,29 @@
-django==2.2.9
-django-filter==2.2.0
-django-tables2==2.2.1
-django_partial_date==1.2.2
-pytz==2019.3
-graphene==2.1.8
-graphene-django==2.8.0
-django-prometheus==2.0.0
-django-allow-cidr==0.3.1
+################################################################################
+# This requirements file has been automatically generated from `Pipfile` with
+# `pipenv-to-requirements`
+#
+#
+# This has been done to maintain backward compatibility with tools and services
+# that do not support `Pipfile` yet.
+#
+# Do NOT edit it directly, use `pipenv install [-d]` to modify `Pipfile` and
+# `Pipfile.lock` and then regenerate `requirements*.txt`.
+################################################################################
+
+django-allow-cidr
+django-bootstrap4
+django-crispy-forms
+django-extensions
+django-filter
+django-prometheus
+django-select2
+django-tables2
+django==3.0.3
+graphene-django>=2.8
+graphene>=2.0
+lxml
+psycopg2-binary
+pyisbn
+r-django-partial-date
+requests
+werkzeug

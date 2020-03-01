@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 #Django = ">=2.2.9"
-Django = "<3.0"
+Django = "==3.0.3"
 "django-tables2" = "*"
 django-filter = "*"
 "django-bootstrap4" = "*"
@@ -18,11 +18,11 @@ requests = "*"
 pyisbn = "*"
 lxml = "*"
 django-crispy-forms = "*"
-django_partial_date = "*"
 django-prometheus = "*"
 django-allow-cidr = "*"
 psycopg2-binary = "*"
 #django-yarn = {editable = true,git = "https://github.com/epineda/django-yarn.git"}
+r-django-partial-date = "*"
 
 [dev-packages]
 "flake8" = "*"
