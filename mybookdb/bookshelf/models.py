@@ -167,7 +167,9 @@ class comments(models.Model):
         if self.dateCreatedInt:
             created = datetime.datetime.utcfromtimestamp(self.dateCreatedInt/1000)
             return created.strftime("%Y-%m-%dT%H:%M")
-        else:
+        elif self.dateCreated:
+            return self.dateCreated.strftime("%Y-%m-%dT%H:%M")
+        else:            
             return '(NA)'
 
     @property
