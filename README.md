@@ -9,8 +9,8 @@ For import of the book database, a migration script will allow to import the boo
 from MyBookDroid repeatedly (and hopefully lossless).
 
 ## prerequisites
-+ Django 2.0  (2.0.8 or newer)
-+ SQLLite (or PostgreSQL)
++ Django 3.0  (3.0.3 or newer)
++ PostgreSQL (or SQLListe)
 + more prerequisites, see requirements / Pipfile
 
 External libraries (bootstrap4, bootstrap-table, ...) are provided locally (but that may be changed in future
@@ -32,8 +32,8 @@ Expect yarn to be installed externally / globally.
 ## TODOs
 + state handling cleanup, make cancel button work
 + cleanup of imported data (from MyBookDroid sqllite backup) - umlaute, incomplete info, groups, ...
-+ login and user access (currently only limited to editing book details)
++ login and user access (currently limited to editing book details)
 + editing book details: more fields to add
 + wishlist feature (list of books I want to read - an extended onleihe Merkzettel, covering also Audible)
-+ add more features, e.g. to add new books with lookup book catalogues for details
++ add new books with lookup book catalogues for details
 
