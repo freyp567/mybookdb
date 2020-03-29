@@ -7,8 +7,16 @@
 {% endblock %}
 
 {% block content %}
+{% load static %}
+
     {{ form.media.css }}
     {{ form.media.js }}
+
+    <h1><a target="search_book_reviews" href="https://duckduckgo.com/?q={{book_search}}">
+    {{book_title}}
+    </a></h1>
+    <h2>add timeline events for this book</h2>
+    <br/>
 
     {% for message in messages %}
         <div class="{{ message|bootstrap_message_classes }} alert-dismissable">
