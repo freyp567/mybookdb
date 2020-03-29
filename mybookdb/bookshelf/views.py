@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 views on bookshelf (books, authors, ...)
 """
@@ -5,6 +6,7 @@ import os
 import logging
 import json
 from datetime import datetime
+
 
 from django.shortcuts import render, redirect
 from django.views import generic
@@ -100,9 +102,7 @@ class BookListGenericView(generic.ListView):
                 if ordering == 'wishlist':
                     # map ordering to what can be handled by DB
                     ordering = ['states__toBuy', 'userRating', '-updated']
-                    # FieldError: Cannot resolve keyword '+states' into field. 
-                    #ordering = ['-states', '-updated']
-                    qs = qs.filter(states__haveRead=False)
+                    qs = qs.filter(states__haveRead=False, states__toBuy=True)
                 elif ordering == 'onleihe_unkown':
                     ordering = ['states__toBuy', 'userRating', '-updated']
                     qs = qs.filter(onleihebooks=None)
@@ -114,7 +114,10 @@ class BookListGenericView(generic.ListView):
             qs = qs.order_by(*ordering)
         return qs
     
-    #def get_context_data(self, *, object_list=None, **kwargs):
+    def get_context_data(self, *args, **kwargs):
+        data = super(BookListGenericView, self).get_context_data(*args, **kwargs)
+        data["result_count"] = len(self.object_list)
+        return data
     
     def get_ordering(self):
         sort = self.request.GET.get('sort', 'updated')
@@ -278,6 +281,9 @@ class BookCreateView(PermissionRequiredMixin, generic.edit.CreateView):
         return initial_data
  
     def get_context_data(self, **kwargs):
+        if getattr(self, 'object', None) is None:
+            # avoid AttributeError: 'BookCreateView' object has no attribute 'object'
+            self.object = None 
         context = super(BookCreateView, self).get_context_data(**kwargs)
         context['tag'] = "div"
         return context
@@ -370,7 +376,7 @@ class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
             states_obj.save()
         else:
             # ATTN ensure pk / id and book_id to be equal
-            others =states.objects.filter(book_id = self.book_obj.pk)
+            others = states.objects.filter(book_id = self.book_obj.pk)
             others = [obj for obj in others if obj.pk != book_id]
             if others:
                 raise ValueError("detected states %s for book %s" % ([obj.pk for obj in others], book_id))
@@ -704,15 +710,15 @@ class UpdateBookComment(PermissionRequiredMixin, generic.edit.UpdateView):
             return HttpResponseBadRequest('update failed')
     
     def save(self, book_id, comment_id, new_text):
+        now = datetime.now(tz=timezone.utc)
         book_obj = books.objects.get(pk=book_id)
         if comment_id == '0':  # new comment
             comment_obj = comments()
             comment_obj.book = book_obj
             comment_obj.bookTitle = book_obj.title
-            now = datetime.now()
             comment_obj.dateCreatedInt = int(now.timestamp() *1000)
             comment_obj.dateCreated = now
-            book_obj.updated = datetime.now(tz=timezone.utc)
+            book_obj.updated = now
             comment_obj.save()            
             book_obj.save()
         else:
