@@ -20,7 +20,7 @@ def show_bookmarks(obj):
         links = obj.book_links.all()
     else:
         links = []
-    # TODO fetch related
+    
     link_infos = []
     for link in links:
         link_info = {'link': link}

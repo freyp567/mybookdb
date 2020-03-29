@@ -72,7 +72,7 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 
 from bookshelf.models import books, authors, comments, grBooks, googleBooks, groups, states
-from bookmarks.models import book_links
+from bookmarks.models import book_links, linksites
 
 import os
 import io
