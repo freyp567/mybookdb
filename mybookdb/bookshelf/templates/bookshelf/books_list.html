@@ -15,11 +15,12 @@
     <br/>
 
     {% if books_list %}
+    total books found: {{ result_count }}<br/><br/>
     <ul>
 
       {% for book in books_list %}
       <li>
-        <a href="{{ book.get_absolute_url }}">
+        <a target="bookdetails" href="{{ book.get_absolute_url }}">
             {{ book.title }}
         </a>
         [{{ book.state_info }}]
