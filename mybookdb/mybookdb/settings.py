@@ -93,6 +93,7 @@ YARN_FILE_PATTERNS = {
     'bootstrap-table': [Path('dist') / '*'],
     'x-editable': [Path('dist') / '*'],
     '@popperjs': [Path('core') / 'dist' / '*'],
+    'clipboard': [Path('dist') / '*'],
 }
 
 

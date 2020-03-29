@@ -48,7 +48,8 @@
 <a class="btn btn-secondary btn-sm" role="button" 
   title="timeline events for current book"
   href="{% url 'timeline:show-timeline' pk=books.pk %}"
-  >Timline events</a>
+  target="timeline"
+  >Timeline events</a>
 {% endif %}
 
 {% if USE_LIBRARYTHING == "1" %}
@@ -66,7 +67,14 @@
   >Onleihe</a>
 {% endif %}
 
-<h1>{{ books.title }}</h1>
+<h1>
+<span id="book_title">{{ books.title }}</span>
+<button class="clipboard_btn" data-clipboard-target="#book_title">
+    <img src="{% static 'images/clipboard.svg' %}" alt="Copy to clipboard">
+</button>
+</h1>
+<script>new ClipboardJS('.clipboard_btn');</script>
+
 
 <p class="mb-0"><strong>Author(s):</strong>
 {% for author in books.authors.all %}
@@ -118,7 +126,7 @@
 <hr/>
 <p class="detail_brief">Updated: {{ books.updated|date:"c" }}</p>
 <p class="detail_brief">States: {{ books.states }}</p>
-<p class="detail_brief">Onleihe: {{ books.onleihebooks|default:'---' }}</p>
+<p class="detail_brief">Onleihe: <!--- to be fixed --- { { books.onleihebooks|default:'---' } } -->??</p>
 
 <hr/>
 
