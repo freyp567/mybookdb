@@ -3,7 +3,10 @@
 {% block content %}
 {% load static %}
 
-    <h1>"{{book_title}}", timeline events</h1>
+    <h1><a target="search_book_reviews" href="https://duckduckgo.com/?q={{book_search}}">
+    {{book_title}}
+    </a></h1>
+    <h2>timeline events for this book</h2>
     navigate 
     <a href="{{ request.path }}?nav=up">up</a>, 
     <a href="{{ request.path }}?nav=down">down</a>, 
