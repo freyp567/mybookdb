@@ -68,10 +68,10 @@
 {% endif %}
 
 <h1>
-<span id="book_title">{{ books.title }}</span>
-<button class="clipboard_btn" data-clipboard-target="#book_title">
+<button class="btn btn-light clipboard_btn" data-clipboard-target="#book_title">
     <img src="{% static 'images/clipboard.svg' %}" alt="Copy to clipboard">
 </button>
+<span id="book_title">{{ books.title }}</span>
 </h1>
 <script>new ClipboardJS('.clipboard_btn');</script>
 
