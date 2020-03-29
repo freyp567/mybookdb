@@ -1,4 +1,5 @@
 import json
+import re
 import urllib.parse 
 from datetime import datetime
 
@@ -13,6 +14,9 @@ from bookshelf.models import books, authors
 from bookmarks.models import author_links, book_links, linksites, linksites_url
 from bookmarks.forms import BookmarkCreateForm
 
+import logging
+LOGGER = logging.getLogger(name='mybookdb.bookmarks.views')
+
 
 def get_bookmarks_stats(request):
     author_links_count = author_links.object.count()
@@ -23,7 +27,7 @@ def get_bookmarks_stats(request):
     }
     return JsonResponse(stats)
 
-def get_linkname_from_path(path, site):
+def get_linkname_from_path(path, site, query):
     pathsteps = path.split('/')
         
     name = pathsteps.pop().strip()
@@ -52,15 +56,46 @@ def get_linkname_from_path(path, site):
         name = name[14:]
         while name.endswith('-0'):
             name = name[:-2]
-            
+
+    linkname = None            
     if site.endswith('.onleihe.de'):
-        name = 'onleihe-' + name
-    if 'wikipedia.org' in site:
-        name = 'wikipedia-' + name
-    if 'goodreads.com' in site:
+        linkname = 'onleihe-' + name
+    elif site =='books.google.de':
+        linkname = 'googlebooks'
+        if 'id=' in query:
+            query = query.split('id=')[1]
+            query = query.split('&')[0]
+            if query:
+                linkname +='-' + query
+            
+    elif 'wikipedia.org' in site:
+        linkname = 'wikipedia-' + name
+    elif 'goodreads.com' in site:        
+        linkname = 'gr-' +name
+    elif site == 'www.audible.de':
+        linkname = 'audible-' + name
+    elif site =='www.evernote.com':
+        parts = name.split('-')
+        assert len(parts) == 5 and len(parts[4]) == 12, "evernote.com, unexpected name '%s'" % name
+        linkname = 'evernote-' + parts[4]
+    elif site == 'www.youtube.com':
+        match =re.match('v=(?P<youtube_id>[0-9A-Za-z]+).*', query)
+        if match is not None:
+            linkname = 'youtube-' + match.group('youtube_id')
+        else:
+            LOGGER.warning("failed to extract youtube_id from query '%s'", query)
+    else:
+        # 'verlorene-werke.blogspot.com', *.wordpress.com, ...
+        linkname = None
         
-        name = 'gr-' +name
-    return name
+    if linkname is None:
+        if len(name) > 50:
+            LOGGER.debug("use shortened default name='%s' for link site='%s'", name, site)
+            linkname = name[:50] +'..'
+        else:
+            LOGGER.debug("use default name='%s' for link site='%s'", name, site)
+            linkname = name
+    return linkname
     
 def parse_uri(request):
     # e.g. https://de.wikipedia.org/wiki/Aharon_Appelfeld
@@ -79,7 +114,7 @@ def parse_uri(request):
         assert site, "missing host part in URL"
         path = parts.path
         assert path, "missing path in URL"
-        name = get_linkname_from_path(path, site)
+        name = get_linkname_from_path(path, site, parts.query)
         nurl = urllib.parse.urlsplit(uri)
         npath = nurl.geturl()
         qs = None
