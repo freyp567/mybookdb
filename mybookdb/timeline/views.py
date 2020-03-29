@@ -47,7 +47,8 @@ class BookEventListView(generic.ListView):
         context = super(BookEventListView, self).get_context_data(*args, **kwargs)
         context["book"] = self.book_obj
         context["book_id"] = self.book_id
-        context["book_title"] = self.book_obj.title  #TODO eliminate
+        context["book_title"] = self.book_obj.title  # TODO display_title
+        context["book_search"] = '"%s" rezension' % self.book_obj.title  # TODO add author name
         context['is_paginated'] = False        
         return context
             
@@ -73,6 +74,16 @@ class BookEventCreateView(generic.CreateView):
     def get_initial(self):
         initial_data = super(BookEventCreateView, self).get_initial()
         return initial_data
+
+    def get_context_data(self, *args, **kwargs):
+        """Get the context for this view."""
+        context = super(BookEventCreateView, self).get_context_data(*args, **kwargs)
+        #context["book"] = self.book_obj
+        #context["book_id"] = self.book_id
+        context["book_title"] = self.book_obj.title  # TODO display_title
+        context["book_search"] = '"%s" rezension' % self.book_obj.title  # TODO add author name
+        context['is_paginated'] = False        
+        return context
 
     def get_form_kwargs(self):
         kwargs = super(BookEventCreateView, self).get_form_kwargs()
