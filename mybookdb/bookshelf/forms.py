@@ -347,8 +347,6 @@ class BookUpdateForm(forms.ModelForm):
     
     def clean_new_description(self):
         data = self.cleaned_data['new_description']
-        if self.instance.description == data:
-            return None  # not changed
         return data
     
     def orig_description(self):
