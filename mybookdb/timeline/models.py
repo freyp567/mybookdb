@@ -5,12 +5,34 @@ record timeline events
 from django.db import models
 from partial_date import PartialDateField
 from bookshelf.models import books
+from django.utils.translation import gettext as _
+
 
 class timelineevent(models.Model):
-    # timeline event with optional location and comment
+    """ timeline event with optional location and comment """
+    
+    class DatePrecision(models.TextChoices):
+        EXACT_YEAR = 'YR', _('Jahr')
+        EXACT_DATE = 'EX', _('Tag od Monat')
+        APPROX_YEAR = 'YA', _('ca Jahr')
+        APPROX_DECADE = 'DA', _('ca Jahrzehnt')
+        APPROX_CENTURY = 'CA', _('ca Jahrhundert')
+        APPROX_GUESSED = 'G?', _('vermutlich')
+        NEAR_FUTURE = 'FN', _('nahe Zukunft')
+        FAR_FUTURE = 'FF', _('ferne Zukunft')
+        FUTURE = 'FU', _('Zukunft')
+        NOTDETERMINED = 'ND', _('unbestimmt') # transition
+        UNKNOWN = 'UN', _('unbekannt od nicht datierbar')
+        
+        
     book = models.ForeignKey(books, on_delete=models.CASCADE)
     date = PartialDateField()
     is_bc = models.BooleanField(default=False)
+    precision = models.CharField(
+        max_length=2,
+        choices=DatePrecision.choices,
+        default=DatePrecision.NOTDETERMINED
+    )
     # TODO evaluate datautil.date.FlexiDate, but need a widget for input 
     location = models.TextField(null=True)
     comment = models.TextField(null=True)
