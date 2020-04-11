@@ -168,6 +168,11 @@ class BookmarkCreate(generic.edit.CreateView):  # TODO fix permissions -- declar
     def __init__(self, *args, **kwargs):
         super(BookmarkCreate, self).__init__(*args, **kwargs)
 
+    def post(self, request, *args, **kwargs):
+        #if request.POST.get('cancel_button'):
+        #    request = request  # TODO how to handle crispy-from cancel button proberly?
+        return super(BookmarkCreate, self).post(request, *args, **kwargs)
+
     def get_success_url(self):
         # success_url = reverse('bookmarks:bookmark-show', args=(self.kwargs['objtype'], self.object.id,))
         if self.kwargs['objtype'] == 'authors':
@@ -177,10 +182,6 @@ class BookmarkCreate(generic.edit.CreateView):  # TODO fix permissions -- declar
         # TODO return to referer ?
         return success_url
     
-    def get_initial(self):
-        initial_data = super(BookmarkCreate, self).get_initial()
-        return initial_data
-    
     def get_form_kwargs(self):
         kwargs = super(BookmarkCreate, self).get_form_kwargs()
         kwargs['objtype'] = self.kwargs['objtype']
@@ -188,18 +189,16 @@ class BookmarkCreate(generic.edit.CreateView):  # TODO fix permissions -- declar
         return kwargs
 
     def form_valid(self, form):
-        # TODO assign bookmark to author / book
-        # django.db.utils.IntegrityError: NOT NULL constraint failed: bookmarks_author_links.author_id
+        # assign bookmark to author / book
         obj_type = self.kwargs['objtype']
         obj_id = self.kwargs['pk']
         if obj_type == 'authors':
             obj = authors.objects.get(pk=obj_id)
-            #form.instance.author_links = obj
-            ## django.db.utils.IntegrityError: NOT NULL constraint failed: bookmarks_author_links.author_id
         elif obj_type == 'books':
             obj = books.objects.get(pk=obj_id)
         else:
             assert False, "unsupported objtype '%s'" % obj_type
+            
         obj.updated = datetime.now()
         obj.save()
         return super(BookmarkCreate, self).form_valid(form)

@@ -36,3 +36,10 @@ class timelineevent(models.Model):
     # TODO evaluate datautil.date.FlexiDate, but need a widget for input 
     location = models.TextField(null=True)
     comment = models.TextField(null=True)
+    
+    @property
+    def date_precision(self):
+        #value = self.precision
+        #value = dict(timelineevent.DatePrecision.choices)[self.precision]
+        value = self.get_precision_display()
+        return value

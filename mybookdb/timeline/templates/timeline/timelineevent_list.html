@@ -21,7 +21,7 @@
       {% for event in timelineevent_list %}
       <li>
         {{ event.date }}{% if event.is_bc %} vChr{% endif %}
-        {{ event.precision }}
+        (<span class="small">{{ event.date_precision }}</span>)
         :  {{ event.location }}  
         {% if event.comment %}[{{ event.comment }}]{% endif %}
         <a target="_self" href="{% url 'timeline:delete-event' book_id=book_id pk=event.id %}">

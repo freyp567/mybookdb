@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Bookmarks forms
 """
@@ -6,6 +7,7 @@ from datetime import datetime
 
 from django import forms
 from django.forms import widgets
+from django.urls import reverse
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -42,6 +44,13 @@ class BookmarkCreateForm(forms.ModelForm):
         self.obj_type = kwargs.pop('objtype')
         self.obj_id = kwargs.pop('pk')
         if self.obj_type == 'books':
+            # TODO fix cross app dependency
+            cancel_url = reverse('bookshelf:books-detail', args=(self.obj_id,))
+        else:
+            cancel_url = reverse('bookmarks:bookmark-show', args=(self.obj_type, self.obj_id,))
+        
+        
+        if self.obj_type == 'books':
             self._meta.model = book_links
         else:
             self._meta.model = author_links
@@ -70,8 +79,10 @@ class BookmarkCreateForm(forms.ModelForm):
             ),
             FormActions(
                 Submit('save', 'Save changes'),
-                Button( 'cancel', 'Cancel', css_class = 'btn btn-default',
-                        onclick="window.history.back()")
+                Button(
+                    'cancel', 'Cancel', css_class = 'btn btn-default',
+                    onclick="window.location.href='{}';".format(cancel_url),
+                )
             )
         )
         
@@ -136,7 +147,8 @@ class BookmarkCreateForm(forms.ModelForm):
             found = book_links.objects.filter(link_uri = uri)
             
         if found:
-            pass # bookmark does already exist
+            # bookmark does already exist
+            raise ValidationError(_("Verknüpfung bereits zugeordnet"))
             
         return self.cleaned_data
         
