@@ -387,7 +387,7 @@ class AuthorCreateForm(forms.ModelForm):
             ) 
 
     name = forms.CharField(max_length=255, label='Vorname Name')
-    #familyName = forms.CharField(max_length=255, label='Familienname')
+    familyName = forms.CharField(max_length=255, label='Familienname')
     updated = forms.DateField(disabled=True)    
         
     def __init__(self, *args, **kwargs):

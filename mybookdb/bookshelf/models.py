@@ -14,6 +14,7 @@ class authors(models.Model):
     lowerCaseName = models.TextField()
     familyName = models.TextField()
     updated = models.DateField(null=True)
+    #short_bio = models.TextField(null=True)
     
     def __str__(self):
         return f"{self.familyName}, {self.name}"

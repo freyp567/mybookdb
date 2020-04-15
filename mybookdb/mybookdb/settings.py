@@ -68,6 +68,7 @@ if USE_DEBUG_TOOLBAR:
     
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+CRISPY_FAIL_SILENTLY = not DEBUG
 
 # 2018-10-23 dropped django_graphiql, seems to be deprecated and outdated
 # and replaced completely by graphene_django

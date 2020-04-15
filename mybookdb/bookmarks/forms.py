@@ -47,7 +47,8 @@ class BookmarkCreateForm(forms.ModelForm):
             # TODO fix cross app dependency
             cancel_url = reverse('bookshelf:books-detail', args=(self.obj_id,))
         else:
-            cancel_url = reverse('bookmarks:bookmark-show', args=(self.obj_type, self.obj_id,))
+            #cancel_url = reverse('bookmarks:bookmark-show', args=(self.obj_type, self.obj_id,))
+            cancel_url = reverse('bookshelf:author-detail', args=(self.obj_id,))
         
         
         if self.obj_type == 'books':

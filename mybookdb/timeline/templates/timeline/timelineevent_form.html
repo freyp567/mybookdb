@@ -1,13 +1,14 @@
 {% extends "base_generic.html" %}
 
+{% load static %}
 {% load bootstrap4 %}
+{% load crispy_forms_tags %}
 
 {% block title %}
     Add timeline event to book
 {% endblock %}
 
 {% block content %}
-{% load static %}
 
     {{ form.media.css }}
     {{ form.media.js }}
@@ -25,12 +26,10 @@
         </div>
     {% endfor %}
     
-    <form role="form" method="post"> <!-- action="/update_book" -->
-        <!-- legend>Update book entry:</legend -->
+    <form role="form" method="post">
         {% csrf_token %}
-        {% bootstrap_form form %}
-        {% buttons submit='OK' reset="Cancel" %}{% endbuttons %}
-        
+
+        {% crispy form %}
     </form>
     
 {% endblock %}

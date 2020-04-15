@@ -537,6 +537,10 @@ class AuthorUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     permission_required = 'bookshelf.can_create'
     model = authors
     form_class = AuthorUpdateForm
+    
+    def get_success_url(self): 
+        success_url = reverse('bookshelf:author-detail', args=(self.object.id,))
+        return success_url
 
 
 class AuthorDetailView(generic.DetailView):

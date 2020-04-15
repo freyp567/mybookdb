@@ -6,7 +6,7 @@ from django.utils.translation import gettext as _
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Field, Div, Button, Row
-from crispy_forms.bootstrap import FormActions, TabHolder, Tab
+from crispy_forms.bootstrap import FormActions, TabHolder, Tab, PrependedText
 
 from timeline.models import timelineevent
 
@@ -34,16 +34,15 @@ class BookEventCreateForm(forms.ModelForm):
         self.helper.label_class = 'lb-sm'
         
         self.helper.layout = Layout(
-            Fieldset(
-                '',
-                Field('date'),
-                Row(
-                    Field('is_bc'),
-                    Field('precision'),
-                    ),
-                Field('location'),
-                Field('comment', label=_('comment'))
-            ),
+            Row(
+                Field('date', css_class='form_group col'),
+                Field('precision', css_class='form_group col-md-8'),
+                Field('is_bc', css_class='form_group col-mb-2 align-items-end'),  # template='field_isbc_template.html')
+                css_class='form-row'
+                ),
+            Field('location'),
+            Field('comment', label=_('comment')),
+            Field('book_id', type='hidden'),
             FormActions(
                 Submit('save', 'Save timeline event'),
                 Button('cancel', 'Cancel', css_class = 'btn btn-default',

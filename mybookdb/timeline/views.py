@@ -8,6 +8,9 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt  # csrf_protect
 
+import logging
+LOGGER = logging.getLogger(name='mybookdb.timeline.views')
+
 
 def get_book(book_id):
     # decouple timeline view from bookshelf model
@@ -71,30 +74,30 @@ class BookEventCreateView(generic.CreateView):
         self.book_obj = get_book(self.book_id)
         return super().post(request, *args, **kwargs)
     
-    def get_initial(self):
-        initial_data = super(BookEventCreateView, self).get_initial()
-        return initial_data
-
     def get_context_data(self, *args, **kwargs):
         """Get the context for this view."""
         context = super(BookEventCreateView, self).get_context_data(*args, **kwargs)
-        #context["book"] = self.book_obj
-        #context["book_id"] = self.book_id
         context["book_title"] = self.book_obj.title  # TODO display_title
         context["book_search"] = '"%s" rezension' % self.book_obj.title  # TODO add author name
-        context['is_paginated'] = False        
+        context['is_paginated'] = False       
+        if kwargs.get('form') and kwargs['form'].errors:
+            context['messages'] = ['validation failed',]
         return context
 
     def get_form_kwargs(self):
         kwargs = super(BookEventCreateView, self).get_form_kwargs()
         initial = kwargs["initial"]
         initial["book_id"] = self.book_id
-        # is_paginated ?
         return kwargs
 
     def form_valid(self, form):
         form.instance.book = self.book_obj
         return super(BookEventCreateView, self).form_valid(form)
+    
+    def form_invalid(self, form):
+        # form.instance.book = self.book_obj
+        LOGGER.error("failed to validate form: %s", form.errors)
+        return super(BookEventCreateView, self).form_invalid(form)
     
     def get_success_url(self): 
         success_url = reverse('timeline:show-timeline', args=(self.book_id,))
