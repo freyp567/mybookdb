@@ -537,6 +537,10 @@ class AuthorUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     permission_required = 'bookshelf.can_create'
     model = authors
     form_class = AuthorUpdateForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        return context
     
     def get_success_url(self): 
         success_url = reverse('bookshelf:author-detail', args=(self.object.id,))
@@ -548,9 +552,10 @@ class AuthorDetailView(generic.DetailView):
     detail view for an author.
     """
     model = authors
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['short_bio'] = self.object.short_bio or ''
         
         authors_books = books.objects.filter(authors__id = self.object.id)
         authors_books = authors_books.order_by('-created')

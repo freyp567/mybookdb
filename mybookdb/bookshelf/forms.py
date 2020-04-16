@@ -384,11 +384,13 @@ class AuthorCreateForm(forms.ModelForm):
         fields = (
             'name', 
             'updated', 
+            'short_bio',
             ) 
 
     name = forms.CharField(max_length=255, label='Vorname Name')
     familyName = forms.CharField(max_length=255, label='Familienname')
     updated = forms.DateField(disabled=True)    
+    short_bio = forms.CharField(label=_('Kurzbiografie'))
         
     def __init__(self, *args, **kwargs):
         super(AuthorCreateForm, self).__init__(*args, **kwargs)
@@ -402,6 +404,7 @@ class AuthorCreateForm(forms.ModelForm):
                 '',
                 Field('name'),
                 Field('familyName'),
+                Field('short_bio'),
                 ),
             Div(
                 Div(Field('updated', readonly=True), css_class='col-md-4',),
@@ -429,7 +432,6 @@ class AuthorCreateForm(forms.ModelForm):
         
         
 class AuthorUpdateForm(AuthorCreateForm):
-    # TODO differentiate create / update? if, then factor out validations ... to shared base class
 
     def __init__(self, *args, **kwargs):
         super(AuthorUpdateForm, self).__init__(*args, **kwargs)

@@ -7,6 +7,7 @@
   href="{% url 'bookshelf:author-update' authors.pk %}">Edit Author Details</a>
 
 <h1>{{ authors.name }}</h1>
+<p class="author_bio_short">{{ authors.short_bio }}</p>
 
 <!-- p><strong>Details:</strong><br/> 
   (currently no additional description for author -- future)
