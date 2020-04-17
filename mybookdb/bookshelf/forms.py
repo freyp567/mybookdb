@@ -23,6 +23,7 @@ class BookCreateForm(forms.ModelForm):
     create book information
     """
     title = forms.CharField(max_length=255)
+    unified_title = forms.CharField(max_length=255, label=_('Buchtitel'))
     orig_description = forms.CharField(disabled=True, label="Original description")
     new_description = forms.CharField()
     isbn10 = forms.CharField(max_length=10, min_length=10)
@@ -46,6 +47,7 @@ class BookCreateForm(forms.ModelForm):
         model = books
         fields = (
             'title', 
+            'unified_title', 
             'orig_description', 
             'new_description', 
             'created',
@@ -70,6 +72,7 @@ class BookCreateForm(forms.ModelForm):
             Fieldset(
                 '',
                 Field('title'),
+                Field('unified_title'),
                 Div(
                     Div(Field('updated', readonly=True), css_class='col-md-4',),
                     Div(Field('created', readonly=True), css_class='col-md-4',),
@@ -119,19 +122,13 @@ class BookCreateForm(forms.ModelForm):
                 userGetValTextFuncName=None,
                 )
         self.fields['authors'].queryset = authors.objects.all()
-        #self.fields['authors'].required = False
-        #self.fields['authors'].widget.choices = book_authors
         
-        #self.fields['publicationDate'].widget = widgets.SelectDateWidget()  # years=years_tuple
-        self.fields['publicationDate'].widget = widgets.DateInput()  # format=('%Y-%m-%d',)
+        self.fields['publicationDate'].widget = widgets.DateInput()
         
         # https://stackoverflow.com/questions/46094811/change-django-required-form-field-to-false
         for field_name in ('new_description','isbn10','isbn13','subject','publisher', 'publicationDate',
                            'created', 'updated'):
             self.fields[field_name].required = False
-
-        #self.fields['created'].widget = widgets.DateInput() # BUT not to be edited, readonly
-        #self.fields['updated'].value = datetime.now(tz=timezone.utc)
 
 
     def clean(self):
@@ -216,6 +213,7 @@ class BookUpdateForm(forms.ModelForm):
     update book information
     """
     title = forms.CharField(max_length=255)
+    unified_title = forms.CharField(max_length=255)
     orig_description = forms.CharField(disabled=True, label="Original description")
     new_description = forms.CharField()
     isbn10 = forms.CharField(max_length=10, min_length=10)
@@ -236,6 +234,7 @@ class BookUpdateForm(forms.ModelForm):
         model = books
         fields = (
             'title', 
+            'unified_title', 
             'orig_description', 
             'new_description', 
             'created',
@@ -261,13 +260,12 @@ class BookUpdateForm(forms.ModelForm):
         self.helper.label_class = 'lb-sm'
         #self.helper.field_class = 'col-lg-8'
         
-        # TODO show validation messages (when returning after save failed)
-        
         self.helper.layout = Layout(
             # Alert(...)
             Fieldset(
                 '',
                 Field('title'),
+                Field('unified_title', width=255),
                 Div(
                     Div(Field('updated', readonly=True), css_class='col-md-4',),
                     Div(Field('created', readonly=True), css_class='col-md-4',),
@@ -358,23 +356,18 @@ class BookInfoForm(forms.ModelForm):
     """
     show book information
     """
-    title = forms.CharField(max_length=255)  # TODO readonly
+    book_title = forms.CharField(max_length=255)
     
     class Meta:
         model = books
         fields = (
-            'title', 
+            'book_title',
             )
         
     def __init__(self, *args, **kwargs):
         super(BookInfoForm, self).__init__(*args, **kwargs)
-        self.fields['title'].widget = forms.Textarea(attrs={'cols': 80, 'rows': 1})
-        self.fields['title'].widget.attrs['disabled'] = 'disabled'
-    
-#BookInfoFormSet = inlineformset_factory(states, books, extra=0)
-
-
-#class BookStatusUpdateForm(forms.ModelForm):
+        self.fields['unified_title'].widget.attrs['disabled'] = 'disabled'
+        self.fields['book_title'].widget.attrs['disabled'] = 'disabled' # readonly
 
 
 class AuthorCreateForm(forms.ModelForm):
@@ -383,6 +376,7 @@ class AuthorCreateForm(forms.ModelForm):
         model = authors
         fields = (
             'name', 
+            'familyName',
             'updated', 
             'short_bio',
             ) 
@@ -417,6 +411,7 @@ class AuthorCreateForm(forms.ModelForm):
             )            
         )
         
+        self.fields['short_bio'].widget = forms.Textarea(attrs={'rows': 4}) # 'cols': 80, 
         self.fields['updated'].initial = datetime.now(tz=timezone.utc)
 
 

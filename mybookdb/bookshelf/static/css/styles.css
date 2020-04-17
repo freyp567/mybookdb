@@ -25,6 +25,11 @@ div.date_column {
 /* height: 45px; */
 /* white-space: nowrap */
 
+.book-title {
+    font-weight:bold;
+    font-size: 24px;
+}
+
 .bookcomment-small {
     font-size: 12px;
 }

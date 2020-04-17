@@ -21,7 +21,7 @@
       {% for book in books_list %}
       <li>
         <a target="bookdetails" href="{{ book.get_absolute_url }}">
-            {{ book.title }}
+            {{ book.book_title }}
         </a>
         [{{ book.state_info }}]
         {{ book.onleihe_status|default:"" }}

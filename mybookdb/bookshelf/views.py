@@ -218,7 +218,7 @@ def search_book(request):
     qs = qs[offset:offset+limit]
     data = []
     fields = (
-        'id', 'title', 'created', 'updated', 'userRating', 
+        'id', 'title', 'unified_title', 'created', 'updated', 'userRating', 
         'states__haveRead', 'states__readingNow', 'states__toRead', 'states__toBuy', 'states__iOwn',
         'isbn13'
     )
@@ -227,7 +227,12 @@ def search_book(request):
         for field_name in fields:
             if field_name.startswith('states__'):
                 pass  # TODO compute display state
-            row_data[field_name] = row.get(field_name)            
+            if field_name == 'title':
+                row_data[field_name] = row.get('unified_title') or row.get('title')
+            elif field_name == 'unified_title':
+                continue
+            else:
+                row_data[field_name] = row.get(field_name)
         data.append(row_data)
         
     result = {
@@ -242,7 +247,8 @@ class BookDetailView(generic.DetailView):
     template: books_detail.html
     """
     model = books
-    if_paginated = False # KeyError else?
+    if_paginated = False # KeyError else
+    # form see book_details.html
     
     def get_context_data(self, **kwargs):
         context = super(BookDetailView, self).get_context_data(**kwargs)
@@ -538,6 +544,10 @@ class AuthorUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     model = authors
     form_class = AuthorUpdateForm
 
+    def get_initial(self):
+        initial_data = super(AuthorUpdateView, self).get_initial()
+        return initial_data
+        
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         return context
@@ -643,7 +653,7 @@ def getAuthorsListDetails(request, pk=None):
                     comment_info.append('...')
                     break
             book_info = ''
-            book_title = "<b>%s</b>" % book_item.title
+            book_title = "<b>%s</b>" % book_item.book_title
             book_details_url = reverse('bookshelf:book-detail', args=(book_item.id,))
             book_title = '<a target="details" href="%s">%s</a>' % (book_details_url, book_title)
             if book_item.userRating:
@@ -724,7 +734,7 @@ class UpdateBookComment(PermissionRequiredMixin, generic.edit.UpdateView):
         if comment_id == '0':  # new comment
             comment_obj = comments()
             comment_obj.book = book_obj
-            comment_obj.bookTitle = book_obj.title
+            comment_obj.bookTitle = book_obj.book_title
             comment_obj.dateCreatedInt = int(now.timestamp() *1000)
             comment_obj.dateCreated = now
             book_obj.updated = now
@@ -765,7 +775,7 @@ class BookStatusUpdateView(SuccessMessageMixin, PermissionRequiredMixin, generic
         return success_url
     
     def get_success_message(self, cleaned_data):
-        return _('Status updated for book %(book_title)s') % {'book_title': self.object.book.title}
+        return _('Status updated for book %(book_title)s') % {'book_title': self.object.book.book_title}
 
     def get_context_data(self, **kwargs):
         context = super(BookStatusUpdateView,

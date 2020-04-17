@@ -27,7 +27,7 @@ class authors(models.Model):
     @property
     def latest_book(self):
         b = self.books_set.all().order_by('-created')
-        return b and b[0].title or None
+        return b and b[0].book_title or None
         
     @property
     def last_book_update(self):
@@ -73,6 +73,8 @@ class books(models.Model):
     isbn10 = models.TextField(null=True, max_length=10)
     isbn13 = models.TextField(null=True, max_length=13)
     title = models.TextField(blank=False, max_length=255)
+    unified_title = models.TextField(null=True)
+      # unified title (may different from title synced with mybookdroid that is 'title')
     binding = models.CharField(max_length=80, null=True)
     orig_description = models.TextField(null=True, blank=True)  
       # original descriptin from MyBookDroid app
@@ -101,6 +103,13 @@ class books(models.Model):
     thumbnailLarge = models.TextField(blank=True, null=True)
     amazonBookId = models.IntegerField(null=True)
     
+    @property
+    def book_title(self):
+        if self.unified_title:
+            return self.unified_title
+        else:
+            return self.title
+        
     @property
     def description(self):
         """ computed from new_/orig_description """
@@ -143,7 +152,7 @@ class books(models.Model):
 
     def __str__(self):
         #return f"{self.title} | {self.author}"
-        return f"{self.title}"
+        return f"{self.book_title}"
 
 
 class comments(models.Model):
@@ -182,7 +191,7 @@ class comments(models.Model):
         return comment_text
     
     def __str__(self):
-        return "comment %s book=%s '%s'" % (self.id, self.book.id, self.book.title)
+        return "comment %s book=%s '%s'" % (self.id, self.book.id, self.book.book_title)
 
 
 class onleiheBooks(models.Model):
@@ -315,7 +324,7 @@ class states(models.Model):
 
     @property
     def book_title(self):
-        return self.books.title
+        return self.books.book_title
         
     @property
     def state_info(self):

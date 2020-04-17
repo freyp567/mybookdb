@@ -23,13 +23,13 @@
 <hr/>
 <p>books read</p>
 {% for book in books_read %}
-  <div><a target="author_book" href="/bookshelf/books/{{book.id}}">{{book.title}}</a></div>
+  <div><a target="author_book" href="/bookshelf/books/{{book.id}}">{{book.book_title}}</a></div>
 {% endfor %}
 
 <br/>
 <p>other books</p>
 {% for book in books_other %}
-  <div><a target="author_book" href="/bookshelf/books/{{book.id}}">{{book.title}}</a></div>
+  <div><a target="author_book" href="/bookshelf/books/{{book.id}}">{{book.book_title}}</a></div>
 {% endfor %}
 
 <hr/>
