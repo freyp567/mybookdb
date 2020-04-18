@@ -75,6 +75,7 @@ class books(models.Model):
     title = models.TextField(blank=False, max_length=255)
     unified_title = models.TextField(null=True)
       # unified title (may different from title synced with mybookdroid that is 'title')
+    book_serie = models.TextField(null=True, max_length=255)
     binding = models.CharField(max_length=80, null=True)
     orig_description = models.TextField(null=True, blank=True)  
       # original descriptin from MyBookDroid app
