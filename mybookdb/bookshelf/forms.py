@@ -24,6 +24,7 @@ class BookCreateForm(forms.ModelForm):
     """
     title = forms.CharField(max_length=255)
     unified_title = forms.CharField(max_length=255, label=_('Buchtitel'))
+    book_serie = forms.CharField(strip=True)
     orig_description = forms.CharField(disabled=True, label="Original description")
     new_description = forms.CharField()
     isbn10 = forms.CharField(max_length=10, min_length=10)
@@ -48,6 +49,7 @@ class BookCreateForm(forms.ModelForm):
         fields = (
             'title', 
             'unified_title', 
+            'book_serie',
             'orig_description', 
             'new_description', 
             'created',
@@ -73,6 +75,7 @@ class BookCreateForm(forms.ModelForm):
                 '',
                 Field('title'),
                 Field('unified_title'),
+                Field('book_serie'),
                 Div(
                     Div(Field('updated', readonly=True), css_class='col-md-4',),
                     Div(Field('created', readonly=True), css_class='col-md-4',),
@@ -127,7 +130,7 @@ class BookCreateForm(forms.ModelForm):
         
         # https://stackoverflow.com/questions/46094811/change-django-required-form-field-to-false
         for field_name in ('new_description','isbn10','isbn13','subject','publisher', 'publicationDate',
-                           'created', 'updated'):
+                           'created', 'updated', 'book_serie'):
             self.fields[field_name].required = False
 
 
@@ -214,6 +217,7 @@ class BookUpdateForm(forms.ModelForm):
     """
     title = forms.CharField(max_length=255)
     unified_title = forms.CharField(max_length=255)
+    book_serie = forms.CharField(max_length=255)
     orig_description = forms.CharField(disabled=True, label="Original description")
     new_description = forms.CharField()
     isbn10 = forms.CharField(max_length=10, min_length=10)
@@ -234,7 +238,8 @@ class BookUpdateForm(forms.ModelForm):
         model = books
         fields = (
             'title', 
-            'unified_title', 
+            'unified_title',
+            'book_serie',
             'orig_description', 
             'new_description', 
             'created',
@@ -265,7 +270,10 @@ class BookUpdateForm(forms.ModelForm):
             Fieldset(
                 '',
                 Field('title'),
-                Field('unified_title', width=255),
+                Div(
+                    Field('unified_title', width=255),
+                    Field('book_serie', width=255),
+                ),
                 Div(
                     Div(Field('updated', readonly=True), css_class='col-md-4',),
                     Div(Field('created', readonly=True), css_class='col-md-4',),
@@ -362,12 +370,14 @@ class BookInfoForm(forms.ModelForm):
         model = books
         fields = (
             'book_title',
+            'book_serie',
             )
         
     def __init__(self, *args, **kwargs):
         super(BookInfoForm, self).__init__(*args, **kwargs)
-        self.fields['unified_title'].widget.attrs['disabled'] = 'disabled'
-        self.fields['book_title'].widget.attrs['disabled'] = 'disabled' # readonly
+        self.fields['unified_title'].widget.attrs['disabled'] = 'disabled' # readonly
+        self.fields['book_title'].widget.attrs['disabled'] = 'disabled'
+        self.fields['book_serie'].widget.attrs['disabled'] = 'disabled'
 
 
 class AuthorCreateForm(forms.ModelForm):
