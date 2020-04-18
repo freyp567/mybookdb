@@ -67,13 +67,14 @@
   >Onleihe</a>
 {% endif %}
 
-<div class="book-title">
+
+<div>
 <button class="btn btn-light clipboard_btn" data-clipboard-target="#book-title">
     <img src="{% static 'images/clipboard.svg' %}" alt="Copy to clipboard">
 </button>
-<span id="book-title">{{ books.book_title }}</span>
+<span class="book-title" id="book-title">{{ books.book_title }}</span>
 {% if books.book_serie %}
-(<span id="book-serie">{{ books.book_serie }}</span>)
+    (<span id="book-serie">{{ books.book_serie }}</span>)
 {% endif %}
 </div>
 <script>new ClipboardJS('.clipboard_btn');</script>
