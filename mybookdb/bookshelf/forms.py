@@ -70,7 +70,6 @@ class BookCreateForm(forms.ModelForm):
         self.helper.label_class = 'lb-sm'
         
         self.helper.layout = Layout(
-            # Alert(...)
             Fieldset(
                 '',
                 Field('title'),
@@ -130,7 +129,7 @@ class BookCreateForm(forms.ModelForm):
         
         # https://stackoverflow.com/questions/46094811/change-django-required-form-field-to-false
         for field_name in ('new_description','isbn10','isbn13','subject','publisher', 'publicationDate',
-                           'created', 'updated', 'book_serie'):
+                           'created', 'updated', 'unified_title', 'book_serie'):
             self.fields[field_name].required = False
 
 
@@ -331,14 +330,9 @@ class BookUpdateForm(forms.ModelForm):
         
         # https://stackoverflow.com/questions/46094811/change-django-required-form-field-to-false
         for field_name in ('new_description','isbn10','isbn13','subject','publisher', 'publicationDate',
-                           'created', 'updated'):
+                           'created', 'updated', 'unified_title', 'book_serie'):
             self.fields[field_name].required = False
 
-        #self.fields['created'].widget = widgets.DateInput() # BUT not to be edited, readonly
-        #self.fields['updated'].value = datetime.now(tz=timezone.utc)
-
-
-    #def clean(self):
     
     def clean_isbn10(self):
         data = self.cleaned_data['isbn10']
