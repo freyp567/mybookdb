@@ -358,7 +358,8 @@ class BookInfoForm(forms.ModelForm):
     """
     show book information
     """
-    book_title = forms.CharField(max_length=255)
+    book_title = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 1}))
+    book_serie = forms.CharField()
     
     class Meta:
         model = books
@@ -369,8 +370,11 @@ class BookInfoForm(forms.ModelForm):
         
     def __init__(self, *args, **kwargs):
         super(BookInfoForm, self).__init__(*args, **kwargs)
-        self.fields['unified_title'].widget.attrs['disabled'] = 'disabled' # readonly
-        self.fields['book_title'].widget.attrs['disabled'] = 'disabled'
+        # TODO use crispy_forms
+        self.fields['book_title'].widget.attrs['disabled'] = 'disabled' # readonly
+        if kwargs.get('instance'):
+            book = kwargs['instance']
+            self.fields['book_title'].initial = book.book_title
         self.fields['book_serie'].widget.attrs['disabled'] = 'disabled'
 
 

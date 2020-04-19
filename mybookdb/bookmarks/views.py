@@ -179,7 +179,6 @@ class BookmarkCreate(generic.edit.CreateView):  # TODO fix permissions -- declar
             success_url = reverse('bookshelf:author-detail', args=(self.kwargs['pk'],))
         else:
             success_url = reverse('bookshelf:book-detail', args=(self.kwargs['pk'],))
-        # TODO return to referer ?
         return success_url
     
     def get_form_kwargs(self):
@@ -225,3 +224,82 @@ class BookmarkCreate(generic.edit.CreateView):  # TODO fix permissions -- declar
         context['tag'] = context.get('tag') or 'div'  # missing tag ...
         return context
     
+    
+class BookmarkDeleteView(generic.DeleteView):
+    """
+    delete Bookmark
+    """
+    permission_required = 'bookshelf.can_create'
+    template_name = 'bookmark_confirm_delete.html'
+
+    def __init__(self, *args, **kwargs):
+        super(BookmarkDeleteView, self).__init__(*args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        # confirm delete request
+        return super().get(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+       return super().delete(request, *args, **kwargs)
+
+    def get_bookmark_source(self):
+        """ get author or book for bookmark """
+        obj_type =self.kwargs['objtype']
+        obj_id =self.kwargs['pk']
+        
+        if obj_type == 'authors':
+            obj = authors.objects.get(pk=obj_id)
+        elif obj_type =='books':
+            obj = books.objects.get(pk=obj_id)
+        else:
+            raise NotImplementedError("unsupported %s" % obj_type)
+        return obj
+
+    def get_bookmark_source_title(self):
+        """ get descriptive title for source of bookmark (author nane, book title, ...) """
+        obj_type =self.kwargs['objtype']
+        obj_id =self.kwargs['pk']
+        
+        if obj_type == 'authors':
+            obj = authors.objects.get(pk=obj_id)
+            title = obj.name
+        elif obj_type =='books':
+            obj = books.objects.get(pk=obj_id)
+            title = obj.book_title
+        else:
+            raise NotImplementedError("unsupported %s" % obj_type)
+        return title
+
+    def get_bookmark_object(self):
+        obj_type =self.kwargs['objtype']
+        obj_id =self.kwargs['pk']
+        link_id =self.kwargs['link_id']
+        # self.get_context_object_name()
+        if obj_type == 'authors':
+            obj = authors.objects.get(pk=obj_id)
+            link = obj.author_links.get(pk=link_id)
+        elif obj_type =='books':
+            obj = books.objects.get(pk=obj_id)
+            link = obj.book_links.get(pk=link_id)        
+        else:
+            raise NotImplementedError("unsupported %s" % obj_type)
+        return link
+
+
+    def get_object(self, queryset=None):
+        return self.get_bookmark_object()
+
+    def get_context_data(self, *args, **kwargs):
+        """ update context dict """
+        context = super().get_context_data(*args, **kwargs)
+        context['source'] = self.get_bookmark_source()
+        context['source_title'] = self.get_bookmark_source_title()
+        context['bookmark'] = self.object
+        return context
+
+    def get_success_url(self): 
+        if self.kwargs['objtype'] == 'authors':
+            success_url = reverse('bookshelf:author-detail', args=(self.kwargs['pk'],))
+        else:
+            success_url = reverse('bookshelf:book-detail', args=(self.kwargs['pk'],))
+        return success_url

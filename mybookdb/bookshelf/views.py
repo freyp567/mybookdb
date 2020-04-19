@@ -424,10 +424,6 @@ class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
         success_url = reverse('bookshelf:book-detail', args=(self.object.id,))
         return success_url
     
-    #def form_valid(self, form):
-    #    # django.core.exceptions.ImproperlyConfigured: No URL to redirect to.  Either provide a url or define a get_absolute_url method on the Model.
-    #    return self.render_to_response(self.get_context_data(form=form))    
-    
     
 class AuthorListView(generic.ListView):
     """

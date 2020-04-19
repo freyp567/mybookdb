@@ -1,6 +1,7 @@
-/*
+<!--
 book states modal dialog / form 
-*/
+see bookshelf.forms.BookInfoForm
+-->
 {% extends "base_generic.html" %}
 
 {% load bootstrap4 %}
@@ -20,14 +21,10 @@ book states modal dialog / form
         </div>
     {% endfor %}
     
-    <!-- 
-    show book title - readonly
-    -->
     <h3>Book state</h3>
     {{ bookinfo_form.as_p }}
     
-    <form role="form" method="post"> <!-- action="/update_book_state" -->
-        <!-- legend>Update book state:</legend -->
+    <form role="form" method="post">
         {% csrf_token %}
         {% bootstrap_form form %}
         {% buttons submit='OK' reset="Cancel" %}{% endbuttons %}        

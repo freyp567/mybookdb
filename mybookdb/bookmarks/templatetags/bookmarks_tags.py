@@ -16,10 +16,13 @@ def bookmarks_count():
 def show_bookmarks(obj):
     if getattr(obj, 'author_links', None):
         links = obj.author_links.all()
+        obj_type ='authors'
     elif getattr(obj, 'book_links', None):
         links = obj.book_links.all()
+        obj_type = 'books'
     else:
         links = []
+        obj_type = 'unknown'
     
     link_infos = []
     for link in links:
@@ -30,7 +33,13 @@ def show_bookmarks(obj):
         except:
             link_info['site_name'] = "?"
         link_infos.append(link_info)
-    return {'links': links, 'link_infos': link_infos }
+    result_info = {
+        'obj_id': obj.id,
+        'obj_type': obj_type,
+        'links': links, 
+        'link_infos': link_infos,
+    }
+    return result_info
 
 
 @register.inclusion_tag('edit_bookmarks.html')

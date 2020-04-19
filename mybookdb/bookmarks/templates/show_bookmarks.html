@@ -1,3 +1,5 @@
+{% load static %}
+
 <!-- show_bookmarks -->
 {% if link_infos %}
 <p><strong>bookmarks:</strong></p>
@@ -14,6 +16,11 @@
     <td>{{ info.site_name }}</td>
     <td><a target="bookmark" href="{{ info.link.link_uri }}">{{ info.link.link_name }}</a></td>
     <td>{{ info.link.updated|date:"c" }}</td>
+    <td>
+        <a target="_self" href="{% url 'bookmarks:delete-bookmark' objtype=obj_type pk=obj_id link_id=info.link.id %}">
+          <img src="{% static 'images/dropbookmark.png' %}" alt="drop bookmark"/>
+        </a>
+    </td>
   </tr>
   {% endfor %}
 </table>
