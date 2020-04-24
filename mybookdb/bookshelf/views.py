@@ -35,6 +35,7 @@ from bookshelf.forms import BookCreateForm, BookUpdateForm, StateUpdateForm, Boo
 from bookshelf.bookstable import BooksTable, BooksTableFilter, MinimalBooksTable
 from bookshelf.authorstable import AuthorsTable, AuthorsTableFilter  # , MinimalAuthorsTable
 from bookshelf import metrics
+from timeline.models import timelineevent
 
 LOGGER = logging.getLogger(name='mybookdb.bookshelf.views')
 
@@ -257,6 +258,12 @@ class BookDetailView(generic.DetailView):
         book_comments = book_comments.order_by('-dateCreatedInt')
         context['books_comments'] = book_comments
         context['comment_now'] = datetime.now().strftime("%Y-%m-%dT%H:%M")
+        try:
+            events = timelineevent.objects.filter(book=self.object)
+            event_count = events.count()
+        except Exception:
+            event_count = "??"
+        context['event_count'] = event_count
         return context 
     
 class MaintainBooks(PermissionRequiredMixin, generic.View):

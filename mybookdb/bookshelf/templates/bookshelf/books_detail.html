@@ -49,7 +49,7 @@
   title="timeline events for current book"
   href="{% url 'timeline:show-timeline' pk=books.pk %}"
   target="timeline"
-  >Timeline events</a>
+  >Timeline ({{ event_count }})</a>
 {% endif %}
 
 {% if USE_LIBRARYTHING == "1" %}

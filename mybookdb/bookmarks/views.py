@@ -236,7 +236,7 @@ class BookmarkDeleteView(generic.DeleteView):
         super(BookmarkDeleteView, self).__init__(*args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        # confirm delete request
+        # ask to confirm delete request
         return super().get(request, *args, **kwargs)
 
     def delete(self, request, *args, **kwargs):
