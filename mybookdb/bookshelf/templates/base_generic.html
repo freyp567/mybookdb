@@ -39,10 +39,10 @@
   <ul class="sidebar-nav">
    {% if user.is_authenticated %}
      <li>User: {{ user.get_username }}</li>
-     <li><a href="{ % url 'bookshelf:reading' %}">Currently Reading</a></li>
-     <li><a href="{ % url 'bookshelf:logout'%}?next={{request.path}}">Logout</a></li>   
+     <li><a href="{% url 'bookshelf:books-reading' %}">Currently Reading</a></li>
+     <li><a href="{ % url 'bookshelf:logout' % }?next={{request.path}}">Logout</a></li>   
    {% else %}
-     <li><a href="{ % url 'bookshelf:login'%}?next={{request.path}}">Login</a></li>   
+     <li><a href="{% url 'bookshelf:login' %}?next={{request.path}}">Login</a></li>   
    {% endif %} 
   </ul>
   
@@ -51,6 +51,7 @@
    <ul class="sidebar-nav">
    <li>Staff</li>
    {% if perms.books.can_edit %}
+  <li><a target="export" href="{% url 'bookshelf:book-export' %}">Export</a></li>
    <li><a href="{% url 'bookshelf:maintenance' %}">Maintenance</a></li>
    {% endif %}
    </ul>

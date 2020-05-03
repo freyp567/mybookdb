@@ -309,13 +309,14 @@ class states(models.Model):
     iOwn = models.BooleanField(default=False)
     toBuy = models.BooleanField(default=False)
     toRead = models.BooleanField(default=False)
+    private = models.BooleanField(default=False)
     
     def __init__(self, *args, **kwargs):
         return super(states, self).__init__(*args, **kwargs)
         
     def __str__(self):
         state_value = []
-        for key in ('favorite', 'readingNow', 'haveRead', 'toRead', 'toBuy', 'iOwn'):
+        for key in ('favorite', 'readingNow', 'haveRead', 'toRead', 'toBuy', 'iOwn', 'private'):
             value = getattr(self, key)
             if value == True:
                 state_value.append(key)

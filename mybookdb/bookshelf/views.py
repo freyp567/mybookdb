@@ -96,7 +96,9 @@ class BookListGenericView(generic.ListView):
     def get_queryset(self):  # disables ordering
         """ overloaded to implement custom sort orders """
         ordering = self.get_ordering()
-        qs = books.objects.all() #.filter('states__')
+        qs = books.objects.all()  
+        #TODO if not authenticated:
+        #qs = qs.filter('states__private'=False)
         if ordering:
             if isinstance(ordering, str):
                 LOGGER.info("sort book list by custom sort order: %s", ordering)
@@ -110,6 +112,9 @@ class BookListGenericView(generic.ListView):
                 elif ordering == 'missing_timeline':
                     ordering = [ '-updated' ]
                     qs = qs.filter(timelineevent__isnull=True, states__haveRead=True)
+                elif ordering == 'reading':
+                    ordering = [ '-updated' ]
+                    qs = qs.filter(states__readingNow=True)
                 else:
                     ordering = (ordering,)
             qs = qs.order_by(*ordering)
@@ -128,9 +133,10 @@ class BookListGenericView(generic.ListView):
             ordering = [ '-created' ]
         elif sort == 'updated':
             ordering = [ '-updated' ]
-        elif sort in ('wishlist', 'onleihe_unkown', 'missing_timeline'):
+        elif sort in ('reading', 'wishlist', 'onleihe_unkown', 'missing_timeline'):
             ordering = sort  # mapped by get_queryset
         else:
+            LOGGER.info("book list unsorted, sort=%s", sort)
             ordering = [] # use default / unordered
         return ordering    
     
@@ -161,22 +167,46 @@ class BooksListTableView(generic.TemplateView):
         return context
 
 
+def login(request):
+    assert False, "not implemented"
+    
+    
+def currently_reading(request):  ## experimental
+    #filter = {'state': 'readingNow'}
+    #return search_book_filtered(request, '-updated', filter)
+    to_url = reverse('bookshelf:books-list')
+    to_url += '?sort=reading'
+    return redirect(to_url)
+
+                      
+
 def search_book(request):
     query = request.GET
-    offset = int(query['offset'])
-    limit = int(query['limit'])
     sort_field = query['sort']
     sort_order = query['order']
     if sort_order == 'desc':
         sort_field = '-' + sort_field
+
+    if query.get('filter'):
+        search_filter = json.loads(query['filter'])
+    else:
+        search_filter = None
+        
+    return search_book_filtered(request, sort_field, search_filter)
+    
+    
+def search_book_filtered(request, sort_field, filter=None):
+    query = request.GET
+    offset = int(query.get('offset', '0'))
+    limit = int(query.get('limit', '0'))
     
     LOGGER.debug("search_book query=%s" % query)
     qs = books.objects.all()
     
     qs = qs.select_related("states")
-    if query.get('filter'):
+    if filter:
         search_filter = {}
-        for key, value in json.loads(query['filter']).items():
+        for key, value in filter.items():
             if key in ('title',):
                 search_filter[key +'__icontains'] = value
             elif key in ('created', 'updated'):
@@ -193,9 +223,9 @@ def search_book(request):
                     search_filter["states__readingNow"] = True
                 elif value == 'iOwn':  # unfinished
                     search_filter["states__iOwn"] = True                    
-                #elif value == 'not_read':
-                #    search_filter["states__haveRead"] = False
-                #    search_filter["states__readingNow"] = False
+                elif value == 'not_read':
+                    cond =Q(states_haveRead=False) & Q(states_readingNow=Faöse)
+                    qs = qs.filter(cond)
                 elif value == 'toBuy':  # want read
                     search_filter["states__toBuy"] = True
                 else:
@@ -206,15 +236,6 @@ def search_book(request):
             qs = qs.filter(**search_filter)
         
     row_count = qs.count()
-    """
-    favorite
-    haveRead
-    readingNow
-    iOwn
-    toBuy
-    toRead
-    
-    """
     qs = qs.order_by(sort_field)
     qs = qs[offset:offset+limit]
     data = []

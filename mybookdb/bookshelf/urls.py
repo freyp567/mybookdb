@@ -4,23 +4,29 @@ bookshelf URL Configuration
 
 # from django.contrib import admin
 from django.urls import path
-from django.urls import include, reverse 
+from django.urls import include
 
 from bookshelf import views
+from bookshelf import export
 from bookshelf import catalog_librarything
 from bookshelf import catalog_onleihe
 
 app_name = 'bookshelf'
 urlpatterns = [
     path('', views.index, name='index'),
+    path('login', views.login, name='login'),
+    
     #path('books/', views.SimpleBookListView, name='books-v1'),
     path('books/', views.FilteredBookListView.as_view(), name='books'),
     path('books/search/', views.search_book, name='books-search'),
+    path('books/reading/', views.currently_reading, name='books-reading'),
     path('books/v1/', views.BookListGenericView.as_view(), name='books-list'),
     path('books/v2/', views.BooksListTableView.as_view(), name='books-v2'),
     path('books/<int:pk>', views.BookDetailView.as_view(), name='books-detail'),
     path('book/<int:pk>', views.BookDetailView.as_view(), name='book-detail'),
     path('book/<int:pk>/listdetails', views.getBooksListDetails, name='books-list-details'),
+    path('books/export/', export.BookExportView.as_view(), name='book-export'),
+    path('books/export/run/', export.export_books, name='book-export-run'),
     path('books/maintain/', views.MaintainBooks.as_view(), name='maintenance'),
 ]
 

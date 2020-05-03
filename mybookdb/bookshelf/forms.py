@@ -468,6 +468,10 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
         required=False, initial=False, 
         label=_("have read"),
         help_text='have read')
+    private = forms.BooleanField(
+        required=False, initial=False, 
+        label=_("private"),
+        help_text='private')
     
     class Meta:
         model = states
@@ -478,7 +482,8 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
             'readingNow',
             'haveRead',
             # 'wantRead',
-            'iOwn',   # = not read / suspended (stopped reading / partially read)            
+            'iOwn',   # = not read / suspended (stopped reading / partially read)       
+            'private',
             )
 
     def __init__(self, *args, **kwargs):
@@ -510,3 +515,8 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
         if readingNow and toRead:
             raise ValidationError("either currently reading or to be read")
         return cleaned_data
+
+
+class BookExportForm(forms.Form):
+    export_path = forms.CharField()
+
