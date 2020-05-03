@@ -40,9 +40,9 @@
    {% if user.is_authenticated %}
      <li>User: {{ user.get_username }}</li>
      <li><a href="{% url 'bookshelf:books-reading' %}">Currently Reading</a></li>
-     <li><a href="{ % url 'bookshelf:logout' % }?next={{request.path}}">Logout</a></li>   
+     <li><a href="{ % url 'accounts:logout' % }?next={{request.path}}">Logout</a></li>   
    {% else %}
-     <li><a href="{% url 'bookshelf:login' %}?next={{request.path}}">Login</a></li>   
+     <li><a href="{% url 'accounts:login' %}?next={{request.path}}">Login</a></li>   
    {% endif %} 
   </ul>
   

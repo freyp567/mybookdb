@@ -27,3 +27,4 @@ pyisbn
 r-django-partial-date
 requests
 werkzeug
+PyYAML

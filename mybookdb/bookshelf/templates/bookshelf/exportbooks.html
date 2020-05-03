@@ -1,0 +1,8 @@
+{% load i18n %}
+
+<h1>Export books</h1>
+<form action="{% url 'bookshelf:book-export-run' %}" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Export">
+</form>

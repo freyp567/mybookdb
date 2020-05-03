@@ -166,14 +166,8 @@ class BooksListTableView(generic.TemplateView):
         context['book_states'] = json.dumps(book_states);
         return context
 
-
-def login(request):
-    assert False, "not implemented"
-    
     
 def currently_reading(request):  ## experimental
-    #filter = {'state': 'readingNow'}
-    #return search_book_filtered(request, '-updated', filter)
     to_url = reverse('bookshelf:books-list')
     to_url += '?sort=reading'
     return redirect(to_url)

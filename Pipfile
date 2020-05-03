@@ -23,6 +23,7 @@ django-allow-cidr = "*"
 psycopg2-binary = "*"
 #django-yarn = {editable = true,git = "https://github.com/epineda/django-yarn.git"}
 r-django-partial-date = "*"
+pyyaml = "*"
 
 [dev-packages]
 "flake8" = "*"

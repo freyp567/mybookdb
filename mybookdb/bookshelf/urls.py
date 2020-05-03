@@ -14,7 +14,6 @@ from bookshelf import catalog_onleihe
 app_name = 'bookshelf'
 urlpatterns = [
     path('', views.index, name='index'),
-    path('login', views.login, name='login'),
     
     #path('books/', views.SimpleBookListView, name='books-v1'),
     path('books/', views.FilteredBookListView.as_view(), name='books'),

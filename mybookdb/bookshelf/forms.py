@@ -519,4 +519,9 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
 
 class BookExportForm(forms.Form):
     export_path = forms.CharField()
+    
+    def __init__(self, *args, **kwargs):
+        super(BookExportForm, self).__init__(*args, **kwargs)
+        
+        self.fields['export_path'].initial = 'books_%s.zip' % datetime.now().strftime("%Y-%m-%d")
 
