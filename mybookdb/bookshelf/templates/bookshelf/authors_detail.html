@@ -29,6 +29,10 @@
   {% if book.book_serie %}
     (<span id="book-serie">{{ book.book_serie }}</span>)
   {% endif %}
+    <span class="book-dates">
+    {{ book.created|date:"Y.m.d" }} / 
+    {{ book.updated|date:"Y.m.d" }}
+    </span>
   </div>
 {% endfor %}
 
