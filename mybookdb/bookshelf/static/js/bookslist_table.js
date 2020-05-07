@@ -20,7 +20,11 @@ function describe_state(row) {
       iOwn
       toBuy
       toRead
-  */    
+  */
+//debugger;  // bookshelf/static/js
+  if (row.states__obsolete) {
+    return "obsolete";
+  }
   if (row.states__haveRead) {
     if (row.states__favorite) {
       return "have read/+";
@@ -46,6 +50,9 @@ function format_state(value, row, index){
   var status_url = url_status_base.replace(/987654321/, row.id);
   status = '<a data-toggle="modal" data-target="#states-modal" data-book-id="' +row.id +'" data-backdrop=true keyboard=true href="' +status_url +'" >' +status +'</a>';
   // status = '<a class="link" onclick="open_status_modal(' +id +')" >' +status +'</a>';
+   if (row.states__obsolete) {
+    return '<span class="bg-warning">' +status +'</span>';
+  }  
   return status;
 
 }
@@ -53,6 +60,9 @@ function format_state(value, row, index){
 function format_book_title(value, row, index) {
     var id = row["id"];
     value = '<a onclick="show_book_details(\'' +index +'\', \'' +id +'\')">' +row.title +'</a>';
+    if (row.states__obsolete) {
+      return '<span class="bg-warning">' +value +'</span>';
+    }
     return value;
 }
 
