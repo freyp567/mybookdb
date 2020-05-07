@@ -470,8 +470,10 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
         help_text='have read')
     private = forms.BooleanField(
         required=False, initial=False, 
-        label=_("private"),
         help_text='private')
+    obsolete = forms.BooleanField(
+        required=False, initial=False, 
+        help_text='obsolete')
     
     class Meta:
         model = states
@@ -484,19 +486,17 @@ class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for boo
             # 'wantRead',
             'iOwn',   # = not read / suspended (stopped reading / partially read)       
             'private',
+            'obsolete',
             )
 
     def __init__(self, *args, **kwargs):
         assert 'instance' in kwargs, "missing state obj"  # always need state obj to update (create is implicit)
         super(StateUpdateForm, self).__init__(*args, **kwargs)
         
-        for field_name in self.fields:
-            #self.fields[field_name].widget = CheckboxInput()
-            #self.fields[field_name].widget.attrs['class'] = 'form-control form-control-lg'
-            pass
-        
         self.fields['toBuy'].label = 'wishlist (to buy)'  # TODO toBuy vs wantRead, have both in form
         self.fields['iOwn'].label = 'not read or stopped reading (I own)'
+        self.fields['private'].label = 'private'
+        self.fields['obsolete'].label = 'obsolete / to be removed'
 
     def clean(self):
         cleaned_data = super(StateUpdateForm, self).clean()

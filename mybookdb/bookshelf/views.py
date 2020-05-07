@@ -236,7 +236,7 @@ def search_book_filtered(request, sort_field, filter=None):
     fields = (
         'id', 'title', 'unified_title', 'created', 'updated', 'userRating', 
         'states__haveRead', 'states__readingNow', 'states__toRead', 'states__toBuy', 'states__iOwn',
-        'isbn13'
+        'states__obsolete', 'isbn13'
     )
     for row in qs.values(*fields):
         row_data = {}

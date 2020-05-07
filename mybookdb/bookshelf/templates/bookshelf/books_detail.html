@@ -111,6 +111,9 @@
 </p>
 
 <br/>
+{% if books.states.obsolete %}
+<p class="bg-danger">--- obsolete ---</p>
+{% else %}
 <a href="{% url "bookmarks:bookmark-create" objtype='books' pk=books.id %}">add bookmark</a>
 
 {% show_bookmarks books %}
@@ -127,6 +130,7 @@
       {{ books.new_description|safe|linebreaks }}
 {% endif %}
 </p>
+{% endif %}
 <hr/>
 <p class="detail_brief">Updated: {{ books.updated|date:"c" }}</p>
 <p class="detail_brief">States: {{ books.states }}</p>
