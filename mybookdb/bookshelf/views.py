@@ -144,9 +144,6 @@ class BookListGenericView(generic.ListView):
 class BooksListTableView(generic.TemplateView):
     """ book list using native bootstrap tables (bootstrap4) """
     template_name = "bookshelf/bookslist_table.html"
-    #template_engine = None
-    #response_class = TemplateResponse
-    #content_type = "text/html"
     
     def get_context_data(self, **kwargs):
         context = super(BooksListTableView, self).get_context_data(**kwargs)
@@ -159,10 +156,16 @@ class BooksListTableView(generic.TemplateView):
             "haveRead": "have read",
             "haveRead+favorite": "have read/+",
             "readingNow": "reading",
-            "toBuy": "want read",
+            "toBuy": "want read/wishlist",
             "iOwn": "unfinished",
-            "": "not read",
+            "obsolete": "obsolete",
+            "private": "private",
+            "other": "other",
+            #"": "not read",
         }
+        # if logged in / role is ...
+        book_states["private"] = "private"
+        
         context['book_states'] = json.dumps(book_states);
         return context
 
@@ -218,10 +221,22 @@ def search_book_filtered(request, sort_field, filter=None):
                 elif value == 'iOwn':  # unfinished
                     search_filter["states__iOwn"] = True                    
                 elif value == 'not_read':
-                    cond =Q(states_haveRead=False) & Q(states_readingNow=Faöse)
+                    cond =Q(states_haveRead=False) & Q(states_readingNow=False)
                     qs = qs.filter(cond)
                 elif value == 'toBuy':  # want read
                     search_filter["states__toBuy"] = True
+                elif value == 'private':
+                    search_filter["states__private"] = True
+                elif value == 'obsolete':
+                    search_filter["states__obsolete"] = True
+                elif value == 'other':
+                    cond = Q(states__haveRead=False) 
+                    cond &= Q(states__readingNow=False)
+                    cond &= Q(states__iOwn=False)
+                    cond &= Q(states__toBuy=False)
+                    cond &= Q(states__toRead=False)
+                    cond &= Q(states__obsolete=False)
+                    qs = qs.filter(cond)
                 else:
                     LOGGER.warn("unrecognized filter value for vield state: %s" % value)
             else:

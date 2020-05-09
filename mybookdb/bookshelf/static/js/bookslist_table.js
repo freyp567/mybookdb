@@ -21,7 +21,6 @@ function describe_state(row) {
       toBuy
       toRead
   */
-//debugger;  // bookshelf/static/js
   if (row.states__obsolete) {
     return "obsolete";
   }
@@ -35,11 +34,25 @@ function describe_state(row) {
       return "reading";
   }
   if (row.states__toBuy) {
+      return "wishlist";
+  }
+  if (row.states__toRead) {
       return "want read";
   }
   if (row.states__iOwn) {
       return "unfinished";  
       // suspended, stopped reading (if not readingNow/haveRead)
+  }
+  // DEBUG code:
+  var states = [];
+  for (var key in row) {
+    if (key.startsWith('states__') && row[key] == true) {
+       states.push(key.substring(8))
+    }
+  }
+  if (states.length > 0) {
+    console.debug("row "+ row.id +" states: " +states);
+    return states.join();
   }
   return "not read";
 }
