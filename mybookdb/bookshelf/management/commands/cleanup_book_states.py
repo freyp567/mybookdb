@@ -4,7 +4,7 @@ to ensure that book id and state id match in correspondance
 what is important for the sync between mybookdb and mybookdroid
 """
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 
 from bookshelf.models import books, states
