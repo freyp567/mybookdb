@@ -5,7 +5,7 @@ set field updated for authors, books, ...
 from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import ObjectDoesNotExist
 
-from bookshelf.models import books, authors, books
+from bookshelf.models import books, authors
 
 import os
 import io
