@@ -153,7 +153,7 @@ class books(models.Model):
 
     def __str__(self):
         #return f"{self.title} | {self.author}"
-        return f"{self.book_title}"
+        return f"{self.id} '{self.book_title}'"
 
 
 class comments(models.Model):
@@ -171,6 +171,10 @@ class comments(models.Model):
     
     class Meta:
         ordering = ['-dateCreated']
+        
+    def __str__(self):
+        created =self.dateCreated.isoformat()[:18]
+        return f"id={self.id} {created} book={self.book}"
         
     @property
     def datetime_created(self):
@@ -317,15 +321,25 @@ class states(models.Model):
         
     def __str__(self):
         state_value = []
+        if getattr(self, 'book'):
+            book_id = self.book.id
+        else:
+            book_id = '(not assigned)'
         if getattr(self, 'obsolete') == True:            
             return "states(obsolete)"
         for key in ('favorite', 'readingNow', 'haveRead', 'toRead', 'toBuy', 'iOwn', 'private'):
             value = getattr(self, key)
             if value == True:
-                state_value.append(key)
+                if key == 'toBuy':
+                    state_value.append('wishlist')
+                else:
+                    state_value.append(key)
             elif value is None:
                 state_value.append("(%s?)" % key)
-        return 'states(%s)' % (' '.join(state_value),)
+        if self.id != book_id:
+            return '%s book=%s (%s)' % (self.id, book_id, ' '.join(state_value),)
+        else:
+            return '%s (%s)' % (self.id, ' '.join(state_value),)
 
     @property
     def book_title(self):
