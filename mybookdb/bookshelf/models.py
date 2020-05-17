@@ -362,3 +362,22 @@ class states(models.Model):
             state_info.append('wish')
         return ' '.join(state_info)
 
+    @property
+    def state_conflict(self):
+        if self.iOwn:
+            if self.toRead or self.toBuy:
+                return True
+        if self.haveRead:
+            if self.readingNow or self.toRead or self.toBuy:
+                return True
+        if self.readingNow:
+            if self.haveRead or self.toBuy or self.toBuy:
+                return True
+        if self.toRead:
+            if self.readingNow or self.haveRead:
+                return True
+        if self.toBuy:
+            if self.readingNow or self.haveRead:
+                return True
+        return False
+
