@@ -133,7 +133,12 @@
 {% endif %}
 <hr/>
 <p class="detail_brief">Updated: {{ books.updated|date:"c" }}</p>
-<p class="detail_brief">States: {{ books.states }}</p>
+<p class="detail_brief">
+  States:
+  <span class="{% if books.states.state_conflict %}bg-danger{% endif %}">
+    {{ books.states }}
+  </span>
+</p>
 <p class="detail_brief">Onleihe: <!--- to be fixed --- { { books.onleihebooks|default:'---' } } -->??</p>
 
 <hr/>

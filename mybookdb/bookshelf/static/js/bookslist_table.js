@@ -12,15 +12,6 @@ function format_book_link(value, row, index) {
 }
 
 function describe_state(row) {
-  /*
-  model states, inherited from MyBookDroid
-      favorite
-      haveRead
-      readingNow
-      iOwn
-      toBuy
-      toRead
-  */
   if (row.states__obsolete) {
     return "obsolete";
   }
@@ -65,7 +56,10 @@ function format_state(value, row, index){
   // status = '<a class="link" onclick="open_status_modal(' +id +')" >' +status +'</a>';
    if (row.states__obsolete) {
     return '<span class="bg-warning">' +status +'</span>';
-  }  
+  }
+  if (row.state_conflict) {
+    return '<span class="bg-error">' +status +'</span>';
+  }
   return status;
 
 }

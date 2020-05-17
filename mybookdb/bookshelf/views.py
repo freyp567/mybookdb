@@ -253,17 +253,23 @@ def search_book_filtered(request, sort_field, filter=None):
         'states__haveRead', 'states__readingNow', 'states__toRead', 'states__toBuy', 'states__iOwn',
         'states__obsolete', 'isbn13'
     )
+    nodata = object()
     for row in qs.values(*fields):
         row_data = {}
         for field_name in fields:
             if field_name.startswith('states__'):
-                pass  # TODO compute display state
-            if field_name == 'title':
-                row_data[field_name] = row.get('unified_title') or row.get('title')
-            elif field_name == 'unified_title':
-                continue
+                value = row.get(field_name)
+                # lookup display title for state
+            elif field_name == 'title':
+                value = row.get('unified_title') or row.get('title')
             else:
-                row_data[field_name] = row.get(field_name)
+                value = row.get(field_name, nodata)
+                if value is nodata:
+                    value = '---'
+            row_data[field_name] = value
+        state_obj = states.objects.get(pk=row['id'])
+        row_data['state_conflict'] =  state_obj.state_conflict
+        row_data['orig_title'] =  row.get('title')
         data.append(row_data)
         
     result = {
