@@ -146,10 +146,12 @@ class BookmarkCreateForm(forms.ModelForm):
             found = author_links.objects.filter(link_uri = uri)
         else:
             found = book_links.objects.filter(link_uri = uri)
-            
+        
         if found:
             # bookmark does already exist
-            raise ValidationError(_("Verknüpfung bereits zugeordnet"))
+            book_info = ["%s %s" % (link.book.id, repr(link.book.unified_title or link.book.title)) for link in found]
+            raise ValidationError(_("Verknüpfung bereits zugeordnet zu %(books)s") % 
+                                  {'books': ','.join(book_info)})
             
         return self.cleaned_data
         
