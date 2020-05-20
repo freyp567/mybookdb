@@ -15,6 +15,8 @@ hopefully case same author name matches several authors will be very seldom
 and can be solved by 'discriminating' the author names with a suffix
 
 TODO readjust authors if added both in mybookdb and mybookdroid, avoid duplication
+TODO handle duplicated books from Merkliste and added after checkout
+TODO books marked obsolete, delete after sync when not in mybookdroid - else log error
 
 """
 """
@@ -423,9 +425,6 @@ class Command(BaseCommand):
                     # TODO to be implemented: create new book object with book_obj.id 
                     # copy all properties, the state, timeline events, bookmarks and comments to new booj_obj
                     # and delete the excessive book object
-
-
-                assert False, 
                 
             if book_obj:
                 # item does already exist
