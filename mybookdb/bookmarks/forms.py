@@ -4,6 +4,7 @@ Bookmarks forms
 """
 
 from datetime import datetime
+import urllib.parse 
 
 from django import forms
 from django.forms import widgets
@@ -11,6 +12,7 @@ from django.urls import reverse
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.conf import settings
 
 from bookmarks.models import author_links, book_links, linksites
 
@@ -43,6 +45,7 @@ class BookmarkCreateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.obj_type = kwargs.pop('objtype')
         self.obj_id = kwargs.pop('pk')
+        self.host = kwargs.pop('host')
         if self.obj_type == 'books':
             # TODO fix cross app dependency
             cancel_url = reverse('bookshelf:books-detail', args=(self.obj_id,))
@@ -142,6 +145,12 @@ class BookmarkCreateForm(forms.ModelForm):
             self.cleaned_data[field_name] = datetime.now(tz=timezone.utc)
 
         uri = self.cleaned_data['link_uri']
+        parts = urllib.parse.urlparse(uri)        
+        if parts.netloc == self.host:
+            # link for mybookdb site, force uri = relative url
+            uri = parts.path
+            self.cleaned_data['link_uri'] = uri
+        
         if self.obj_type == 'authors':
             found = author_links.objects.filter(link_uri = uri)
             found = [link for link in found if link.author.id != self.obj_id]

@@ -57,6 +57,14 @@ def get_linkname_from_path(path, site, query):
         while name.endswith('-0'):
             name = name[:-2]
 
+    if site == "mybookdb":
+        if '/author/' in path:
+            return "author-%s" % name
+        elif '/book/' in path:
+            return "book-%s" % name
+        else:
+            return "mybookdb-%s" % name
+        
     linkname = None            
     if site.endswith('.onleihe.de'):
         linkname = 'onleihe-' + name
@@ -74,6 +82,8 @@ def get_linkname_from_path(path, site, query):
         linkname = 'gr-' +name
     elif site == 'www.audible.de':
         linkname = 'audible-' + name
+    elif site == 'www.amazon.de':
+        linkname = 'amazon-' + name
     elif site =='www.evernote.com':
         parts = name.split('-')
         assert len(parts) == 5 and len(parts[4]) == 12, "evernote.com, unexpected name '%s'" % name
@@ -106,6 +116,7 @@ def parse_uri(request):
         'name': '',
         'site_created': False,
     }
+    
     if uri:
         parts = urllib.parse.urlparse(uri)
         if parts.scheme not in ('http', 'https'):
@@ -113,7 +124,12 @@ def parse_uri(request):
         site = parts.netloc
         assert site, "missing host part in URL"
         path = parts.path
-        assert path, "missing path in URL"
+        if not path:
+            assert path, "missing path in URL"
+
+        if parts.netloc == request.get_host():
+            site = 'mybookdb'
+        
         name = get_linkname_from_path(path, site, parts.query)
         nurl = urllib.parse.urlsplit(uri)
         npath = nurl.geturl()
@@ -124,6 +140,7 @@ def parse_uri(request):
                 break
             npath = npath[:npath.rfind('/')]
             nurl = urllib.parse.urlsplit(npath)
+                
             
         if not qs:
             qs = linksites_url.objects.filter(url=npath)
@@ -149,6 +166,8 @@ def parse_uri(request):
         info['site'] = site
         info['site_id'] = site_id
         info['name'] = name
+        
+        
     return JsonResponse(info)
 
 
@@ -185,6 +204,7 @@ class BookmarkCreate(generic.edit.CreateView):  # TODO fix permissions -- declar
         kwargs = super(BookmarkCreate, self).get_form_kwargs()
         kwargs['objtype'] = self.kwargs['objtype']
         kwargs['pk'] = self.kwargs['pk']
+        kwargs['host'] = self.request.get_host()
         return kwargs
 
     def form_valid(self, form):
