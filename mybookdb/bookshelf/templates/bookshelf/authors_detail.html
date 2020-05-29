@@ -39,7 +39,7 @@
 <br/>
 <p>other books</p>
 {% for book in books_other %}
-  <div>
+  <div class="{% if book.states.obsolete %}book-obsolete{% endif %}">
     <a target="author_book" href="/bookshelf/books/{{book.id}}">{{book.book_title}}</a>
   {% if book.book_serie %}
     (<span id="book-serie">{{ book.book_serie }}</span>)

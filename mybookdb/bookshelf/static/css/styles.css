@@ -30,6 +30,10 @@ div.date_column {
     font-size: 16px;
 }
 
+.book-obsolete {
+    text-decoration: line-through;
+}
+
 .book-dates {
     font-size: 10px;
 }

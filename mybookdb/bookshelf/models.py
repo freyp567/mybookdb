@@ -15,6 +15,7 @@ class authors(models.Model):
     familyName = models.TextField()
     updated = models.DateField(null=True)
     short_bio = models.TextField(null=True)
+    obsolete = models.BooleanField(default=False)
     
     def __str__(self):
         return f"{self.familyName}, {self.name}"
@@ -94,6 +95,7 @@ class books(models.Model):
     subject = models.TextField(null=True, blank=True)
     created = models.DateField()
     updated = models.DateField(null=True)
+    sync_mybookdroid = models.DateField(null=True)
     userRating = models.IntegerField(null = True)
     
     authors = models.ManyToManyField(authors)

@@ -611,9 +611,6 @@ class AuthorDetailView(generic.DetailView):
         context['is_paginated'] = False
         books_read = list(authors_books.filter(states__haveRead = True))
         context['books_read'] = books_read
-        #context['books_other'] = authors_books.filter(states__haveRead = False)  # some missing
-        #context['books_other'] = authors_books.exclude(states__naveRead = True)
-        # django.core.exceptions.FieldError: Related Field got invalid lookup: naveRead
         other_books = [ book for book in authors_books if book not in books_read ]
         context['books_other'] = other_books
         
