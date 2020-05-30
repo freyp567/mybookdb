@@ -74,7 +74,9 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 
 from bookshelf.models import books, authors, comments, grBooks, googleBooks, groups, states
-from bookmarks.models import book_links, linksites
+from bookmarks.models import author_links, book_links, linksites
+from timeline.models import timelineevent
+
 
 import os
 import io
@@ -119,6 +121,68 @@ class Command(BaseCommand):
         return False
         
         
+    def load_authors(self):
+        self.stdout.write(f"loading data for authors ...")
+        rows = self._c.execute(f"SELECT * FROM authors")
+        col_names = [ col_info[0] for col_info in self._c.description ]
+        # '_id', 'name', 'lowerCaseName', 'familyName'
+        rowcount = updated = 0
+        for row in rows:
+            rowcount += 1
+            data = {}
+            id = None
+            for pos, value in enumerate(row):
+                col_name = col_names[pos]
+                if col_name == '_id':
+                    data['id'] = id = value
+                    
+                else:
+                    data[col_name] = value
+
+            
+            obj = authors.objects.filter(id=id)
+            if obj:
+                # author does already exist
+                assert len(obj) == 1
+                # never update authors created (and synced) by mybookdb
+                continue
+            
+            # check if authors exists with same name - if created in mybookdb directly
+            obj = authors.objects.filter(name=data['name'])
+            if len(obj) != 0:
+                assert len(obj) == 1  # author name not unique ??
+                obj = obj[0]
+                
+                # books referencing this author?? 
+                assigned = books.objects.filter(authors__name=data['name'])
+
+                new_obj = authors(**data)
+                new_obj.updated = datetime.now(tz=timezone.utc)
+                new_obj.save()
+                updated += 1
+                
+                # trahsfer author_links from obj to new_obj
+                for link in author_links.objects.filter(author=obj):
+                    link.author = new_obj
+                    link.save()
+                
+                for book_obj in assigned:
+                    # shift references to this author
+                    book_obj.authors.add(new_obj)
+                    book_obj.authors.remove(obj)
+                    book_obj.save()
+                obj.delete()
+                continue
+            
+            # new author, create
+            obj = authors(**data)
+            obj.updated = datetime.now(tz=timezone.utc)
+            obj.save()
+            updated += 1
+                
+        self.stdout.write(f"authors: total {updated} rows updated (of total {rowcount})")
+        return updated
+
     def load_table(self, table_name, objType):
         self.stdout.write(f"loading data for table {table_name} ...")
         rowcount = updated = 0
@@ -181,6 +245,7 @@ class Command(BaseCommand):
                         #assert book_obj.title == data['bookTitle'], "title mismatch"
                         # pass similarity, e.g. 'Im Land der wei?en Wolke: Roman' vs 'Im Land der weissen Wolke: Roman'
                         self.stdout.write(f"title mismatch for book {book_obj.id}:\n  {book_obj.title!r}\n  {data['bookTitle']!r}\n.")
+                        # this can usually be ignored, it happens if title is edited in mybookdroid (what is not updated in comments)
                         
             elif table_name in ('grBooks','states',) and book_obj is None:
                 # skip if missing book it relates to
@@ -195,11 +260,11 @@ class Command(BaseCommand):
                
             if table_name == 'grBooks':
                 data = data  # TODO normalize to avoid excessive updates
-            
-            #obj = objType.objects.get(pk=id) # raises DoesNotExist if not found, so avoid
+
+            # test if already synced
             obj = objType.objects.filter(id=id)
             if obj:
-                # item does already exist
+                # test if update required
                 assert len(obj) == 1
                 obj = obj[0]
                 diff = {}
@@ -207,9 +272,9 @@ class Command(BaseCommand):
                     obj_value = getattr(obj, key)
                     is_same = self.same_value_table(table_name, key, obj_value, value)
                     if is_same is None:
-                        self.stdout.write(f"ignore change {table_name} {id} key={key} -- book {book_id} {book_obj.title}")
+                        # ignore certain changes if target value is set
                         self._books_ignorechange.append(f"change {table_name} key={key} ignored -- book {book_id} {book_obj.title}")
-                    elif is_same is not True:
+                    elif is_same is not True:  # book_obj, key, value, obj_value
                         diff[key] = (getattr(obj, key), value) 
                         
                 if diff:
@@ -281,10 +346,8 @@ class Command(BaseCommand):
                 author.save()
                 updated += 1
                 
-        assert updated > 0, "failed to update book authors"
-        
-        # TODO merge new authors created directly in mybookdb with new authors from mybookdb 
-        # if same name
+        assert updated > 0, f"failed to update authors for book {book_obj}"
+        return
 
     def same_value(self, key, curr_value, new_value):
         """ compare current and new value for equality """
@@ -386,7 +449,7 @@ class Command(BaseCommand):
                             book_authors.add(obj_author[0])
                         else:
                             self.stdout.write(f"duplicate author name:{author_name!r}")
-                            self._conflicts_authors.append("%s duplicated" % (author_name,))
+                            self._conflicts_authors.append("%s duplicated (%s)" % (author_name, ', '.join([str(a.id) for a in obj_author])))
                             #for author_obj in obj_author:
                             #    book_authors.add(author_obj)
                                 
@@ -420,88 +483,126 @@ class Command(BaseCommand):
                 if found_by_title:
                     assert len(found_by_title) == 1, "title not unique"  # needs more examination, which book to pick 
                     book_obj2 = found_by_title[0]
-                    sys.stdout.write(f"book does already exist but different id: {book_obj.id}: {book_obj2}")
-                    assert False 
-                    # TODO to be implemented: create new book object with book_obj.id 
-                    # copy all properties, the state, timeline events, bookmarks and comments to new booj_obj
-                    # and delete the excessive book object
+                    self.stdout.write(f"book does already exist with different id: {id} != {book_obj2}")
+                    # happens if created in mybookdb in parallel to adding it to mybookdroid (e.g. added from onleihe Merkzettel)
+                    book_obj = self.create_book_obj(data, book_authors)
+                    updated += 1
+                    
+                    # transfer links etc from book_obj2 to book_obj
+                    self.transfer_book_links(book_obj2, book_obj)
+                    
+                    if not book_obj.new_description:
+                        book_obj.new_description = book_obj2.description
+                        book_obj.save()
+                    
+                    # transfer comments
+                    for comment in comments.objects.filter(book=book_obj2):
+                        comment.book = book_obj
+                        comment.save()
+                        
+                    # transfer timeline events
+                    for event in timelineevent.objects.filter(book=book_obj2):
+                        event.book = book_obj
+                        event.save()
+                    
+                    # and mark the excessive book object as beeing obsolete
+                    book_obj2.states.obsolete = True
+                    book_obj2.save()
+                    self._conflicts_books.append(f"{book_obj2} replaced by {book_obj}")
                 
             if book_obj:
                 # item does already exist
-                book_obj = book_obj[0]
-                # self.stdout.write(f"existing book {id}: {data['title']!r}") # blather
-                try:
-                    if book_obj.states.obsolete:
-                        self.stdout.write("cannot update book if marked obsolete: %s '%s'" % (id, book_title))
-                        self._conflicts_books.append("%s '%s' -- obsolete" % (id, book_title))
-                        # maybe need to delete in mybookdroid?
-                        continue
-                except states.DoesNotExist:
-                    # RelatedObjectDoesNotExist - rare cases missing States
-                    self.stdout.write("book without state: %s - %s" % (id, book_title))
-                    self._books_nostate.append("%s '%s'" % (id, book_title))
-                
-                diff = {}
-                for key, new_value in data.items():
-                    curr_value = getattr(book_obj, key)
-                    if not self.same_value(key, curr_value, new_value):
-                        diff[key] = (curr_value, new_value) 
-                        
-                # detect changes in book - authors relationship (many-to-many)
-                book_authors_set = list(book_obj.authors.all())
-                self.update_book_authors(book_obj, book_authors_set, book_authors)
-                        
-                if diff: # handle other differences
-                    keys = ", ".join(diff.keys())
-                    self.stdout.write(f"detected changes for book {id} '{book_obj.title}' fields={keys}")
-                    # update changed fields, e.g. title
-                    for key, value in diff.items():
-                        assert not key in ('id',) # disallow update
-                        old_value, new_value = value
-                        if key in ('reviewsFechedDate',):
-                            value = new_value  #.isoformat()
-                        else:
-                            value = new_value
-                        setattr(book_obj, key, value)
-                    book_obj.updated = datetime.now(tz=timezone.utc)
-                    book_obj.save()
-                else:
-                    pass # no changes
+                assert len(book_obj) == 1
+                self.update_book_obj(book_obj[0], data, book_authors)
+                continue
                     
-            else:
-                found_by_title = books.objects.exclude(states__obsolete=True).filter(title=book_title)
-                if found_by_title:
-                    if not books.objects.filter(id=id):
-                        other_book = found_by_title[0]
-                        # extract book_links, if any
-                        # links = book_links.objects.find(id=other_book.id)
-                        # save title if edited 
-                        assert False # TODO ro be resolved, cause of duplicated books
-                        # e.g. from Merkzettel imported to mybookdb (756 Der Circle)
-                        # later on checked out in onleihe and added to mybookdroid - as new book
-                        # book with lower id has precedence, needs to be update with info from other book
-                        # for description, urls, ...
-                        
-                        # diffing ?
-                        self.stdout.write(f"already in mybooksdb with different id than {id}: {data['title']!r}")
-                        data['new_description'] = other_book.description  # retain (edited) description
-                        self._conflicts_books.append("%s '%s'" % (id, book_title))
-                    else:
-                        assert False, "duplicate in mybooksdb: {data['title']!r}"  # or id collision
-                self.stdout.write(f"new book {id}: {data['title']!r}")
-                book_obj = books(**data)
-                book_obj.save()
-                for author in book_authors:  
-                    book_obj.authors.add(author.id)
-                book_obj.updated = datetime.now(tz=timezone.utc)
-                book_obj.save()
-                
-                updated += 1
+            found_by_title = books.objects.exclude(states__obsolete=True).filter(title=book_title)  #TODO verify obsolete? see above
+            assert not found_by_title
+            #if found_by_title:
+                #if not books.objects.filter(id=id):
+                    #other_book = found_by_title[0]
+                    ## extract book_links, if any
+                    ## links = book_links.objects.find(id=other_book.id)
+                    ## save title if edited 
+                    #assert False # TODO ro be resolved, cause of duplicated books
+                    ## e.g. from Merkzettel imported to mybookdb (756 Der Circle)
+                    ## later on checked out in onleihe and added to mybookdroid - as new book
+                    ## book with lower id has precedence, needs to be update with info from other book
+                    ## for description, urls, ...
+                    
+                    ## diffing ?
+                    #self.stdout.write(f"already in mybooksdb with different id than {id}: {data['title']!r}")
+                    #data['new_description'] = other_book.description  # retain (edited) description
+                    #self._conflicts_books.append("%s '%s'" % (id, book_title))
+                #else:
+                    #assert False, "duplicate in mybooksdb: {data['title']!r}"  # or id collision
+                    
+            book_obj = self.create_book_obj(data, book_authors)
+            updated += 1
                 
         self.stdout.write("")
         self.stdout.write(f"books: total {updated} rows updated (of total {rowcount})")
         return updated
+
+    def transfer_book_links(self, from_book_obj, to_book_obj):
+        for link in book_links.objects.filter(book=from_book_obj):
+            link.book = to_book_obj
+            link.save()
+        return
         
+    def create_book_obj(self, data, book_authors):
+        self.stdout.write(f"new book {data['id']}: {data['title']!r}")
+        book_obj = books(**data)
+        book_obj.save()
+        for author in book_authors:  
+            book_obj.authors.add(author.id)
+        book_obj.updated = datetime.now(tz=timezone.utc)
+        book_obj.sync_mybookdroid = datetime.now(tz=timezone.utc)                
+        book_obj.save()
+        return book_obj
+        
+    def update_book_obj(self, book_obj, data, book_authors):
+        # self.stdout.write(f"update book {id}: {data['title']!r}") # blather
+        try:
+            if book_obj.states.obsolete:
+                self.stdout.write(f"skip update book marked obsolete: {book_obj}")
+                self._conflicts_books.append(f"{book_obj} -- obsolete")
+                return
+        except states.DoesNotExist:
+            # RelatedObjectDoesNotExist - rare cases missing States
+            self.stdout.write(f"book without state: {book_obj}")
+            self._books_nostate.append(f"{book_obj}")
+        
+        diff = {}
+        for key, new_value in data.items():
+            curr_value = getattr(book_obj, key)
+            if not self.same_value(key, curr_value, new_value):
+                diff[key] = (curr_value, new_value) 
+                
+        # detect changes in book - authors relationship (many-to-many)
+        book_authors_set = list(book_obj.authors.all())
+        self.update_book_authors(book_obj, book_authors_set, book_authors)
+                
+        if len(diff) > 0: # handle other differences
+            keys = ", ".join(diff.keys())
+            self.stdout.write(f"detected changes for book {id} '{book_obj.title}' fields={keys}")
+            # update changed fields, e.g. title
+            for key, value in diff.items():
+                assert not key in ('id',) # disallow update
+                old_value, new_value = value
+                if key in ('reviewsFechedDate',):
+                    value = new_value  #.isoformat()
+                else:
+                    value = new_value
+                setattr(book_obj, key, value)
+            book_obj.updated = datetime.now(tz=timezone.utc)
+            book_obj.sync_mybookdroid = datetime.now(tz=timezone.utc)
+            book_obj.save()
+        else:
+            # no changes, but update last sync date
+            book_obj.sync_mybookdroid = datetime.now(tz=timezone.utc)
+            book_obj.save()
+        return
         
     def output_sqllite(self, *args, **kwards):
         if args[0].startswith('SELECT '):
@@ -522,7 +623,7 @@ class Command(BaseCommand):
         only = [tn.strip() for tn in options.get('only', '').split(',')]
         only = [tn for tn in only if tn]  # drop empty entries
         if not only or 'authors' in only:
-            self.load_table('authors', authors)
+            self.load_authors()
 
         if not only or 'groups' in only:
             self.load_table('groups', groups)
@@ -533,8 +634,8 @@ class Command(BaseCommand):
         if not only or 'states' in only:
             self.load_table('states', states)
             
-        if not only or 'states' in only:
-            skipped = 1  # self.load_table('bookGroup', bookGroup) # not synced
+        if only and 'bookGroup' in only:  # not synced unless explicitly requested
+            self.load_table('bookGroup', bookGroup)
     
         if not only or 'googleBooks' in only:
             self.load_table('googleBooks', googleBooks)
