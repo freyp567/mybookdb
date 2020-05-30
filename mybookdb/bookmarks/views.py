@@ -93,7 +93,9 @@ def get_linkname_from_path(path, site, query):
     elif site == 'www.librarything.com':
         if name in ('summary', 'reviews', 'recommendations', 'members', 'descriptions', 'commonknowledge', 'covers', 'editions'):
             name = pathsteps[-1]
-        linkname = 'thing-' + name        
+        linkname = 'thing-' + name
+    elif site == 'www.histo-couch.de':
+        name = 'histo-couch-' +name
     elif site == 'www.youtube.com':
         match =re.match('v=(?P<youtube_id>[0-9A-Za-z]+).*', query)
         if match is not None:
