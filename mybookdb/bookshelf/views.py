@@ -2,7 +2,6 @@
 """
 views on bookshelf (books, authors, ...)
 """
-import os
 import logging
 import json
 from datetime import datetime
@@ -615,6 +614,7 @@ class AuthorDetailView(generic.DetailView):
         context['books_other'] = other_books
         
         return context 
+
 
 
 def getBooksListDetails(request, pk=None):

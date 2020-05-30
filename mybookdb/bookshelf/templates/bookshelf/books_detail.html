@@ -86,6 +86,7 @@
 {% endfor %}
 </p>
 <p class="m-0"><strong>ISBN:</strong> 
+<a target="isbn-info" href="{% url "bookshelf:isbn-info" pk=books.id %}">
 {% if books.isbn13 %}
   {{ books.isbn13 }}
 {% else %}
@@ -95,6 +96,7 @@
     <i>(ISBN?)</i>
   {% endif %}
 {% endif %}
+</a>
 </p>
 
 <p class="m-0">

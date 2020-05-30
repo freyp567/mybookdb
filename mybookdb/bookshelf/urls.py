@@ -7,6 +7,7 @@ from django.urls import path
 from django.urls import include
 
 from bookshelf import views
+from bookshelf import isbn_info
 from bookshelf import export
 from bookshelf import catalog_librarything
 from bookshelf import catalog_onleihe
@@ -23,6 +24,7 @@ urlpatterns = [
     path('books/v2/', views.BooksListTableView.as_view(), name='books-v2'),
     path('books/<int:pk>', views.BookDetailView.as_view(), name='books-detail'),
     path('book/<int:pk>', views.BookDetailView.as_view(), name='book-detail'),
+    path('book/<int:pk>/isbn/', isbn_info.BookISBNinfoView.as_view(), name='isbn-info'),
     path('book/<int:pk>/listdetails', views.getBooksListDetails, name='books-list-details'),
     path('books/export/', export.BookExportView.as_view(), name='book-export'),
     path('books/export/run/', export.export_books, name='book-export-run'),

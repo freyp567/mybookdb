@@ -88,6 +88,12 @@ def get_linkname_from_path(path, site, query):
         parts = name.split('-')
         assert len(parts) == 5 and len(parts[4]) == 12, "evernote.com, unexpected name '%s'" % name
         linkname = 'evernote-' + parts[4]
+    elif site == 'www.worldcat.org':
+        linkname = 'worldcat-' + name        
+    elif site == 'www.librarything.com':
+        if name in ('summary', 'reviews', 'recommendations', 'members', 'descriptions', 'commonknowledge', 'covers', 'editions'):
+            name = pathsteps[-1]
+        linkname = 'thing-' + name        
     elif site == 'www.youtube.com':
         match =re.match('v=(?P<youtube_id>[0-9A-Za-z]+).*', query)
         if match is not None:

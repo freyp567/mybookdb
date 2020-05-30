@@ -1,0 +1,91 @@
+{% extends "base_generic.html" %}
+{% load static %}
+{% load bookmarks_tags %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" />
+<link rel="stylesheet" href="{% static 'bootstrap-table/dist/bootstrap-table.min.css' %}" />
+<link rel="stylesheet" href="{% static 'x-editable/dist/bootstrap-editable/css/bootstrap-editable.css' %}" />
+
+<script src="{% static '/bootstrap-table/dist/bootstrap-table.min.js' %}"></script>
+<script src="{% static 'x-editable/dist/bootstrap-editable/js/bootstrap-editable.min.js' %}"></script>
+<script src="{% static 'bootstrap-table/dist/extensions/editable/bootstrap-table-editable.min.js' %}"></script>
+
+<a class="btn btn-primary btn-sm" role="button" 
+  href="{% url 'bookshelf:book-update' books.pk %}">Edit Book Details</a>
+<a class="btn btn-secondary btn-sm" role="button" 
+  href="{% url 'bookshelf:state-update' books.pk %}">Update Book State</a>
+
+<div>
+<button class="btn btn-light clipboard_btn" data-clipboard-target="#book-title">
+    <img src="{% static 'images/clipboard.svg' %}" alt="Copy to clipboard">
+</button>
+<span class="book-title" id="book-title">{{ books.book_title }}</span>
+{% if books.book_serie %}
+    (<span id="book-serie">{{ books.book_serie }}</span>)
+{% endif %}
+</div>
+<script>new ClipboardJS('.clipboard_btn');</script>
+
+{% if goob_url %}
+<div>
+Google Books: <a target="goob" href={{goob_url}}>{{goob_title}}</a><br/>
+<br/>
+{{goob_desc}}
+</div>
+{% endif %}
+
+{% if reader_url %}
+<div>
+<br/>
+<a target="webreader" href={{reader_url}}>open WebReader</a><br/>
+</div>
+{% endif %}
+
+{% if goob %}
+<hr/>
+isbnlib Info from Google Books:<br/>
+<div>
+    | {% for key, value in goob.items %}
+    {% if value %}
+        {{ key }}:&nbsp;{{ value }} |
+    {% endif %}
+    </tr>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if wiki %}
+<hr/>
+isbnlib Info from Wikipedia:<br/>
+<div>
+    | {% for key, value in wiki.items %}
+    {% if value %}
+        {{ key }}:&nbsp;{{ value }} | 
+    {% endif %}
+    </tr>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if wikiinfo %}
+<br/>
+<div>
+<table>
+    {% for key, value in wikiinfo.items %}
+    <tr>
+        <td>{{ key }}</td>
+        {% if key == 'url' %}
+            <td><a target="wikiinfourl" href="{{ value }}">{{ value }}</a></td>
+        {% else %}
+            <td>{{ value }}</td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</table>
+</div>
+{% endif %}
+
+{% endblock %}
+
