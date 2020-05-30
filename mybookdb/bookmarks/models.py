@@ -36,6 +36,9 @@ class book_links(links):
         on_delete=models.CASCADE,
     )
     
+    def __str__(self):
+        return "book_links link=%s for book %s" % (self.link_name, self.book)
+    
 class author_links(links):
     author = models.ForeignKey(
         'bookshelf.authors', 
@@ -43,3 +46,5 @@ class author_links(links):
         on_delete=models.CASCADE,
     )
     
+    def __str__(self):
+        return "author_links link=%s for author %s" % (self.link_name, self.author)
