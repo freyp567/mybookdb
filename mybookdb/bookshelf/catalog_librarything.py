@@ -52,12 +52,13 @@ def lookup_book_isbn(book_obj):
         raise ValueError('missing book isbn for lookup in LibraryThing')
     
     headers = {}
+    requests_s = requests.Session()
     user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.47 Safari/537.36'
     headers['User-Agent'] = user_agent
     apikey = os.environ["LIBRARYTHING_APIKEY"]
     baseuri = LT_BASEURL +"/services/rest/1.1/"
     url = f'{baseuri}?method=librarything.ck.getwork&isbn={isbn10}&apikey={apikey}'
-    response = requests.get(url, headers=headers, timeout=30.0)
+    response = requests_s.get(url, headers=headers, timeout=30.0)
     if response.status_code != 200:
         LOGGER.error("lookup on LibraryThing failed: %s" % result)
         assert False, 'TODO handle book lookup failures'
