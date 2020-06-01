@@ -12,10 +12,10 @@ bootstrap-table@^1.15.5:
   resolved "https://registry.yarnpkg.com/bootstrap-table/-/bootstrap-table-1.16.0.tgz#d05bd262e7f70a76ee872c658918983beb3befce"
   integrity sha512-bLbVetbyiXYmhU1LSsaiOHH4uvmlyBa/fNUo3y0owCfQSyQms/sfXOBvbcJWlDmjGtTY7kPW5z7KQvQJDPzN5w==
 
-bootstrap@4.3.1:
-  version "4.3.1"
-  resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-4.3.1.tgz#280ca8f610504d99d7b6b4bfc4b68cec601704ac"
-  integrity sha512-rXqOmH1VilAt2DyPzluTi2blhk17bO7ef+zLLPlWvG494pDxcM234pJ8wTc/6R40UWizAIIMgxjvxZg5kmsbag==
+bootstrap@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-4.5.0.tgz#97d9dbcb5a8972f8722c9962483543b907d9b9ec"
+  integrity sha512-Z93QoXvodoVslA+PWNdk23Hze4RBYIkpb5h8I2HY2Tu2h7A0LpAgLcyrhrSUyo2/Oxm2l1fRZPs1e5hnxnliXA==
 
 clipboard@^2.0.6:
   version "2.0.6"
@@ -59,6 +59,11 @@ js.cookie@^0.0.4:
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/js.cookie/-/js.cookie-0.0.4.tgz#c581270d0403b1c5125f91d5a48295e290e2869a"
   integrity sha1-xYEnDQQDscUSX5HVpIKV4pDihpo=
+
+popper.js@^1.16.1:
+  version "1.16.1"
+  resolved "https://registry.yarnpkg.com/popper.js/-/popper.js-1.16.1.tgz#2a223cb3dc7b6213d740e40372be40de43e65b1b"
+  integrity sha512-Wb4p1J4zyFTbM+u6WuO4XstYx4Ky9Cewe4DWrel7B0w6VVICvPwdOpotjzcf6eD8TsckVnIMNONQyPIUFOUbCQ==
 
 select@^1.1.2:
   version "1.1.2"
