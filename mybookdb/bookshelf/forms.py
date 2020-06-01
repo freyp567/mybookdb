@@ -1,8 +1,8 @@
-from datetime import datetime, date
+from datetime import datetime
 from pyisbn import Isbn13, Isbn10, IsbnError
 
 from django.core.exceptions import ValidationError
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django import forms
 from django.forms import widgets
 #from django.forms.models import inlineformset_factory
@@ -266,11 +266,10 @@ class BookUpdateForm(forms.ModelForm):
         book_id = instance and instance.id or 0
         if book_id:
             cancel_url = reverse('bookshelf:books-detail', args=(book_id,))
-            self.helper.form_action = cancel_url
+            # self.helper.form_action = cancel_url  # parameters? .form_action fails with render(...) for resolved url
         else:
             # TODO referer_url ??
             cancel_url = reverse('bookshelf:index',)
-            
 
         self.helper.layout = Layout(
             # Alert(...)
@@ -278,8 +277,8 @@ class BookUpdateForm(forms.ModelForm):
                 '',
                 Field('title'),
                 Div(
-                    Div(Field('unified_title', width=125), css_class='col-md-4'),
-                    Div(Field('book_serie', width=125), css_class='col-md-4'),
+                    Div(Field('unified_title', width=125), css_class='col-md-6'),
+                    Div(Field('book_serie', width=125), css_class='col-md-6'),
                     css_class='row',
                 ),
                 Div(
@@ -304,8 +303,11 @@ class BookUpdateForm(forms.ModelForm):
                 ),
             Div(
                 'authors',
-                'userRating',
-                'subject',
+                ),
+            Div( # TODO move to single row
+                Div(Field('userRating'), css_class='col-md-2'),
+                Div(Field('subject'), css_class='col-md-10'),
+                css_class='row',
                 ),
             FormActions(
                 Submit('save', 'Save changes'),
@@ -316,7 +318,8 @@ class BookUpdateForm(forms.ModelForm):
             )
         )
 
-        self.fields['new_description'].widget = forms.Textarea(attrs={'cols': 80, 'rows': 7})
+        self.fields['new_description'].widget = forms.Textarea(attrs={'cols': 80, 'rows': 6})
+        self.fields['orig_description'].widget = forms.Textarea(attrs={'cols': 80, 'rows': 6})
         self.fields['new_description'].label = False
         self.fields['orig_description'].label = False
         
