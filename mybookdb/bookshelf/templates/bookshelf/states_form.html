@@ -23,8 +23,7 @@ see bookshelf.forms.StateUpdateForm
     <form role="form" method="post">
         {% csrf_token %}
         {% bootstrap_form form %} <!-- see StateUpdateForm -->
-        {% buttons submit='OK' reset="Cancel" %}{% endbuttons %}
-        <!-- TODO fix Cancel button - or switch to use crisy_forms FormActions -->
+        {% buttons submit='OK' %}{% endbuttons %}
     </form>
     
 {% endblock %}
