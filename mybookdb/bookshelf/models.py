@@ -114,6 +114,13 @@ class books(models.Model):
             return self.title
         
     @property
+    def title_and_serie(self):
+        title = self.book_title
+        if self.book_serie:
+            title += ' (%s)' % self.book_serie
+        return title
+        
+    @property
     def description(self):
         """ computed from new_/orig_description """
         if self.new_description:

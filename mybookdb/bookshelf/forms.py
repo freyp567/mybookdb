@@ -232,6 +232,7 @@ class BookUpdateForm(forms.ModelForm):
     
     created = forms.DateField(disabled=True)
     updated = forms.DateField(disabled=True)
+    userRating = forms.IntegerField(max_value=5, min_value=1)
     
     class Meta:
         model = books
@@ -249,8 +250,8 @@ class BookUpdateForm(forms.ModelForm):
             'subject',
             'publisher',
             'publicationDate',
+            'userRating',
             ) 
-        # 'userrating', 'authors'
         
     def __init__(self, *args, **kwargs):
         instance = kwargs['instance']
@@ -260,18 +261,26 @@ class BookUpdateForm(forms.ModelForm):
         super(BookUpdateForm, self).__init__(*args, **kwargs)
         
         self.helper = FormHelper()
-        #self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'lb-sm'
-        #self.helper.field_class = 'col-lg-8'
         
+        book_id = instance and instance.id or 0
+        if book_id:
+            cancel_url = reverse('bookshelf:books-detail', args=(book_id,))
+            self.helper.form_action = cancel_url
+        else:
+            # TODO referer_url ??
+            cancel_url = reverse('bookshelf:index',)
+            
+
         self.helper.layout = Layout(
             # Alert(...)
             Fieldset(
                 '',
                 Field('title'),
                 Div(
-                    Field('unified_title', width=255),
-                    Field('book_serie', width=255),
+                    Div(Field('unified_title', width=125), css_class='col-md-4'),
+                    Div(Field('book_serie', width=125), css_class='col-md-4'),
+                    css_class='row',
                 ),
                 Div(
                     Div(Field('updated', readonly=True), css_class='col-md-4',),
@@ -295,12 +304,15 @@ class BookUpdateForm(forms.ModelForm):
                 ),
             Div(
                 'authors',
+                'userRating',
                 'subject',
                 ),
             FormActions(
                 Submit('save', 'Save changes'),
-                Button( 'cancel', 'Cancel', css_class = 'btn btn-default',
-                        onclick="window.history.back()")
+                Button(
+                    'cancel', 'Cancel', css_class = 'btn',
+                    onclick="window.location.href='{}';".format(cancel_url),
+                )
             )
         )
 
@@ -322,15 +334,14 @@ class BookUpdateForm(forms.ModelForm):
                 userGetValTextFuncName=None,
                 )
         self.fields['authors'].queryset = authors.objects.all()
-        #self.fields['authors'].required = False
-        #self.fields['authors'].widget.choices = book_authors
+        #self.fields['authors'].required = True
         
         #self.fields['publicationDate'].widget = widgets.SelectDateWidget()  # years=years_tuple
         self.fields['publicationDate'].widget = widgets.DateInput()  # format=('%Y-%m-%d',)
         
         # https://stackoverflow.com/questions/46094811/change-django-required-form-field-to-false
         for field_name in ('new_description','isbn10','isbn13','subject','publisher', 'publicationDate',
-                           'created', 'updated', 'unified_title', 'book_serie'):
+                           'created', 'updated', 'unified_title', 'book_serie', 'userRating'):
             self.fields[field_name].required = False
 
     
@@ -440,16 +451,11 @@ class AuthorUpdateForm(AuthorCreateForm):
         super(AuthorUpdateForm, self).__init__(*args, **kwargs)
 
 
-class StateUpdateForm(forms.ModelForm):  # TODO integrate into edit form for book
+class StateUpdateForm(forms.ModelForm):
     """
     update book state
+    see states_form.html
     """
-    # TODO
-    # inline formset 
-    # https://docs.djangoproject.com/en/dev/topics/forms/modelforms/#inline-formsets
-    # https://stackoverflow.com/questions/1113047/creating-a-model-and-related-models-with-inline-formsets
-    #
-    # or implement as new standalone form
 
     favorite = forms.BooleanField(
         required=False, initial=False, 

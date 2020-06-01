@@ -1,14 +1,10 @@
 <!--
 book states modal dialog / form 
-see bookshelf.forms.BookInfoForm
+see bookshelf.forms.StateUpdateForm 
 -->
 {% extends "base_generic.html" %}
-
+{% load static %}
 {% load bootstrap4 %}
-
-{% block title %}
-    Edit Book State
-{% endblock %}
 
 {% block content %}
     {{ form.media.css }}
@@ -21,13 +17,14 @@ see bookshelf.forms.BookInfoForm
         </div>
     {% endfor %}
     
-    <h3>Book state</h3>
-    {{ bookinfo_form.as_p }}
+    <h3>Edit State for Book "{{ object.book.book_title }}"</h3>
+    <br/>
     
     <form role="form" method="post">
         {% csrf_token %}
-        {% bootstrap_form form %}
-        {% buttons submit='OK' reset="Cancel" %}{% endbuttons %}        
+        {% bootstrap_form form %} <!-- see StateUpdateForm -->
+        {% buttons submit='OK' reset="Cancel" %}{% endbuttons %}
+        <!-- TODO fix Cancel button - or switch to use crisy_forms FormActions -->
     </form>
     
 {% endblock %}

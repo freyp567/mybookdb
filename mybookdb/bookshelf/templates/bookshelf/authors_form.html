@@ -3,14 +3,11 @@
 {% load bootstrap4 %}
 {% load bookmarks_tags %} %}
 
-
-{% block title %}
-    Edit Book Details
-{% endblock %}
-
 {% block content %}
     {{ form.media.css }}
     {{ form.media.js }}
+    
+    <h3>Edit Author Details for "{{object.name}}"</h3>
 
     {% for message in messages %}
         <div class="{{ message|bootstrap_message_classes }} alert-dismissable">

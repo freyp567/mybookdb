@@ -367,12 +367,12 @@ class BookEditableUpdate(generic.UpdateView):  # PermissionRequiredMixin
 
 class BookUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     """
-    Edit book details.
+    Edit details of book.
     """
     model = books
     permission_required = 'bookshelf.can_edit'
-    form_class = BookUpdateForm  # fails with TypeError instance on instantiation
-    if_paginated = False # KeyError else?
+    form_class = BookUpdateForm
+    is_paginated = False
     
     def __init__(self, *args, **kwargs):
         super(BookUpdateView, self).__init__(*args, *kwargs)
@@ -396,6 +396,7 @@ class BookDeleteView(PermissionRequiredMixin, generic.edit.DeleteView):
 class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
     """
     Edit book state.
+    invoked from book detail view / button "Update Book State"
     """
     model = states
     permission_required = 'bookshelf.can_edit'
@@ -450,7 +451,7 @@ class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
 
     def get_form_kwargs(self):  # TODO cleanup after debugging
         kwargs = super(StateUpdateView, self).get_form_kwargs()
-        # TODO passing instance to update to form??
+        # {'initial': {}, 'prefix': None, 'instance': <states: 5132 (favorite haveRead)>}
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -459,7 +460,8 @@ class StateUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
             # if "cancel" in request.POST:
             pass  # book info is read-only
         else:
-            context['bookinfo_form'] = BookInfoForm(instance=self.book_obj)  # TODO refactor this
+            # context['bookinfo_form'] = BookInfoForm(instance=self.book_obj)  # TODO refactor this
+            pass
         return context
     
     def get_success_url(self):
@@ -797,6 +799,7 @@ class BookStatusUpdateView(SuccessMessageMixin, PermissionRequiredMixin, generic
     """
     Edit book status.
     """
+    #xxx TODO vs StateUpdateView
     model = states
     permission_required = 'bookshelf.can_edit'
     # form_class = BookStatusUpdateForm

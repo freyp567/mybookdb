@@ -2,13 +2,11 @@
 
 {% load bootstrap4 %}
 
-{% block title %}
-    Edit Book Details
-{% endblock %}
-
 {% block content %}
     {{ form.media.css }}
     {{ form.media.js }}
+
+    <h3>Edit Book Details for "{{object.book_title}}"</h3>
 
     {% for message in messages %}
         <div class="{{ message|bootstrap_message_classes }} alert-dismissable">
@@ -18,7 +16,7 @@
     {% endfor %}
     
     <form role="form" method="post"> <!-- action="/update_book" -->
-        <!-- legend>Update book entry:</legend -->
+    
         {% csrf_token %}
         
         {% load crispy_forms_tags %}
