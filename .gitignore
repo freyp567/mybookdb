@@ -109,6 +109,10 @@ ENV/
 # PyCharm
 .idea/
 
+# yarn
+.yarn/
+.yarnrc
+
 # VSCode 
 .vscode/
 
