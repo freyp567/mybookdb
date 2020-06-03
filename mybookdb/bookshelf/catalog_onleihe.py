@@ -3,33 +3,24 @@
 lookup book from bookshelf in Onleihe website
 """
 
-import os
 import logging
 import json
 from pathlib import Path
-import urllib
-import re
 from datetime import datetime
 
-from lxml import etree
-from pyisbn import Isbn13
+#from pyisbn import Isbn13
 
 from django.views import generic
 from django.views.generic.base import View
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.urls import reverse
-from django.utils.safestring import mark_safe
 from django.utils import timezone
 
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
 
-from django import forms
-
-from bookshelf.models import books, authors, comments, states, onleiheBooks
-from bookshelf.forms import BookUpdateForm, StateUpdateForm, BookInfoForm
-from bookshelf.bookstable import BooksTable, BooksTableFilter, MinimalBooksTable
-from bookshelf.authorstable import AuthorsTable, AuthorsTableFilter  # , MinimalAuthorsTable
+from bookshelf.models import books, onleiheBooks
+from bookshelf.forms import BookUpdateForm
 
 from bookshelf.onleihe_client import OnleiheClient, ONLEIHE_DETAIL_FIELDS
 
@@ -90,18 +81,18 @@ def lookup_book_isbn(book_obj):
     #    book_obj.isbn10 = Isbn13(book_obj.isbn13).convert()
 
     if not media_info:
-        # lookup by ISBN not successful, search book title (fulltext)
-        # TODO wrong ISBN, need to update?
-        media_info = client.search_book(book_obj.title, 'title')
+        # lookup by ISBN not successful, search for book title
+        title = book_obj.book_title
+        media_info = client.search_book(title, 'title')
         if media_info:
             LOGGER.warning("book not found by isbn but title: %s / '%s'", isbn, book_obj.title)
-            result['isbn_mismatch'] = book_obj.isbn13
+            result['isbn_notfound'] = book_obj.isbn13
     
     if not media_info:
         LOGGER.warning("book %s not found in Onleihe" % book_obj)
         result['html'] = "not found"
         result['error'] = 'book not found in onleihe'
-        self.add_onleihe_book(book_obj, 'notfound', "book not found in Onleihe")
+        add_onleihe_book(book_obj, 'notfound', "book not found in Onleihe")
         result['error'] = 'lookup failed'
         cached_path.write_text(json.dumps(result))
         return result
@@ -119,13 +110,8 @@ def lookup_book_isbn(book_obj):
         # more than one book matching in Onleihe 
         LOGGER.warning("found %s books in Onleihe matching book %s '%s'" % 
                        (len(all_details), book_obj.id, book_obj.title))
-        # let user pick if more than one book for given search criterias 
+        # let user pick if more than one book for searched by title
         
-    # if unique, pick summary for selected book and store / cache in booksdb 
-    # TODO via view / interaction with user
-    # keys in details: 'meta-keywords', 'img_cover', 'Titel', 'Autor', '�bersetzer', 'Jahr', 'Verlag', 
-    #   'Sprache', 'ISBN', 'Format', 'Umfang', 'Dateigr��e', 'keywords', 'Exemplare', 'Verf�gbar', 
-    #   'Vormerker', 'Voraussichtlich verf�gbar ab', 'Kopieren'
     cached_path.write_text(json.dumps(result))
     return result, None
 
@@ -133,7 +119,7 @@ def lookup_book_isbn(book_obj):
 def add_onleihe_book(book_obj, onleihe_status, comment=""):
     onleihe_book = onleiheBooks(
         book=book_obj,
-        status = onleihestatus,
+        status = onleihe_status,
         updated = datetime.now(tz=timezone.utc),
         comment = comment
         )
@@ -207,7 +193,7 @@ class OnleiheView(generic.TemplateView):
                     LOGGER.warning("detected change in key=%s" % key)
                     assert details[key]  # not None !
                     setattr(onleihe_book, key, details[key])
-                    change.add(key)
+                    changed.add(key)
             if changed:
                 onleihe_book.save()
                 book_obj.updated = datetime.now(tz=timezone.utc)
@@ -325,7 +311,7 @@ class OnleiheView(generic.TemplateView):
             book_info, cached_at = lookup_book_isbn(book)
         except Exception as err:
             LOGGER.exception("lookup in Onleihe not successful - %s", err)
-            self.add_onleihe_book(book_obj, 'lookupfailed', "lookup in Onleihe not successful")
+            add_onleihe_book(book, 'lookupfailed', "lookup in Onleihe not successful")
             book_info = {'error': str(err)}
             cached_at = None
         context['cached'] = cached_at
@@ -345,7 +331,7 @@ class OnleiheView(generic.TemplateView):
             # transform details into JSON payload for bootstrap-table
             # where the keys are in the first rows, one column per book found
             
-            img_covers = [d['img_cover'] for d in details if 'img_cover' in d]
+            #img_covers = [d['img_cover'] for d in details if 'img_cover' in d]
             book_ids = [d['book_url'].split('/')[-1] for d in details]
             
             if len(details) == 1:  # found one book
@@ -396,8 +382,9 @@ class OnleiheDataView(View):
             
             if len(details) == 1:  # found one book
                 onleiheId = book_ids[0]
+                LOGGER.debug("found book in onleihe: %s", onleiheId)
             else:
-                LOGGER.info("found multiple books")
+                LOGGER.info("found multiple books in onleihe: %s", book_ids)
                 
             row = {
                 'field_name': 'choice', 
@@ -422,6 +409,18 @@ class OnleiheDataView(View):
                             value = [value, img_covers[pos]]
                         else:
                             value = [value, '']
+                        if hasattr(book, 'onleihebooks'):
+                            onleihe_updated = book.onleihebooks.updated
+                        else:
+                            onleihe_updated = None
+                        if cached_at is not None:
+                            if onleihe_updated is None:
+                                updated = cached_at.date()
+                            else:
+                                updated = min(onleihe_updated, cached_at.date())
+                        else:
+                            updated = onleihe_updated
+                        value.append(updated and updated.strftime("%Y-%m-%d") or "new")
                     if field_name in ('title','book_description'):
                         if '"' in value:
                             # causes troubles with python -> javascript -> bootstrap-table

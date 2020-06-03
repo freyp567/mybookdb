@@ -7,6 +7,12 @@ from pathlib import Path
 TEST_DATA_DIR = Path('test', 'data')
 TEST_DATA = [
     {
+        # 6 Titeltreffer
+        'hits': 6,
+        'title': "Der Traum der Schlange",
+        'search_result': 'search_result_Traum_der_Schlange_6.html',
+    },
+    {
         'title': "Die Rache des Kaisers",
         'search_result': 'search_result_Rache_des_Kaisers.html',
         'detail_info':  'details_info_Rache_des_Kaisers.html',
@@ -19,31 +25,44 @@ TEST_DATA = [
 
 
 class OnleiheClientExtractTestCase(TestCase):
+    
     def setUp(self):
         pass
 
     def test_extract_mediainfo(self):
         """test that we can extract book related info from search result"""
+        print("")
         for test_item in TEST_DATA:
             if not test_item.get('search_result'):
                 continue
             
+            print("test_extract_mediainfo path=%r" % test_item['search_result'])
             data_path = (TEST_DATA_DIR / test_item['search_result']).resolve()
             assert data_path.is_file(), f"missing test data file: {data_path}"
             html = open(data_path, 'r', encoding='utf-8').read()
+            
             client = OnleiheClient()
             media_info = client.extract_mediainfo(html)
-            self.assertEqual(len(media_info), 1, msg="not unique or not found")
-            self.assertEqual(media_info[0]['title'], test_item['title'], msg="wrong title")
+            
+            hits = test_item.get('hits', 1)
+            self.assertEqual(len(media_info), hits, msg="got items: %s" % len(media_info))
+            if hits == 1:
+                self.assertEqual(media_info[0]['title'], test_item['title'], msg="wrong title")
+            else:
+                for media_item in media_info:
+                    print("media item: %r" % (media_item['title']))
+                print(".")
             
         return            
-        
+
     def test_extract_detailinfo(self):
         """test that we can extract book related info from search result"""
+        print("")
         for test_item in TEST_DATA:
             if not test_item.get('detail_info'):
                 continue
             
+            print("test_extract_detailinfo path=%r" % test_item['detail_info'])
             data_path = (TEST_DATA_DIR / test_item['detail_info']).resolve()
             assert data_path.is_file(), f"missing test data file: {data_path}"
             html = open(data_path, 'r', encoding='utf-8').read()
@@ -63,8 +82,6 @@ class OnleiheClientExtractTestCase(TestCase):
         
         return
 
-
-        
         
 """
 search_text='9780061240485', field='isbn'
@@ -74,5 +91,14 @@ FUTURE, for integration test:
     href = cmedia_info[0]['href']
     details_info = client.get_book_details(href)
     assert details_info
+
+test_extract_mediainfo path='search_result_Traum_der_Schlange_6.html'
+extracting mediaInfo items from result
+media item: 'Das Nest der Schlangen'
+media item: "Gregs Tagebuch 4 - Ich war's nicht"
+media item: 'Deine Liebe ist der Tod'
+media item: 'Instinkt - 800 Kilometer zu Fuß durch die Wildnis Australiens'
+media item: "Gregs Tagebuch 4 - Ich war's nicht!"
+media item: 'Salzige Sommerküsse'
 
 """

@@ -131,7 +131,7 @@ class OnleiheClient:
             for item in doc.xpath("//article[@class='list-item']"):
                 # <a class="cover-link" title="Details zum Titel: Die Rache des Kaisers" 
                 media_item = {}
-                details = item.xpath("//a[@class='cover-link']")
+                details = item.xpath(".//a[@class='cover-link']")
                 assert len(details) == 1, "missing article details"
                 details = details[0]
                 
@@ -141,7 +141,7 @@ class OnleiheClient:
                 media_item["title"] = title
                 media_item["href"] = details.attrib['href']
                 
-                abstract = item.xpath("//div[@class='abstract']")
+                abstract = item.xpath(".//div[@class='abstract']")
                 if abstract:
                     assert len(abstract) == 1, "multiple abstracts?"
                     abstract = abstract[0]
@@ -152,7 +152,7 @@ class OnleiheClient:
                 # //div[@class='media-type']
                 # <svg class="svg-icon ic_ebook"><use xlink:href="#ic_ebook"></use></svg>
 
-                author = item.xpath("//div[@class='author']")
+                author = item.xpath(".//div[@class='author']")
                 if author:
                     assert len(author) == 1
                     author_text = author[0].text_content().strip()
@@ -177,15 +177,17 @@ class OnleiheClient:
     def extract_detailinfo(self, html):
         doc = lxml.html.document_fromstring(html)
         item = doc.xpath("//article[@class='title']")
+        #item = doc.xpath("//article")  # class="list-item" if multiple hits
         if len(item) == 0:
             return None
        
         details = {}
-        assert len(item) == 1
+        assert len(item) == 1, "multiple articles found in html (%s)" % len(item)
         item = item[0]
         
         # fields to extract see ONLEIHE_DETAIL_FIELDS
         details['book_url'] = self.extract_detailinfo_bookurl(item)
+        details['img_cover'] = self.extract_detailinfo_cover(item)
         
         details['title'] = self.extract_detailinfo_item(item, "//div[@class='title-name']", "Titel:")
         details['subtitle'] = self.extract_detailinfo_item(item, "//div[@class='subtitle']", "Untertitel:")
@@ -195,7 +197,7 @@ class OnleiheClient:
         details['year'] = self.extract_detailinfo_item(item, "//div[@class='publishing-date']", "Jahr:")
         details['language'] = self.extract_detailinfo_item(item, "//div[@class='title-language']", "Sprache:")
         details['length'] = self.extract_detailinfo_length(item)  # pages if ebook, duration [min] if eaudio
-        details['available'] = self.extract_detailinfo_item(item, "//div[@class='available']", "")
+        details['available'] = self.extract_detailinfo_item(item, "//div[@class='available']", "Verfügbar:")
         details['isbn'] = self.extract_detailinfo_item(item, "//div[@class='isbn']", "ISBN:")
         details['format'] = self.extract_detailinfo_item(item, "//div[@class='format']", "Format:")
         
@@ -248,7 +250,7 @@ class OnleiheClient:
             info_text = info_text.strip()
             return info_text
         else:
-            LOGGER.info("failed to extract detailinfo item ({prefix})")
+            LOGGER.debug("failed to extract detailinfo item ({prefix})")
             return None
         
     def extract_detailinfo_length(self, item):
@@ -263,11 +265,22 @@ class OnleiheClient:
         
         return None
 
+    def extract_detailinfo_cover(self, item):
+        link = item.xpath("//img[@class='cover-img']")
+        if len(link) > 0:
+            img_src = link[0].attrib["src"]
+            return img_src
+        else:
+            LOGGER.warning("missing link to cover image in book details")
+            return None
+    
     def extract_detailinfo_bookurl(self, item):
         link = item.xpath("//a[@class='watchlist link']")
         if len(link) > 0:
             watchlist_link = link[0].attrib["href"]
-            return watchlist_link.replace('myBib', 'mediaInfo')
+            media_link = watchlist_link.replace('myBib', 'mediaInfo')
+            media_link = media_link.replace('-551-0-0-0-0-0-0-0.html', '-200-0-0-0-0-0-0-0.html')
+            return media_link
         else:
             LOGGER.warning("missing watchlist link in book details")
             return None
@@ -285,6 +298,7 @@ class OnleiheClient:
         return headers
 
     def search_book(self, search_text, field):
+        LOGGER.info("search in Onleihe pText=%r (%s)", search_text, field)
         data = f"""cmdId=703&sK=1000&pText=&pText={search_text}&pMediaType=-1&Suchen=Suchen"""
 
         response = self.session.post(
@@ -322,7 +336,7 @@ class OnleiheClient:
             if hits == 1:
                 self.dump_html('search_result_one.html', html, "dump")
             else:
-                self.dump_html(f'search_result_{hits}.html', html, "dump")            
+                self.dump_html(f'search_result_{hits}.html', html, "dump")    
 
         # extract mediaItem info from html response
         media_info = self.extract_mediainfo(html)
@@ -330,9 +344,11 @@ class OnleiheClient:
         return media_info
     
     def dump_html(self, dump_path, html, info="", encoding='utf-8'):
-        dump_path = Path(dump_path).resolve()
+        logdir = Path("log").resolve()
+        logdir.mkdir(exist_ok=True)  # mode=511
+        dump_path = logdir / dump_path
         dump_path.write_text(html, encoding=encoding, errors=None)
-        LOGGER.debug("HTML (%s) dumped to %s" % (info, dump_path))
+        LOGGER.debug("HTML (%s) dumped to %r" % (info, dump_path.as_posix()))
             
     def get_book_details(self, book_ref):
         book_url = f'{BASEURL}/{book_ref}'

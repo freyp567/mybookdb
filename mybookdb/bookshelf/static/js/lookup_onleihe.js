@@ -21,7 +21,8 @@ function CustomFormatter(value, row, index) {
       else {
         link_content = value[0];
       }
-      return "<a href='"+ book_url +"'>" + link_content + "</a>";
+      update_info = value[2];
+      return "<a href='"+ book_url +"'>" + link_content + "</a> (" + update_info +")";
     }
     if (row.field_name == "title") {
       return '<span class="book-title-table">' + value +'</span>';

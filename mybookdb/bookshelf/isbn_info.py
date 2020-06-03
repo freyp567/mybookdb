@@ -112,7 +112,7 @@ class BookISBNinfoView(generic.DetailView):
             if len(data) > 1:
                 context['wikiinfo']['info'] = 'multiple items from de.wikipedia.org (%s)' % len(data)
         else:
-            context['wikiinfo'] = {'info': 'no info from de.wikipedia.org'}
+            context['wikiinfo'] = {'info': 'no info from de.wikipedia.org/mediawiki'}
         context['is_paginated'] = False
         return context
     

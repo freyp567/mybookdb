@@ -140,9 +140,9 @@ class books(models.Model):
             return ''
         status = self.onleihebooks.status
         if status == 'confirmed':
-            return 'onleihe'
+            return 'in Onleihe'
         if status == 'notfound':
-            return 'NOT onleihe'
+            return 'NOT in onleihe'
         return 'onleihe:%s' % status
 
     class Meta:
@@ -244,7 +244,14 @@ class onleiheBooks(models.Model):
     def __str__(self):
         value = []
         if self.onleiheId:
-            value.append(self.onleiheId)
+            onleihe_id = self.onleiheId
+            if onleihe_id:
+                # strip off boilerplate info from onleihe media id
+                if onleihe_id.endswith('-0-0-0-0-0-0-0.html'):
+                    onleihe_id = onleihe_id[:len(onleihe_id)-19]
+                if onleihe_id.startswith('mediaInfo,0-0-'):
+                    onleihe_id = onleihe_id[14:]
+            value.append(onleihe_id)
         if not self.status in ('confirmed',):
             value.append(self.status)
         if not value:
