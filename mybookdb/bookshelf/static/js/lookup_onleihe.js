@@ -13,9 +13,10 @@ function DetailTableRowStyle(row, index) {
 function CustomFormatter(value, row, index) {
     if (row.field_name == "book_url") {
       book_url = value[0];
-      img_url = value[1];
+      img_url = null; // value[1];
       var link_content = "";
       if (img_url) {
+        // TODO scale to equal size
         link_content = '<img src = "' + img_url + '" alt = "book details" border = "0"/>';
       }
       else {

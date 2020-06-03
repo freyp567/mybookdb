@@ -31,7 +31,7 @@ from django_tables2.views import SingleTableMixin
 from bookshelf.models import books, authors, comments, states
 from bookshelf.forms import BookCreateForm, BookUpdateForm, StateUpdateForm, BookInfoForm, \
     AuthorCreateForm, AuthorUpdateForm
-from bookshelf.bookstable import BooksTable, BooksTableFilter, MinimalBooksTable
+from bookshelf.bookstable import BooksTable, BooksTableFilter
 from bookshelf.authorstable import AuthorsTable, AuthorsTableFilter  # , MinimalAuthorsTable
 from bookshelf import metrics
 from timeline.models import timelineevent
@@ -283,7 +283,7 @@ class BookDetailView(generic.DetailView):
     template: books_detail.html
     """
     model = books
-    if_paginated = False # KeyError else
+    is_paginated = 0  # KeyError else
     # form see book_details.html
     
     def get_context_data(self, **kwargs):

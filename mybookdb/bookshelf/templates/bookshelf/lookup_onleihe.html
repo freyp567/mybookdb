@@ -64,7 +64,8 @@
     </form>
     
 {% else %}
-<p>Book not found in Onleihe!</p>
+<p class="alert alert-warning">Book not found in Onleihe!</p>
+<p>Updated {{ last_update }}</p>
 {% endif %}
 <hr/>
 

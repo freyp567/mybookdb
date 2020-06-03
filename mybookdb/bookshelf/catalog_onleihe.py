@@ -146,7 +146,7 @@ class OnleiheView(generic.TemplateView):
     #response_class = TemplateResponse
     #content_type = "text/html"
     #http_method_names = [u'get', u'post', u'put', u'delete', u'head', u'options', u'trace']
-    is_paginated = False
+    is_paginated = 0
     
     def post(self, request, pk):
         book_obj = books.objects.get(pk=pk)
@@ -296,15 +296,26 @@ class OnleiheView(generic.TemplateView):
         if hasattr(book, 'onleihebooks'):
             onleiheBook = book.onleihebooks
             context['onleiheId'] = onleiheBook.onleiheId
+            context['onleiheStatus'] = onleiheBook.status
+            context['last_update'] = onleiheBook.updated
             context['mustConfirm'] = False
         else:
             onleiheBook = None
             context['onleiheId'] = None
+            context['onleiheStatus'] = 'unknown'
+            context['last_update'] = '---'
             context['mustConfirm'] = True
 
         # book info from our db
         context['book'] = book
         context['book_id'] = book.id
+        
+        if context['onleiheStatus'] in ('notfound',):
+            # do not lookup in Onleihe if book could not be found before
+            return context            
+
+        if context['onleiheStatus'] not in ('unknown', 'confirmed'):
+            LOGGER.debug("search book in Onleihe, status=%s", context['onleiheStatus'])
         
         # with matching info from Onleihe
         try:

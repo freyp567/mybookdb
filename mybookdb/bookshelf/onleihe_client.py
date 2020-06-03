@@ -250,7 +250,7 @@ class OnleiheClient:
             info_text = info_text.strip()
             return info_text
         else:
-            LOGGER.debug("failed to extract detailinfo item ({prefix})")
+            LOGGER.debug(f"failed to extract detailinfo item ({prefix})")
             return None
         
     def extract_detailinfo_length(self, item):
