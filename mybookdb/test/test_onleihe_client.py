@@ -11,6 +11,10 @@ TEST_DATA = [
         'search_result': 'search_result_Rache_des_Kaisers.html',
         'detail_info':  'details_info_Rache_des_Kaisers.html',
     },
+    {
+        'title': "Das Spiel der Spiele",
+        'detail_info': 'book_details_Wildcards.html',
+    },
 ]
 
 

@@ -96,6 +96,8 @@ def get_linkname_from_path(path, site, query):
         linkname = 'thing-' + name
     elif site == 'www.histo-couch.de':
         name = 'histo-couch-' +name
+    elif site == 'www.phantastik-couch.de':
+        name = 'phantastik-couch-' +name
     elif site == 'www.youtube.com':
         match =re.match('v=(?P<youtube_id>[0-9A-Za-z]+).*', query)
         if match is not None:

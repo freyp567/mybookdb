@@ -80,23 +80,21 @@ def lookup_book_isbn(book_obj):
     client.connect()
     
     media_info = []
+    isbn = '(unknown)'
     if book_obj.isbn13:
-        media_info = client.search_book(book_obj.isbn13, 'isbn')
-    if not media_info:
-        if book_obj.isbn10:
-            media_info = client.search_book(isbn10, 'isbn')
-        #elif book_obj.isbn13:
-        #    isbn = Isbn13(book_obj.isbn13)
-        #    isbn10 = isbn.convert()
-        #    book_obj.isbn10 = isbn10
-        #    media_info = client.search_book(isbn10, 'isbn')
+        isbn = book_obj.isbn13
+        media_info = client.search_book(isbn, 'isbn')
         
     #if not book_obj.isbn10 and book_obj.isbn13:
     #    book_obj.isbn10 = Isbn13(book_obj.isbn13).convert()
 
     if not media_info:
         # lookup by ISBN not successful, search book title (fulltext)
+        # TODO wrong ISBN, need to update?
         media_info = client.search_book(book_obj.title, 'title')
+        if media_info:
+            LOGGER.warning("book not found by isbn but title: %s / '%s'", isbn, book_obj.title)
+            result['isbn_mismatch'] = book_obj.isbn13
     
     if not media_info:
         LOGGER.warning("book %s not found in Onleihe" % book_obj)

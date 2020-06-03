@@ -12,7 +12,7 @@ import urllib.parse
 from django.utils.translation import gettext as _
 from django.conf import settings
 
-from lxml import etree
+#from lxml import etree
 import lxml.html
 
 
@@ -38,7 +38,7 @@ ONLEIHE_DETAIL_FIELDS = ( #TODO cleanup
     ['publisher', 'Verlag'],
     ['language', 'Sprache'],
     ['format', 'Format'],
-    ['pages', 'Umfang'],
+    ['length', 'Umfang'],  # TODO rename pages to length (pages if ebook, duration if eaudio)
     #['filesize', 'Dateigröße'],
     #['copies', 'Exemplare'],  # <div class="exemplar-count">
     ['available', 'Verfügbar'],
@@ -75,7 +75,7 @@ else:
     
 def strip_embedded_whitespaces(value):
     newvalue = value
-    for ws in ('\t','\n'):
+    for ws in ('\t', '\n', '\xa0', ):
         newvalue = newvalue.replace(ws, ' ')
     newvalue = re.sub(' +', ' ', newvalue)
     return newvalue
@@ -175,7 +175,6 @@ class OnleiheClient:
         return media_info
 
     def extract_detailinfo(self, html):
-        LOGGER.debug("extracting detailInfo items from html result")
         doc = lxml.html.document_fromstring(html)
         item = doc.xpath("//article[@class='title']")
         if len(item) == 0:
@@ -191,11 +190,11 @@ class OnleiheClient:
         details['title'] = self.extract_detailinfo_item(item, "//div[@class='title-name']", "Titel:")
         details['subtitle'] = self.extract_detailinfo_item(item, "//div[@class='subtitle']", "Untertitel:")
         details['book_description'] = self.extract_detailinfo_item(item, "//div[@class='abstract']", "Inhalt:")
-        details['author'] = self.extract_detailinfo_item(item, "//div[@class='author']", "Autor:")
+        details['author'] = self.extract_detailinfo_authors(item)
         details['publisher'] = self.extract_detailinfo_item(item, "//div[@class='publisher']", "Verlag:")
         details['year'] = self.extract_detailinfo_item(item, "//div[@class='publishing-date']", "Jahr:")
         details['language'] = self.extract_detailinfo_item(item, "//div[@class='title-language']", "Sprache:")
-        details['pages'] = self.extract_detailinfo_pages(item)
+        details['length'] = self.extract_detailinfo_length(item)  # pages if ebook, duration [min] if eaudio
         details['available'] = self.extract_detailinfo_item(item, "//div[@class='available']", "")
         details['isbn'] = self.extract_detailinfo_item(item, "//div[@class='isbn']", "ISBN:")
         details['format'] = self.extract_detailinfo_item(item, "//div[@class='format']", "Format:")
@@ -206,6 +205,28 @@ class OnleiheClient:
         
         return details
        
+    def extract_detailinfo_authors(self, item):
+        info_items = []
+        #for info in item.xpath("//div[@class='author']"):  # fails when having more than one Author
+        for info in item.xpath("//div[@class='participants']"):
+            if info[0].text != 'Autor:':
+                continue
+                
+            for author_item in info.xpath("a[@title='Alle Titel des Autors anzeigen']"):
+                info_text = author_item.text.strip()
+                if info_text.endswith(';'):
+                    info_text = info_text[:-1]
+                info_text = info_text.strip()
+                #info_text = strip_embedded_whitespaces(info_text).strip()
+            
+                info_text = info_text.replace('\xa0', ' ')
+                info_text = info_text.strip()
+                info_items.append(info_text)
+            
+        if not info_items:
+            LOGGER.warning("failed to extract authors")
+        return info_items
+        
     def extract_detailinfo_item(self, item, expr, prefix):
         info = item.xpath(expr)
         if info:
@@ -229,14 +250,17 @@ class OnleiheClient:
             LOGGER.info("failed to extract detailinfo item ({prefix})")
             return None
         
-    def extract_detailinfo_pages(self, item):
-        page_count = None
-        pages = self.extract_detailinfo_item(item, "//div[@class='length']", "Umfang:")
-        if pages:
-            pages = strip_embedded_whitespaces(pages)
-            assert pages.endswith(' S.'), f"unexpected value for length: '{pages}'"
-            page_count = int(pages.split(' ')[0])
-        return page_count
+    def extract_detailinfo_length(self, item):
+        length = self.extract_detailinfo_item(item, "//div[@class='length']", "Umfang:")
+        if length:
+            length = strip_embedded_whitespaces(length)
+            if length.endswith(' S.'): # ebook, number of pages
+                return length
+            
+            assert length.endswith(' min'), f"unexpected value for length: '{length}'"
+            return length
+        
+        return None
 
     def extract_detailinfo_bookurl(self, item):
         link = item.xpath("//a[@class='watchlist link']")
