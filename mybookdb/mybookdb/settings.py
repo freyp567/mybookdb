@@ -154,8 +154,8 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': 'mybookdb',
-            'USER': 'mybookdbusr',
+            'NAME': os.environ.get("DB_NAME", 'mybookdb'),
+            'USER': os.environ.get("DB_USER", 'mybookdbusr'),
             'PASSWORD': os.environ["DB_PWD"],
             'HOST': os.environ.get("DB_HOST", '127.0.0.1'),
             'PORT': os.environ.get("DB_PORT", '5432'),

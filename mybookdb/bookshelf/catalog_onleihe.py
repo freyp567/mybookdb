@@ -6,7 +6,6 @@ lookup book from bookshelf in Onleihe website
 import os
 import logging
 import json
-import requests
 from pathlib import Path
 import urllib
 import re
@@ -71,7 +70,7 @@ def lookup_book_isbn(book_obj):
     result['error'] = None
     result['updated'] = datetime.now(tz=timezone.utc).isoformat()
     
-    # use cached onleihe data to reduce impact
+    # use cached onleihe data to reduce traffic / impact on onleihe site
     cached_path = get_cached_details_path(book_obj)
     if cached_path.exists():
         data = json.loads(cached_path.read_text())
@@ -82,42 +81,28 @@ def lookup_book_isbn(book_obj):
     
     media_info = []
     if book_obj.isbn13:
-        media_info = client.search_book(isbn=book_obj.isbn13)
-        isbn13 = Isbn13(book_obj.isbn13)
-        isbn10 = book_obj.isbn10 or isbn13.convert()
+        media_info = client.search_book(book_obj.isbn13, 'isbn')
     if not media_info:
-        isbn10 = book_obj.isbn10
-        if isbn10:
-            media_info = client.search_book(isbn=isbn10)
-        elif not book_obj.isbn10 and book_obj.isbn13:
-            isbn = Isbn13(book_obj.isbn13)
-            isbn10 = isbn.convert()
-            book_obj.isbn10 = isbn10
-            media_info = client.search_book(isbn=isbn10)
-        else:
-            LOGGER.warning('missing isbn for book %s' % book_obj.id)
-            isbn10 = None
-    else:
-        if not book_obj.isbn10:
-            book_obj.isbn10 = Isbn13(book_obj.isbn13).convert()
+        if book_obj.isbn10:
+            media_info = client.search_book(isbn10, 'isbn')
+        #elif book_obj.isbn13:
+        #    isbn = Isbn13(book_obj.isbn13)
+        #    isbn10 = isbn.convert()
+        #    book_obj.isbn10 = isbn10
+        #    media_info = client.search_book(isbn10, 'isbn')
+        
+    #if not book_obj.isbn10 and book_obj.isbn13:
+    #    book_obj.isbn10 = Isbn13(book_obj.isbn13).convert()
 
     if not media_info:
         # lookup by ISBN not successful, search book title (fulltext)
-        media_info = client.search_book(book_title=book_obj.title)
+        media_info = client.search_book(book_obj.title, 'title')
     
     if not media_info:
-        LOGGER.warning("lookup %s in Onleihe not successful" % book_obj.id)
+        LOGGER.warning("book %s not found in Onleihe" % book_obj)
         result['html'] = "not found"
         result['error'] = 'book not found in onleihe'
-        onleihe_book = onleiheBooks(
-            book=book_obj,
-            status = 'lookupfailed',
-            updated = datetime.now(tz=timezone.utc),
-            comment = "lookup in Onleihe not successful"
-            )
-        onleihe_book.save()
-        book_obj.updated = datetime.now(tz=timezone.utc)
-        book_obj.save()
+        self.add_onleihe_book(book_obj, 'notfound', "book not found in Onleihe")
         result['error'] = 'lookup failed'
         cached_path.write_text(json.dumps(result))
         return result
@@ -144,6 +129,19 @@ def lookup_book_isbn(book_obj):
     #   'Vormerker', 'Voraussichtlich verf�gbar ab', 'Kopieren'
     cached_path.write_text(json.dumps(result))
     return result
+
+
+def add_onleihe_book(book_obj, onleihe_status, comment=""):
+    onleihe_book = onleiheBooks(
+        book=book_obj,
+        status = onleihestatus,
+        updated = datetime.now(tz=timezone.utc),
+        comment = comment
+        )
+    onleihe_book.save()
+    book_obj.updated = datetime.now(tz=timezone.utc)
+    book_obj.save()
+    return onleihe_book
 
     
 class OnleiheUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
@@ -324,7 +322,12 @@ class OnleiheView(generic.TemplateView):
         context['book_id'] = book.id
         
         # with matching info from LibraryThing
-        book_info = lookup_book_isbn(book)            
+        try:
+            book_info = lookup_book_isbn(book)
+        except Exception as err:
+            LOGGER.exception("lookup in Onleihe not successful - %s", err)
+            self.add_onleihe_book(book_obj, 'lookupfailed', "lookup in Onleihe not successful")
+            book_info = {'error': str(err)}
         
         if book_info.get('error'):
             # pass error from lookup to form message handling
