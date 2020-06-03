@@ -217,7 +217,7 @@ class onleiheBooks(models.Model):
     onleiheId = models.TextField(null=True)
     status = models.TextField(null=False)  # 'confirmed', ...
     bookCoverURL = models.TextField(null=True)
-    author = models.TextField(null=True)
+    author = models.TextField(null=True)  # TODO multiple
     translator = models.TextField(null=True)
     year = models.IntegerField(null=True)
     isbn = models.TextField(null=True, max_length=13)
@@ -229,13 +229,14 @@ class onleiheBooks(models.Model):
     publisher = models.TextField(null=True)
     #language = models.TextField(null=True)
     format = models.TextField(null=True)
-    pages = models.IntegerField(null=True)
+    pages = models.IntegerField(null=True)  # obsolete, to be replaced by length
+    length = models.TextField(null=True)
     # filesize', 'Dateigröße'],
     # copies', 'Exemplare'],
     # available', 'Verfügbar'],
     # reservations', 'Vormerker'],
     # available_after', 'Voraussichtlich verfügbar ab'],
-    allow_copy = models.NullBooleanField(null=True)
+    allow_copy = models.NullBooleanField(null=True)  #TODO obsolete, cleanup
     book_description = models.TextField(null=True)
     updated = models.DateField(null=True)
     comment = models.TextField(null=True, blank=True)

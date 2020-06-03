@@ -24,23 +24,28 @@
     </div>
 {% endfor %}
 
-<h3>Book Info</h3>
-{{ bookinfo_form.as_p }}
+<h3>Onleihe Book Info</h3>
 
-<hr/>
-<h3>Info from Onleihe</h3>
-
+<p>Book Id={{book}}</p>
 {% if details %}
-<br/>
 
     <form role="form" method="post" action="{% url 'bookshelf:lookup-onleihe' book_id %}">
         <!-- legend>Update book state:</legend -->
         {% csrf_token %}
         
-   <div class="container">
-        <table id="book-detail-table" data-height="460"
+   <div class="container-fluid">
+        <table 
+            id="book-detail-table" 
+            class="table table-condensed"
+            data-show-header="false"
+            data-class="table table-condensed"
+            data-toggle="table"
+            data-row-style="DetailTableRowStyle"
+            data-url="{% url 'bookshelf:onleihe-data' pk=book_id %}"
         >
-        <!--     //data-formatter="CustomFormatter" -->
+        <!--
+            data-height="460"        
+        -->
         <thead>
             <tr>
                 <th data-field="field_name" data-sortable="true" data-visible="false"></th>
@@ -68,13 +73,9 @@
 <hr/>
 
 
-<script type="text/javascript">
-var onleiheId = "{{onleiheId|default:''}}"; // last confirmed Id
-var table_data_json = "{{ table_data_json|safe }}";
-//var table_data_json = table_data_json.replace('None', '\"(?)\"');
-var table_data = JSON.parse(table_data_json);
+<script>
+var onleiheId = "{{ onleiheId }}";
 </script>
-
 <script src="{% static 'js/lookup_onleihe.js' %}"></script>
 
 {% endblock %}

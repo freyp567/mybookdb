@@ -9,13 +9,13 @@ import json
 from pathlib import Path
 import urllib
 import re
-from datetime import datetime 
+from datetime import datetime
 
 from lxml import etree
 from pyisbn import Isbn13
 
-from django.shortcuts import render
 from django.views import generic
+from django.views.generic.base import View
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -73,8 +73,9 @@ def lookup_book_isbn(book_obj):
     # use cached onleihe data to reduce traffic / impact on onleihe site
     cached_path = get_cached_details_path(book_obj)
     if cached_path.exists():
+        cached_at = datetime.fromtimestamp(cached_path.stat().st_mtime)
         data = json.loads(cached_path.read_text())
-        return data
+        return data, cached_at
     
     client = OnleiheClient()
     client.connect()
@@ -126,7 +127,7 @@ def lookup_book_isbn(book_obj):
     #   'Sprache', 'ISBN', 'Format', 'Umfang', 'Dateigr��e', 'keywords', 'Exemplare', 'Verf�gbar', 
     #   'Vormerker', 'Voraussichtlich verf�gbar ab', 'Kopieren'
     cached_path.write_text(json.dumps(result))
-    return result
+    return result, None
 
 
 def add_onleihe_book(book_obj, onleihe_status, comment=""):
@@ -159,6 +160,7 @@ class OnleiheView(generic.TemplateView):
     #response_class = TemplateResponse
     #content_type = "text/html"
     #http_method_names = [u'get', u'post', u'put', u'delete', u'head', u'options', u'trace']
+    is_paginated = False
     
     def post(self, request, pk):
         book_obj = books.objects.get(pk=pk)
@@ -224,21 +226,22 @@ class OnleiheView(generic.TemplateView):
                 updated = datetime.now(tz=timezone.utc),
                 
                 )
-            CACHE_FIELDS = (
-                ('bookCoverURL', 'img_cover'),
-                ('translator', ''),
+            CACHE_FIELDS = (  #TODO cleanup fields no longer in use, e.g. pages
+                #('bookCoverURL', 'img_cover'),
+                #('translator', ''),
                 # ('title', ''),
                 ('author', ''),
                 ('year', ''),
                 ('isbn', ''),
                 # ('metaKeywords', 'meta-keywords'),
-                ('keywords', (self.store_keywords, 'keywords')),
-                ('category', (self.store_category, 'category')),
+                #('keywords', (self.store_keywords, 'keywords')),
+                #('category', (self.store_category, 'category')),
                 ('publisher', ''),
                 # ('language', ''),
                 ('format', ''),
-                ('pages', (self.get_pages, 'pages')),
-                ('allow_copy', (self.is_copy_allowed, 'Kopieren')),
+                #('pages', (self.get_pages, 'pages')), #obsolete
+                ('length', ''),
+                #('allow_copy', (self.is_copy_allowed, 'Kopieren')),
                 ('book_description', ''),
                 # ('', ''),
             )
@@ -253,15 +256,13 @@ class OnleiheView(generic.TemplateView):
                     value = details.get(from_name)
                     value = fn(value)
                 else:
-                    value = details[from_name]
+                    value = details.get(from_name)
                 if value is None:
                     # e.g. no 'translator' if original book language is german
                     LOGGER.debug("missing value for field %s" % (from_name or tgt_name))
                 if from_name == 'author':
-                    if ';' in value:
-                        # multiple authors, normalize and split
-                        value = value.replace('\r\n', '\n').replace('\n', '')
-                        value = [ n.strip() for n in value.split(';')]
+                    # TODO fix this, make Array field - currently have Textfield
+                    value = ';'.join(value)
                 setattr(onleihe_book, tgt_name, value)
                 
             onleihe_book.save()
@@ -316,24 +317,27 @@ class OnleiheView(generic.TemplateView):
             context['mustConfirm'] = True
 
         # book info from our db
-        context['bookinfo_form'] = BookInfoForm(instance=book)
+        context['book'] = book
         context['book_id'] = book.id
         
-        # with matching info from LibraryThing
+        # with matching info from Onleihe
         try:
-            book_info = lookup_book_isbn(book)
+            book_info, cached_at = lookup_book_isbn(book)
         except Exception as err:
             LOGGER.exception("lookup in Onleihe not successful - %s", err)
             self.add_onleihe_book(book_obj, 'lookupfailed', "lookup in Onleihe not successful")
             book_info = {'error': str(err)}
+            cached_at = None
+        context['cached'] = cached_at
         
         if book_info.get('error'):
             # pass error from lookup to form message handling
             context["messages"] = [book_info.get('error')]
+            # TODO indicate warnings, e.g. different ISBN?
+            # TODO indicate if cached info used, show date captured == timestamp .json file
         
         context['details'] = []
         context['book_url'] = None
-        table_data = []
         if book_info.get('details'):
             details = book_info['details']
             context['details'] = details
@@ -341,12 +345,60 @@ class OnleiheView(generic.TemplateView):
             # transform details into JSON payload for bootstrap-table
             # where the keys are in the first rows, one column per book found
             
-            img_covers = [d['img_cover'] for d in details]
+            img_covers = [d['img_cover'] for d in details if 'img_cover' in d]
             book_ids = [d['book_url'].split('/')[-1] for d in details]
             
-            table_data = []
             if len(details) == 1:  # found one book
                 context['onleiheId'] = book_ids[0]
+            else:
+                LOGGER.info("found multiple books")
+                
+        else:
+            context['details'] = details = []
+            
+        context["other_books_idx"] = list(range(2, len(details)+1))
+        context["details_url"] = reverse('bookshelf:book-detail', args=(book.id,))
+        
+        return context
+    
+    def get_success_url(self): 
+        success_url = reverse('bookshelf:book-detail', args=(self.object.id,))
+        return success_url
+
+
+class OnleiheDataView(View):
+    """ JSON data to fill bootstrap-table """
+    id_paginated = False
+    
+    def get(self, *args, **kwargs):
+        book = books.objects.get(pk=kwargs['pk'])
+        
+        # fetch info from Onleihe
+        try:
+            book_info, cached_at = lookup_book_isbn(book)
+        except Exception as err:
+            LOGGER.exception("lookup in Onleihe not successful - %s", err)
+            book_info = {'error': str(err)}
+        
+        if book_info.get('error'):
+            LOGGER.error("failed to get book info for onleihe - %s", book_info['error'])
+            return JsonResponse({})  # TODO error feedback for bootstrap table
+        
+        table_data = []
+        if book_info.get('details'):
+            details = book_info['details']
+        
+            # transform details into JSON payload for bootstrap-table
+            # where the keys are in the first rows, one column per book found
+            
+            img_covers = [d['img_cover'] for d in details if 'img_cover' in d]
+            book_ids = [d['book_url'].split('/')[-1] for d in details]
+            
+            if len(details) == 1:  # found one book
+                onleiheId = book_ids[0]
+            else:
+                LOGGER.info("found multiple books")
+                
             row = {
                 'field_name': 'choice', 
                 'field_title': 'Buchauswahl',
@@ -366,36 +418,25 @@ class OnleiheView(generic.TemplateView):
                         LOGGER.warning("missing field %s", field_name)
                         continue
                     if field_name == 'book_url':
-                        value = [value, img_covers[pos]]
+                        if img_covers and len(img_covers) > pos:
+                            value = [value, img_covers[pos]]
+                        else:
+                            value = [value, '']
                     if field_name in ('title','book_description'):
                         if '"' in value:
                             # causes troubles with python -> javascript -> bootstrap-table
                             # while loading html: Uncaught SyntaxError: Unexpected identifier
                             # as for display only, map them
-                            value = value.replace('"', '*')
+                            value = value.replace('"', "'")
                     if field_name == 'author':
-                        if '\r\n' in value:
-                            # multiple author names separated by ';', normalize/drop newlines
-                            value = value.replace('\r\n', '\n')
-                            value = value.replace('\n', '')
+                        value = ', '.join(value)
                     row['book%s' % (pos+1)] = value or ''
                     
-                    if onleiheBook:
-                        # TODO determine where differences between details item and onleiheBook
-                        pass
+                    #if onleiheBook:
+                    #    # TODO determine where differences between details item and onleiheBook
                 table_data.append(row)
                 
         else:
-            context['details'] = details = []
             table_data = []
             
-        context["table_data"] = table_data
-        context["table_data_json"] = escape_json(json.dumps(table_data))
-        context["other_books_idx"] = list(range(2, len(details)+1))
-        context["details_url"] = reverse('bookshelf:book-detail', args=(book.id,))
-        
-        return context
-    
-    def get_success_url(self): 
-        success_url = reverse('bookshelf:book-detail', args=(self.object.id,))
-        return success_url
+        return JsonResponse(table_data, safe=False)

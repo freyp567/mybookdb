@@ -202,6 +202,7 @@ class OnleiheClient:
         # TODO not yet extracted fields
         details['translator'] = None
         #details['keywords'] = None  # <div class="category"> ?
+        #details['img_cover'] = ...
         
         return details
        
@@ -392,7 +393,7 @@ def test_onleihe_client():
         sys.exit(1)
     LOGGER.info("search succeeded.")
 
-def test_onleihe_extract():
+def test_onleihe_extract():  # obsolete, moved to test_onleihe_client.py
     onleihe_response_path =  Path('onleihe_search_result.html').resolve()
     assert onleihe_response_path.is_file(), f"missing: {onleihe_response_path}"
     html = open(onleihe_response_path, 'r', encoding='utf-8').read()    

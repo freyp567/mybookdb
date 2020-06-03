@@ -55,8 +55,13 @@ urlpatterns += [
          name='lookup-librarything'),
     path('book/<int:pk>/onleihe', 
          catalog_onleihe.OnleiheView.as_view(), 
-         name='lookup-onleihe'),
-    # TODO goodreads, googlebooks, audible
+         name='lookup-onleihe',
+         ),
+    path('book/<int:pk>/onleihe-data/',
+         catalog_onleihe.OnleiheDataView.as_view(),
+         name='onleihe-data',
+         )
+    # TODO goodreads, audible, lovelybook
 ]
 
 urlpatterns += [
