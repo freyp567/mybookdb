@@ -10,12 +10,12 @@ from datetime import datetime
 
 #from pyisbn import Isbn13
 
+from django.conf import settings
 from django.views import generic
 from django.views.generic.base import View
 from django.http import JsonResponse
 from django.urls import reverse
 from django.utils import timezone
-
 
 from django.contrib.auth.mixins import PermissionRequiredMixin
 
@@ -288,10 +288,9 @@ class OnleiheView(generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super(OnleiheView, self).get_context_data(**kwargs)
         book = books.objects.get(pk=kwargs['pk'])
-        #if self.request.POST:
-        #    assert False  # book info is read-only
-        #    context["errors"] = "POST unsupported, view is readonly"
-        #    return
+        context['onleiheURL'] = settings.ONLEIHE_URL
+        if not context['onleiheURL'].endswith('/'):
+            context['onleiheURL'] += '/'
 
         if hasattr(book, 'onleihebooks'):
             onleiheBook = book.onleihebooks

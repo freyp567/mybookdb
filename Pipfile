@@ -26,6 +26,7 @@ r-django-partial-date = "*"
 pyyaml = "*"
 isbnlib = "*"
 requests-random-user-agent = "*"
+#openlibrary-client = "*"
 
 [dev-packages]
 "flake8" = "*"

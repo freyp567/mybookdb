@@ -23,7 +23,7 @@ function CustomFormatter(value, row, index) {
         link_content = value[0];
       }
       update_info = value[2];
-      return "<a href='"+ book_url +"'>" + link_content + "</a> (" + update_info +")";
+      return '<a target="onleihe" href="' + onleihe_url + book_url + '">' + link_content + '</a>  (' + update_info + ')';
     }
     if (row.field_name == "title") {
       return '<span class="book-title-table">' + value +'</span>';
