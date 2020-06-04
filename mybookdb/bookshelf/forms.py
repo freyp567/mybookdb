@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from datetime import datetime
 from pyisbn import Isbn13, Isbn10, IsbnError
 
@@ -527,10 +528,17 @@ class StateUpdateForm(forms.ModelForm):
 
 
 class BookExportForm(forms.Form):
+    
+    EXPORTTYPES = [
+        ('serialized', 'Django-Serialisiert'),
+        ('bookcatalog-csv', 'CSV für Book Catalogue'),        
+    ]
+    export_type = forms.ChoiceField(choices=EXPORTTYPES, )
     export_path = forms.CharField()
     
     def __init__(self, *args, **kwargs):
         super(BookExportForm, self).__init__(*args, **kwargs)
-        
-        self.fields['export_path'].initial = 'books_%s.zip' % datetime.now().strftime("%Y-%m-%d")
+
+        self.fields['export_type'].initial = 'serialized'
+        self.fields['export_path'].initial = 'books_%s' % datetime.now().strftime("%Y-%m-%d")
 

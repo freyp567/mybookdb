@@ -105,6 +105,7 @@ class books(models.Model):
     thumbnailSmall = models.TextField(blank=True, null=True)
     thumbnailLarge = models.TextField(blank=True, null=True)
     amazonBookId = models.IntegerField(null=True)
+    bookCatalogueId = models.UUIDField(null=True)
     
     @property
     def book_title(self):

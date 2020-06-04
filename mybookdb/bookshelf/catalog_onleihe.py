@@ -117,12 +117,24 @@ def lookup_book_isbn(book_obj):
 
 
 def add_onleihe_book(book_obj, onleihe_status, comment=""):
-    onleihe_book = onleiheBooks(
-        book=book_obj,
-        status = onleihe_status,
+    if not has_attrib(book_obj, 'onleihe_book'):
+        if not comment:
+            comment = "created %s" % datetime.now().isoformat()
+        onleihe_book = onleiheBooks(
+            book=book_obj,
+            status = onleihe_status,
+            updated = datetime.now(tz=timezone.utc),
+            comment = comment
+            )
+    else:
+        if not comment:
+            comment = "updated %s" % datetime.now().isoformat()
+        onliehe_book = book_obj.onleihe_book
+        onleihe_book.status = onleihe_status
+        onleihe_book.comment = comment
         updated = datetime.now(tz=timezone.utc),
-        comment = comment
-        )
+        
+    LOGGER.info("onleihe_book %s", comment)
     onleihe_book.save()
     book_obj.updated = datetime.now(tz=timezone.utc)
     book_obj.save()

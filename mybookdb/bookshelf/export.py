@@ -1,19 +1,17 @@
-"""
-functionality to export book related information
-"""
-
 # -*- coding: utf-8 -*-
 """
+functionality to export book related information
 views on bookshelf (books, authors, ...)
 """
 import logging
 import shutil
 from pathlib import Path
 import zipfile
+import csv
 from datetime import datetime
+import uuid
 
 from django.urls import reverse_lazy
-from django.conf import settings
 from django.http import FileResponse
 from django.views.generic.edit import FormView
 
@@ -50,10 +48,120 @@ def zip_dir(filename: str, to_zip: Path):
     return
 
 
-def export_books(request):
-     
-    export_path = Path(request.POST['export_path']).absolute()
-    LOGGER.debug(f"exporting books to {export_path} ...")
+def escape_text_csv(value):
+    if not value:
+        return ''
+    value = value.replace('\r\n', '\n')
+    value = value.replace('\n', '\\n')
+    value = value.replace('"', '""')
+    #value = value.encode('latin-1', 'xmlcharrefreplace').unicode('latin-1')  # normalize charset
+    return value
+
+
+def format_author_names(authors):
+    names = []
+    for author in authors:
+        name = author.name.split(' ')
+        if len(name) > 1:
+            nl = len(name) -1
+            names.append('%s, %s' % (name[nl], ' '.join(name[:nl])))
+        #else:
+        #    names.append(name[0])
+    return '|'.join(names)
+
+def export_books_bookcatalogue(export_path):
+    LOGGER.debug(f"exporting books to {export_path} BookCatalogue CSV ...")
+    # see https://github.com/eleybourn/Book-Catalogue/wiki/Export-Import-Format
+    csv_fields = (
+        '_id',
+        'author_details',
+        'title',
+        'isbn',
+        'publisher',
+        'date_pbulished',
+        'rating',
+        'bookshelf_id',
+        'bookshelf',
+        'read',
+        'series_details',
+        'pages',
+        'notes',
+        'list_price',
+        'anthology',
+        'location',
+        'read_start',
+        'read_end',
+        'format',
+        'signed',
+        'loaned_to',
+        'anthology_titles',
+        'description',
+        'genre',
+        'language',
+        'date_added',
+        'goodreads_book_id',
+        'last_goodreads_sync_date',
+        'last_update_date',        
+        'book_uuid',
+    )
+    row_count = 0
+    with open(export_path, mode='w', encoding='utf-8') as csv_f:
+        writer = csv.DictWriter(csv_f, fieldnames=csv_fields, quoting=csv.QUOTE_ALL, lineterminator='\n', quotechar='"')
+        writer.writeheader()
+        for book_obj in books.objects.all():
+            
+            if not book_obj.states.haveRead:
+                continue
+            
+            row_count += 1
+            book_uuid = book_obj.bookCatalogueId
+            if not book_uuid:
+                book_obj.bookCatalogueId = uuid.uuid4()
+                book_obj.save()
+            
+            book_obj.created and book_obj.created.isoformat() or ''
+            
+            data = {}
+            data['_id'] = ''  # using book_uuid instead, see below
+            data['author_details'] = format_author_names(book_obj.authors.all())
+            data['title'] = escape_text_csv(book_obj.book_title)
+            data['isbn'] = book_obj.isbn13
+            data['publisher'] = ''  # .publisher
+            data['date_pbulished'] = ''
+            data['rating'] = book_obj.userRating
+            data['bookshelf_id'] = ''
+            data['bookshelf'] = ''
+            data['read'] = book_obj.states.haveRead and '1' or '0'
+            data['series_details'] = escape_text_csv(book_obj.book_serie)
+            data['pages'] = ''
+            data['notes'] = ''
+            data['list_price'] = ''
+            data['anthology'] = '0'
+            data['location'] = ''
+            data['read_start'] = date_read
+            data['read_end'] = date_read  # set to sort by 'gelesen am'
+            data['format'] = ''
+            data['signed'] = '0'
+            data['loaned_to'] = ''
+            data['anthology_titles'] = ''
+            data['description'] = escape_text_csv(book_obj.new_description)
+            data['genre'] = ''
+            data['language'] = 'de'  # TODO fix this
+            data['date_added'] = ''
+            data['goodreads_book_id'] = ''
+            data['last_goodreads_sync_date'] = ''
+            data['last_update_date'] = ''
+            data['book_uuid'] = str(book_uuid).replace('-','')
+            
+            writer.writerow(data)
+
+    LOGGER.info("exported totally %s book entries", row_count)
+    return FileResponse(open(export_path, 'rb'))  # as_attachment=True ?
+    
+
+def export_books_serialized(export_path):
+    """ export book and author information using Django serialization """
+    LOGGER.debug(f"exporting books to {export_path} (Django serialied) ...")
 
     # preparations
     dump_dir = Path("export_" +datetime.now().strftime("export_%Y%m%dT%H%M%S.%f"))
@@ -75,7 +183,7 @@ def export_books(request):
                 serializers.serialize("yaml", [ book_state, ], stream=out)
         except Exception as err:
             # some rare cases raising RelatedObjectDoesNotExist
-            LOGGER.warning("ignore book without state: bookid=%s %s", book_obj.id, book_obj)
+            LOGGER.warning("ignore book without state: bookid=%s % - %r", book_obj.id, book_obj, err)
 
         comments = book_obj.comments_set.all().order_by('-id')
         if len(comments) > 0:
@@ -100,5 +208,20 @@ def export_books(request):
     shutil.rmtree(dump_dir.as_posix())
     
     return FileResponse(open(export_path, 'rb'))  # as_attachment=True ?
-    # content_type="application/zip"
-    # TODO FileResponse with redirect?
+    
+    
+def export_books(request):
+    export_type = request.POST['export_type']
+    export_path = request.POST['export_path']
+    if '-csv' in export_type:
+        export_path += '.csv'
+    else:        
+        export_path += '.zip'
+    export_path = Path(export_path).absolute()
+    if export_type == 'serialized':
+        return export_books_serialized(export_path)
+    elif export_type == 'bookcatalog-csv':
+        return export_books_bookcatalogue(export_path)
+    else:
+        raise NotImplementedError("unsupported export_type=%r" % export_type)
+        

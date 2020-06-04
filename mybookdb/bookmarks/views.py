@@ -104,6 +104,8 @@ def get_linkname_from_path(path, site, query):
             linkname = 'youtube-' + match.group('youtube_id')
         else:
             LOGGER.warning("failed to extract youtube_id from query '%s'", query)
+    elif site== 'openlibrary.org':
+        name = 'ol-' +name
     else:
         # 'verlorene-werke.blogspot.com', *.wordpress.com, ...
         linkname = None
