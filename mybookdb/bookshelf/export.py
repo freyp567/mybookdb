@@ -78,7 +78,7 @@ def export_books_bookcatalogue(export_path):
         'title',
         'isbn',
         'publisher',
-        'date_pbulished',
+        'date_published',
         'rating',
         'bookshelf_id',
         'bookshelf',
@@ -113,13 +113,17 @@ def export_books_bookcatalogue(export_path):
             if not book_obj.states.haveRead:
                 continue
             
+            if book_obj.states.private or book_obj.states.obsolete: # do not export
+                continue
+            
             row_count += 1
             book_uuid = book_obj.bookCatalogueId
             if not book_uuid:
                 book_obj.bookCatalogueId = uuid.uuid4()
                 book_obj.save()
             
-            book_obj.created and book_obj.created.isoformat() or ''
+            created = book_obj.created and book_obj.created.isoformat() or ''
+            updated = book_obj.created and book_obj.created.isoformat() or ''
             
             data = {}
             data['_id'] = ''  # using book_uuid instead, see below
@@ -127,30 +131,30 @@ def export_books_bookcatalogue(export_path):
             data['title'] = escape_text_csv(book_obj.book_title)
             data['isbn'] = book_obj.isbn13
             data['publisher'] = ''  # .publisher
-            data['date_pbulished'] = ''
+            data['date_published'] = ''
             data['rating'] = book_obj.userRating
             data['bookshelf_id'] = ''
             data['bookshelf'] = ''
             data['read'] = book_obj.states.haveRead and '1' or '0'
             data['series_details'] = escape_text_csv(book_obj.book_serie)
-            data['pages'] = ''
-            data['notes'] = ''
+            data['pages'] = ''  # length from onleihe (pages vs minutes)
+            data['notes'] = ''  # use this?
             data['list_price'] = ''
             data['anthology'] = '0'
             data['location'] = ''
-            data['read_start'] = date_read
-            data['read_end'] = date_read  # set to sort by 'gelesen am'
-            data['format'] = ''
+            data['read_start'] = created
+            data['read_end'] = created  # set to sort by 'gelesen am'
+            data['format'] = ''  # TODO book, ebook or eaudio?
             data['signed'] = '0'
             data['loaned_to'] = ''
             data['anthology_titles'] = ''
             data['description'] = escape_text_csv(book_obj.new_description)
-            data['genre'] = ''
+            data['genre'] = ''  # TODO set this to what?
             data['language'] = 'de'  # TODO fix this
             data['date_added'] = ''
             data['goodreads_book_id'] = ''
             data['last_goodreads_sync_date'] = ''
-            data['last_update_date'] = ''
+            data['last_update_date'] = updated
             data['book_uuid'] = str(book_uuid).replace('-','')
             
             writer.writerow(data)
