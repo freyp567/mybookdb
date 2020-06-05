@@ -30,14 +30,13 @@ from django_tables2.views import SingleTableMixin
 
 from bookshelf.models import books, authors, comments, states
 from bookshelf.forms import BookCreateForm, BookUpdateForm, StateUpdateForm, BookInfoForm, \
-    AuthorCreateForm, AuthorUpdateForm
+    AuthorCreateForm, AuthorUpdateForm, BOOK_LANGUAGE, get_lang_code, get_lang_text
 from bookshelf.bookstable import BooksTable, BooksTableFilter
 from bookshelf.authorstable import AuthorsTable, AuthorsTableFilter  # , MinimalAuthorsTable
 from bookshelf import metrics
 from timeline.models import timelineevent
 
 LOGGER = logging.getLogger(name='mybookdb.bookshelf.views')
-
 
 class HttpResponseTemporaryRedirect(HttpResponse):
     status_code = 307
@@ -280,11 +279,10 @@ def search_book_filtered(request, sort_field, filter=None):
 class BookDetailView(generic.DetailView):
     """
     detail view for a book.
-    template: books_detail.html
+    template: books_detail.html / form: 
     """
     model = books
-    is_paginated = 0  # KeyError else
-    # form see book_details.html
+    is_paginated = 0
     
     def get_context_data(self, **kwargs):
         context = super(BookDetailView, self).get_context_data(**kwargs)
@@ -299,6 +297,8 @@ class BookDetailView(generic.DetailView):
         except Exception:
             event_count = "??"
         context['event_count'] = event_count
+        #context['languages'] = BOOK_LANGUAGE  
+        context['language_text'] =  get_lang_text(self.object.language)
         return context 
     
 class MaintainBooks(PermissionRequiredMixin, generic.View):

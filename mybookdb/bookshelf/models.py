@@ -77,6 +77,7 @@ class books(models.Model):
     unified_title = models.TextField(null=True)
       # unified title (may different from title synced with mybookdroid that is 'title')
     book_serie = models.TextField(null=True, max_length=255)
+    language = models.TextField(null=True, max_length="2")
     binding = models.CharField(max_length=80, null=True)
     orig_description = models.TextField(null=True, blank=True)  
       # original descriptin from MyBookDroid app
@@ -228,7 +229,7 @@ class onleiheBooks(models.Model):
     #keywords = # Array or many to many # TODO fix later, for searching
     keywords = models.TextField(null=True) # string, comma separated
     publisher = models.TextField(null=True)
-    #language = models.TextField(null=True)
+    language = models.TextField(null=True)
     format = models.TextField(null=True)
     pages = models.IntegerField(null=True)  # obsolete, to be replaced by length
     length = models.TextField(null=True)

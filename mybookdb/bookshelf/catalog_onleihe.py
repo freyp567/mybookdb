@@ -95,7 +95,7 @@ def lookup_book_isbn(book_obj):
         add_onleihe_book(book_obj, 'notfound', "book not found in Onleihe")
         result['error'] = 'lookup failed'
         cached_path.write_text(json.dumps(result))
-        return result
+        return result, None
     
     LOGGER.info("search found %s mediaInfo items" % len(media_info))
     result['details'] = all_details = []
@@ -117,7 +117,7 @@ def lookup_book_isbn(book_obj):
 
 
 def add_onleihe_book(book_obj, onleihe_status, comment=""):
-    if not has_attrib(book_obj, 'onleihe_book'):
+    if not hasattr(book_obj, 'onleihe_book'):
         if not comment:
             comment = "created %s" % datetime.now().isoformat()
         onleihe_book = onleiheBooks(
@@ -125,7 +125,7 @@ def add_onleihe_book(book_obj, onleihe_status, comment=""):
             status = onleihe_status,
             updated = datetime.now(tz=timezone.utc),
             comment = comment
-            )
+            ) # TODO language, length, format, ...
     else:
         if not comment:
             comment = "updated %s" % datetime.now().isoformat()
@@ -235,9 +235,9 @@ class OnleiheView(generic.TemplateView):
                 #('keywords', (self.store_keywords, 'keywords')),
                 #('category', (self.store_category, 'category')),
                 ('publisher', ''),
-                # ('language', ''),
+                ('language', ''),
                 ('format', ''),
-                #('pages', (self.get_pages, 'pages')), #obsolete
+                #('pages', (self.get_pages, 'pages')), #obsolete #TODO cleanup and drop
                 ('length', ''),
                 #('allow_copy', (self.is_copy_allowed, 'Kopieren')),
                 ('book_description', ''),

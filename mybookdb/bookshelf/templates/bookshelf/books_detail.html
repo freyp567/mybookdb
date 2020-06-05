@@ -90,13 +90,13 @@
 {% if books.isbn13 %}
   {{ books.isbn13 }}
 {% else %}
-  {% if books.isbn10 %}
-    {{ books.isbn10 }}
-  {% else %}
-    <i>(ISBN?)</i>
-  {% endif %}
+  <i>(ISBN?)</i>
 {% endif %}
 </a>
+</p>
+
+<p class="m-0"><strong>Language:</strong> 
+{{ language_text }}
 </p>
 
 <p class="m-0">

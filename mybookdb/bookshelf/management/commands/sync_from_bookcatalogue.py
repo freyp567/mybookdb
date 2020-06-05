@@ -7,6 +7,7 @@ import os
 import sys
 from pathlib import Path
 import csv
+from datetime import datetime
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -150,21 +151,53 @@ class Command(BaseCommand):
         if self.check_differs('read', row["read"], book_obj.states.haveRead and '1', book_info):
             # do not attempt to fix that, report only
             diff.add('read')
+
+        if self.check_differs('language', row['language'], book_obj.language, book_info):
+            if book_obj.language is None:
+                book_obj.language = row['language']
+                updated.append('language')                
+            else:
+                diff.add('language')
+        
+        if self.check_differs('publisher', row['publisher'], book_obj.publisher, None):
+            book_obj.publisher = row['publisher']  # always update if not set or different
+            updated.append('publisher')                
             
-        # 'publisher', 'date_published', 'rating', 
-        #  'notes', 
-        # 'description', 'genre', 'language'
+        date_published = row['date_published']
+        if date_published:
+            if len(date_published) < 10:
+                date_published = date_published[:4] +'-01-01' # only year
+            try:
+                date_published =datetime.strptime(date_published, '%Y-%m-%d').date()
+            except ValueError as err:
+                LOGGER.error("failed to determine value for date_published - %s", err)
+                date_published = None
+            if self.check_differs('date_published', date_published, book_obj.publicationDate, book_info):
+                if not date_published:
+                    diff.add('date_published')
+                else:
+                    book_obj.publicationDate = date_published  # always update
+                    updated.append('date_published')                
+
+        userRating = book_obj.userRating and str(book_obj.userRating) or '0'
+        if self.check_differs('rating', row['rating'], userRating, book_info):
+            diff.add('rating')
+
+            
+        # 'description', 'genre'
         # 
         # fields maybe of interest (in future):
         # 'pages', 'format'
         # 'goodreads_book_id',
         # 'read_start', 'read_end'
         # 'bookshelf_id', 'bookshelf', 
+        # 'notes', 
+        # 'rating'
         #
         # fields not of interest:
         # 'signed', 'loaned_to', 'anthology_titles', 'date_added'
         # 'location', 'list_price', 'anthology', 
-        #
+        
         if updated:
             book_obj.save()
         return diff, updated        
@@ -202,7 +235,7 @@ class Command(BaseCommand):
             for book_title in self.differs:
                 diff = self.differs[book_title]
                 diff_info.append(f"{book_title} differs in {diff}")
-            LOGGER.info(f"found {len(self.differs)} books with differences:\n%s\n.", '   '.join(diff_info))
+            LOGGER.info(f"found {len(self.differs)} books with differences:\n%s\n.", '\n   '.join(diff_info))
         LOGGER.info(f"updated {updated} rows of totally {rows} entries in {csv_path.name}")
         
         if self._conflicts_books:

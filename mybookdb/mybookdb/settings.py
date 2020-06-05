@@ -280,6 +280,8 @@ INTERNAL_IPS = [  # for debug_toolbar
 ]
 
 
+DEFAULT_LANGUAGE = os.environ.get('DEFAULT_LANGUAGE', 'de')  # default book language
+
 assert TEMPLATES[0]['BACKEND'] == 'django.template.backends.django.DjangoTemplates'
 TEMPLATES[0]['OPTIONS']['context_processors'].append('mybookdb.context_processors.export_vars')
 

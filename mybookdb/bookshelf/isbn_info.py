@@ -74,8 +74,10 @@ class BookISBNinfoView(generic.DetailView):
         if response.status_code == 200:
             data = response.json()
             if data:
-                LOGGER.debug("openlibrary data for isbn=%s: %s", isbn, data)
-                # TODO extract
+                LOGGER.debug("openlibrary data for isbn=%s: %r", isbn, data)
+                book_data = data[f'ISBN:{isbn}']
+                # 'bib_key', 'preview', 'thumbnail_url', 'preview_url', 'info_url'                
+                # TODO information using 'info_url'
             else:
                 LOGGER.debug("openlibrary returned no data for isbn=%s", isbn)
         else:

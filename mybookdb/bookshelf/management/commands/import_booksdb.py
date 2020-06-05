@@ -378,10 +378,10 @@ class Command(BaseCommand):
                 # never reset
                 return True
             if new_value and len(new_value) != 13:
-                # mybookdroid sets isbn13 with isbn10 value by mistake, ignore
+                # mybookdroid sets isbn13 with isbn10 value by mistake, ignore #xxx TODO verify
                 return True
         
-        if key =='isbn10':
+        if key =='isbn10': #xxx TODO obsolete, drop - or convert to isbn13
             if not new_value:
                 # never reset
                 return True
