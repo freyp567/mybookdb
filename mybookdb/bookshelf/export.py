@@ -53,7 +53,8 @@ def escape_text_csv(value):
         return ''
     value = value.replace('\r\n', '\n')
     value = value.replace('\n', '\\n')
-    value = value.replace('"', '""')
+    value = value.replace('\t', '\\t')
+    #value = value.replace('"', '""')
     #value = value.encode('latin-1', 'xmlcharrefreplace').unicode('latin-1')  # normalize charset
     return value
 
@@ -109,11 +110,16 @@ def export_books_bookcatalogue(export_path):
         writer = csv.DictWriter(csv_f, fieldnames=csv_fields, quoting=csv.QUOTE_ALL, lineterminator='\n', quotechar='"')
         writer.writeheader()
         for book_obj in books.objects.all():
-            
-            if not book_obj.states.haveRead:
-                continue
-            
-            if book_obj.states.private or book_obj.states.obsolete: # do not export
+
+            if hasattr(book_obj, "states"):
+                if not book_obj.states.haveRead:
+                    continue
+                
+                if book_obj.states.private or book_obj.states.obsolete: # do not export
+                    continue
+                
+            else:
+                LOGGER.warning(f"book without state: {book_obj}")
                 continue
             
             row_count += 1
@@ -125,6 +131,19 @@ def export_books_bookcatalogue(export_path):
             created = book_obj.created and book_obj.created.isoformat() or ''
             updated = book_obj.created and book_obj.created.isoformat() or ''
             
+            if book_obj.states.haveRead:
+                bookshelves = 'read'
+            elif book_obj.states.readingNow:
+                bookshelves = 'reading'
+            else:
+                bookshelf = 'not_read'
+            
+            if book_obj.states.favorite:
+                pass # TODO add additionally to shelve 'favorites'
+            
+            book_notes = ''
+            # TODO extract from timeline first_date/last_date | century | location(s) | comment
+                
             data = {}
             data['_id'] = ''  # using book_uuid instead, see below
             data['author_details'] = format_author_names(book_obj.authors.all())
@@ -132,13 +151,13 @@ def export_books_bookcatalogue(export_path):
             data['isbn'] = book_obj.isbn13
             data['publisher'] = ''  # .publisher
             data['date_published'] = ''
-            data['rating'] = book_obj.userRating
+            data['rating'] = book_obj.userRating or ''
             data['bookshelf_id'] = ''
-            data['bookshelf'] = ''
+            data['bookshelf'] = bookshelves
             data['read'] = book_obj.states.haveRead and '1' or '0'
             data['series_details'] = escape_text_csv(book_obj.book_serie)
             data['pages'] = ''  # length from onleihe (pages vs minutes)
-            data['notes'] = ''  # use this?
+            data['notes'] = book_notes
             data['list_price'] = ''
             data['anthology'] = '0'
             data['location'] = ''
@@ -150,12 +169,12 @@ def export_books_bookcatalogue(export_path):
             data['anthology_titles'] = ''
             data['description'] = escape_text_csv(book_obj.new_description)
             data['genre'] = ''  # TODO set this to what?
-            data['language'] = 'de'  # TODO fix this
+            data['language'] = book_obj.language
             data['date_added'] = ''
             data['goodreads_book_id'] = ''
             data['last_goodreads_sync_date'] = ''
             data['last_update_date'] = updated
-            data['book_uuid'] = str(book_uuid).replace('-','')
+            data['book_uuid'] = book_uuid.hex  # UUID without dashes
             
             writer.writerow(data)
 

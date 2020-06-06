@@ -287,6 +287,16 @@ class BookDetailView(generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super(BookDetailView, self).get_context_data(**kwargs)
         context['is_paginated'] = False  # avoid KeyError
+        context['onleihe_button_status'] = 'btn-secondary'
+        if hasattr(self.object, 'onleihebooks'):
+            status = self.object.onleihebooks.status
+            if status == 'notfound':
+                context['onleihe_button_status'] = 'btn-warning'                
+            elif status == 'confirmed':
+                context['onleihe_button_status'] = 'btn-success'
+            else:
+                context['onleihe_button_status'] = 'btn-info'
+            
         book_comments = self.object.comments_set.all()
         book_comments = book_comments.order_by('-dateCreatedInt')
         context['books_comments'] = book_comments

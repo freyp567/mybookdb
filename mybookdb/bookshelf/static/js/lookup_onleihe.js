@@ -23,17 +23,23 @@ function CustomFormatter(value, row, index) {
         link_content = value[0];
       }
       update_info = value[2];
-      return '<a target="onleihe" href="' + onleihe_url + book_url + '">' + link_content + '</a>  (' + update_info + ')';
+      console.debug("rendering book_url=" +book_url);
+      book_url = onleihe_url + book_url;  // make absolute
+      return '<a target="onleihe" href="' + book_url + '">' + link_content + '</a>  (' + update_info + ')';
     }
     if (row.field_name == "title") {
       return '<span class="book-title-table">' + value +'</span>';
     }
     if (row.field_name == "choice") {
+        var frag = '';
         if (onleiheId == value) {
-            return '<input type="radio" id="choice" name="choice" checked value="' +value +'">';
+            frag += '<input type="radio" id="choice" name="choice" checked value="' +value +'">';
+            frag += '&nbsp;&nbsp;&nbsp;'
+            frag += '<button class="btn btn-sm btn-danger" name="force_update">update</button>';
         } else {
-            return '<input type="radio" id="choice" name="choice" value="' +value +'">';
+            frag += '<input type="radio" id="choice" name="choice" value="' +value +'">';
         }
+        return frag;
     }
     //console.info("customFormatter field_name=" +row.field_name +" index=" +index +" value=" +value);
     // 'book_description' -- prettyprint

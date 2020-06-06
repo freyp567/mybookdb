@@ -71,7 +71,7 @@ class books(models.Model):
     to achieve sqllite binary compatible
     """
 
-    isbn10 = models.TextField(null=True, max_length=10)
+    isbn10 = models.TextField(null=True, max_length=10)  #TODO cleanup, obsolete
     isbn13 = models.TextField(null=True, max_length=13)
     title = models.TextField(blank=False, max_length=255)
     unified_title = models.TextField(null=True)

@@ -36,7 +36,7 @@ def escape_json(value):
     return value
 
 def get_cached_details_path(book_obj):
-    cached_name = book_obj.isbn13 or book_obj.isbn10 or 'id_%s' % book_obj.id
+    cached_name = book_obj.isbn13 or 'id_%s' % book_obj.id
     cached_name = cached_name +'.json'
     cached_path = Path(__file__).parent / 'static' / 'onleihe'
     cached_path = cached_path / cached_name
@@ -92,7 +92,7 @@ def lookup_book_isbn(book_obj):
         LOGGER.warning("book %s not found in Onleihe" % book_obj)
         result['html'] = "not found"
         result['error'] = 'book not found in onleihe'
-        add_onleihe_book(book_obj, 'notfound', "book not found in Onleihe")
+        add_onleihe_book(book_obj, 'notfound', "%s book not found in Onleihe" % datetime.now().date().isoformat())
         result['error'] = 'lookup failed'
         cached_path.write_text(json.dumps(result))
         return result, None
@@ -125,7 +125,7 @@ def add_onleihe_book(book_obj, onleihe_status, comment=""):
             status = onleihe_status,
             updated = datetime.now(tz=timezone.utc),
             comment = comment
-            ) # TODO language, length, format, ...
+            )
     else:
         if not comment:
             comment = "updated %s" % datetime.now().isoformat()
@@ -141,17 +141,6 @@ def add_onleihe_book(book_obj, onleihe_status, comment=""):
     return onleihe_book
 
     
-class OnleiheUpdateView(PermissionRequiredMixin, generic.edit.UpdateView):
-    """
-    Update book link/state from local bookdb info to Onleihe.
-    """
-    model = books  #xxx TODO separate into own table? 
-    permission_required = 'bookshelf.can_edit'
-    form_class = BookUpdateForm  # TODO adapt
-    
-    # TODO to be continued - when Onleihe returning what we need
-
-
 class OnleiheView(generic.TemplateView):
     """ book info from Onleihe web service """
     template_name = "bookshelf/lookup_onleihe.html"
@@ -163,10 +152,9 @@ class OnleiheView(generic.TemplateView):
     def post(self, request, pk):
         book_obj = books.objects.get(pk=pk)
         choice = request.POST.get('choice')
-        #TODO if more than one book in onleihe, need user to choose one
+        # if more than one book in onleihe, need user to choose one
         if not choice:
             # no book selected, i.e. notfound
-            # TODO extra button next to OK to allow to reject
             LOGGER.warning("none of books found in onleihe does match")
             if not hasattr(book_obj, 'onleihebooks'):
                 onleihe_book = onleiheBooks(
@@ -188,13 +176,14 @@ class OnleiheView(generic.TemplateView):
             return super(generic.TemplateView, self).render_to_response(context)
         
         # cache onleihe book details in DB
+        force_update = 'force_update' in request.POST
         client = OnleiheClient()
         client.connect()
         if hasattr(book_obj, 'onleihebooks'):
             # already have onleiheBook info assigned, so update it
             onleihe_book = book_obj.onleihebooks
             details = get_cached_details(book_obj)  # TODO option to drop cache to force update
-            if not details:
+            if not details or force_update:
                 details = client.get_book_details(onleihe_book.onleiheId)
             assert details['isbn'] == onleihe_book.isbn
             # update book fields if changed
@@ -427,6 +416,14 @@ class OnleiheDataView(View):
                         LOGGER.warning("missing field %s", field_name)
                         continue
                     if field_name == 'book_url':
+                        if value.startswith('https://'):
+                            # workaround for issue with old-style absolute urls (https://www4.onleihe.de)
+                            value = value.split('/frontend/')
+                            if len(value) == 2:
+                                value = value[1]
+                            else:
+                                value = value[0]
+                        
                         if img_covers and len(img_covers) > pos:
                             value = [value, img_covers[pos]]
                         else:
@@ -450,7 +447,10 @@ class OnleiheDataView(View):
                             # as for display only, map them
                             value = value.replace('"', "'")
                     if field_name == 'author':
-                        value = ', '.join(value)
+                        if not isinstance(value, str):  # support multiple authors
+                            value = ' | '.join(value)
+                        else:
+                            value = value
                     row['book%s' % (pos+1)] = value or ''
                     
                     #if onleiheBook:

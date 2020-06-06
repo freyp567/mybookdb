@@ -61,7 +61,7 @@
 
 {% if USE_ONLEIHE == "1" %}
 <!-- currently not working, and no API documentation available -->
-<a class="btn btn-secondary btn-sm" role="button" 
+<a class="btn btn-sm {{onleihe_button_status}}" role="button" 
   title="search book in Onleihe"
   href="{% url 'bookshelf:lookup-onleihe' pk=books.pk %}"
   >Onleihe</a>
