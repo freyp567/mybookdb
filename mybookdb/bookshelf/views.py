@@ -291,11 +291,12 @@ class BookDetailView(generic.DetailView):
         if hasattr(self.object, 'onleihebooks'):
             status = self.object.onleihebooks.status
             if status == 'notfound':
-                context['onleihe_button_status'] = 'btn-warning'                
+                context['onleihe_button_status'] = 'btn-danger'                
             elif status == 'confirmed':
                 context['onleihe_button_status'] = 'btn-success'
             else:
-                context['onleihe_button_status'] = 'btn-info'
+                # 'lookupfailed', ...
+                context['onleihe_button_status'] = 'btn-warning'
             
         book_comments = self.object.comments_set.all()
         book_comments = book_comments.order_by('-dateCreatedInt')
