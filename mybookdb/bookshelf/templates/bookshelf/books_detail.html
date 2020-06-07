@@ -134,14 +134,17 @@
 </p>
 {% endif %}
 <hr/>
-<p class="detail_brief">Updated: {{ books.updated|date:"c" }}</p>
+<p class="detail_brief">
+  Created: {{ books.created|date:"c" }}, 
+  Updated: {{ books.updated|date:"c" }},
+  Synced: {{ books.sync_mybookdroid|date:'c' }}
+</p>
 <p class="detail_brief">
   States:
   <span class="{% if books.states.state_conflict %}bg-danger{% endif %}">
     {{ books.states }}
   </span>
 </p>
-<p class="detail_brief">Synced: {{ books.sync_mybookdroid|date:'c' }}</p>
 <p class="detail_brief">Onleihe: {{ books.onleihebooks|default:'---' }}</p>
 
 <hr/>
