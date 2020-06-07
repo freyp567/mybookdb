@@ -57,7 +57,8 @@ class Command(BaseCommand):
         if len(value) < 10: # partial date
             value = value[:4] +'-01-01' # year only
         try:
-            assert len(value) == 10, "expect date in ISO format without time"
+            if len(value) > 10: # date with time? strip off latter
+                value = value[:10]
             date_value = datetime.strptime(value, '%Y-%m-%d')
         except ValueError as err:
             LOGGER.error("failed to determine date value - %s", err)
@@ -185,7 +186,7 @@ class Command(BaseCommand):
             comment = "added %s from bookcatalogue (created=%s)" % (now.date().isoformat(), date_added.date().isoformat())
             self.create_book_comment(book_obj, row['title'], comment)
 
-            state_obj = self.set_book_state(book_obj, row['read'])
+            self.set_book_state(book_obj, row['read'])
 
             if row['notes']:
                 comment = row['notes'] + NOTE_SUFFIX
@@ -193,7 +194,7 @@ class Command(BaseCommand):
                         
             # add authors from author_details
             authors = row['author_details'].split('|')
-            author_objs = self.add_book_authors(book_obj, authors)
+            self.add_book_authors(book_obj, authors)
                 
         self.new_books.append(book_info)
         return
@@ -206,7 +207,7 @@ class Command(BaseCommand):
         for series_name in book_series:
             series_name = series_name.strip()
             if not series_name:
-                 continue
+                continue
             # drop pseudo series names found in sync data
             if series_name not in ('German Edition', 'mit Bonusgeschichten', 'Ab 10 J.'):
                 series.append(series_name)
@@ -230,7 +231,7 @@ class Command(BaseCommand):
         description = description.replace('\r\n', '\n')  # linux style line-ends
         description = description.replace('\n', '\\n')  # single line, so escape newlines
         description = description.replace('\t', '\\t')  # single line, so escape newlines
-        description = description.replace('"', '""')  #TODO drop this
+        #description = description.replace('"', '""')  #TODO drop this
         return description
     
     def denormalize_description(self, description):
@@ -345,13 +346,12 @@ class Command(BaseCommand):
             updated.append('publisher')                
             
         date_published = self.safe_get_date_iso(row['date_published'])
-        if date_published:
-            if self.check_differs('date_published', date_published, book_obj.publicationDate, book_info):
-                if not date_published:
-                    diff.add('date_published')
-                else:
-                    book_obj.publicationDate = date_published  # always update
-                    updated.append('date_published')                
+        if date_published and self.check_differs('date_published', date_published, book_obj.publicationDate, book_info):
+            if not date_published:
+                diff.add('date_published')
+            else:
+                book_obj.publicationDate = date_published  # always update
+                updated.append('date_published')                
 
         userRating = book_obj.userRating and str(book_obj.userRating) or '0'
         if self.check_differs('rating', row['rating'], userRating, book_info):
@@ -377,6 +377,7 @@ class Command(BaseCommand):
         bookshelves.discard('Default')
         if bookshelves:
             LOGGER.debug(f"book on bookshelf {bookshelf!r} id={row['bookshelf_id']} - {book_info}")
+            pass
             
         if row['genre']:
             LOGGER.debug(f"book genre {row['genre']!r} - {book_info}")
@@ -390,11 +391,26 @@ class Command(BaseCommand):
             
         assert row['anthology'] == '0'  # what else, from bookcatalogue sync with goodreads ...?
         
+        read_start = self.safe_get_date_iso(row['read_start'])
+        if read_start and self.check_differs('read_start', read_start, book_obj.read_start, book_info):
+            if book_obj.read_start:
+                diff.add('read_start')
+            else:
+                book_obj.read_start = read_start  # update if not yet set
+                updated.append('read_start')
+        
+        read_end = self.safe_get_date_iso(row['read_end'])
+        if read_end and self.check_differs('read_end', read_end, book_obj.read_end, book_info):
+            if book_obj.read_end:
+                diff.add('read_end')
+            else:
+                book_obj.read_end = read_start  # update if not yet set
+                updated.append('read_end')
+        
         # 
         # fields maybe of interest (in future):
         # 'pages', 'format'
         # 'goodreads_book_id',
-        # 'read_start', 'read_end'
         #
         # fields not of interest / ignored (for updates):
         # 'signed', 'loaned_to', 'anthology_titles', 'date_added'
@@ -433,8 +449,12 @@ class Command(BaseCommand):
                 found = books.objects.filter(unified_title=book_title)
             if found:
                 LOGGER.error(f'found book with title {book_title!r}')
-                self._conflicts_books.append(book_title)
-                #TODO requires handling - future
+                assert len(found) == 1, f"multiple books for {book_title!r}"
+                book_obj = found[0]
+                self._conflicts_books.append(f"{book_obj.book_title!r} id={book_obj.id} -- not matching book_uuid={uuid.UUID(book_uuid)}")
+                # requires manual fixup - best we can do is change book title by prefixing with '[dup]'
+                self.create_book_comment(book_obj, book_obj.title, f"auto-renamed by sync_from_bookcatalogue, duplicate")                
+                book_obj.unified_title = f"[dup] {book_obj.book_title}"
                 return
             
         if not found:

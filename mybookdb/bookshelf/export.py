@@ -19,9 +19,39 @@ from django.core import serializers
 
 from bookshelf.forms import BookExportForm
 from bookshelf.models import books, authors
-from timeline.models import timelineevent
+from timeline.models import timelineevent, DatePrecision
 
 LOGGER = logging.getLogger(name='mybookdb.bookshelf.export')
+
+TIME_EPOQUES= [
+    # https://de.wikipedia.org/wiki/Geschichte_Europas
+    (2000, "2000 .. Gegenwart"),
+    (1960, "1960 .. 2000"),
+    (1945, "1945 .. 1960 Nachkriegszeit"),
+    (1939, "1939 .. 1945 2.WK"),
+    (1918, "1918 .. 1939 Zwischenkriegszeit"),
+    (1914, "1914 .. 1918 1.WK"),
+    (1884, "1884 .. 1914 Belle Epoque"),  # https://de.wikipedia.org/wiki/Belle_%C3%89poque
+    (1800, "19.Jh",),
+    (1700, "18.Jh",),
+    (1600, "17.Jh",),
+    (1500, "16.Jh",),
+    (1400, "15.Jh",),
+    (1300, "14.Jh",),
+    (1200, "13.Jh",),
+    (1100, "12.Jh",),
+    (1000, "11.Jh",),
+    ( 900, "10.Jh",),
+    ( 500, "Frühmittelalter",),  # https://de.wikipedia.org/wiki/Fr%C3%BChmittelalter
+    ( 284, "Spätantike",),  # https://de.wikipedia.org/wiki/Sp%C3%A4tantike
+    (-800, "Antike",),  # Antike 800 vChr bis 600 n Chr
+    # https://de.wikipedia.org/wiki/Altertum
+    (-4000, "Altertum",),  # Altertum 4000 / 3500 vChr .. 
+    # https://de.wikipedia.org/wiki/Fr%C3%BChgeschichte
+    # https://de.wikipedia.org/wiki/Geschichte_Europas
+    # Frühgeschichte (Urgeschichte, Mittelsteinzeit, Jungsteinzeit, Bronzezeit, Eisenzeit, Hochkulturen)]
+    (-9999, "Frühgeschichte",),
+]
 
 
 class BookExportView(FormView):
@@ -69,6 +99,67 @@ def format_author_names(authors):
         #else:
         #    names.append(name[0])
     return '|'.join(names)
+
+def get_timeline_info(book_obj):
+    epoque = notes = ''
+    start_event = None
+    event_last = None
+    is_bc = False
+    start_event = None
+    for event in timelineevent.objects.filter(book=book_obj).order_by('date'):
+        if event.is_bc:
+            is_bc = True
+        if not start_event:
+            start_event = event
+            event_last = event.date
+        if event.date > event_last:
+            event_last = event.date
+            
+    if start_event is None:
+        epoque = 'Unknown'
+        notes = '(no timeline event)'
+    elif start_event.precision in (
+        DatePrecision.NOTDETERMINED,  # used for dates added before introduction of DatePrecision
+        DatePrecision.EXACT_YEAR,
+        DatePrecision.EXACT_DATE,
+        DatePrecision.APPROX_YEAR,
+        DatePrecision.APPROX_DECADE,
+        DatePrecision.APPROX_CENTURY,
+        DatePrecision.APPROX_GUESSED,
+    ):
+        if is_bc:
+            year = start_event.date.date.year * -1
+            notes = f"{year} BC"
+        else:
+            year = start_event.date.date.year
+            
+        epoque = 'Unknown'
+        for year_start, epoque_name in TIME_EPOQUES:
+            if year >= year_start:
+                epoque = epoque_name
+                break
+
+        if event_last and event_last != start_event.date:
+            year_to = event_last.date.year
+            notes = f"{year} .. {year_to}"
+        else:
+            notes = f"{year}"
+
+    else:
+        # future, fantasy, unknown, ...
+        if start_event.precision == DatePrecision.NEAR_FUTURE:
+            epoque = 'Zukunft nahe'
+        elif start_event.precision == DatePrecision.FAR_FUTURE:
+            epoque = 'Zukunft ferne'
+        elif start_event.precision == DatePrecision.FUTURE:
+            epoque = 'Zukunft'
+        elif start_event.precision == DatePrecision.UNKNOWN:
+            epoque = 'Epoche unbekannt'
+        else:
+            epoque = 'Epoche unbekannt'
+    assert not ',' in epoque
+    return notes, "z " +epoque
+    
 
 def export_books_bookcatalogue(export_path):
     LOGGER.debug(f"exporting books to {export_path} BookCatalogue CSV ...")
@@ -125,24 +216,26 @@ def export_books_bookcatalogue(export_path):
             row_count += 1
             book_uuid = book_obj.bookCatalogueId
             if not book_uuid:
-                book_obj.bookCatalogueId = uuid.uuid4()
+                book_uuid = uuid.uuid4()
+                book_obj.bookCatalogueId = book_uuid
                 book_obj.save()
             
             created = book_obj.created and book_obj.created.isoformat() or ''
             updated = book_obj.created and book_obj.created.isoformat() or ''
             
+            bookshelves = set()
             if book_obj.states.haveRead:
-                bookshelves = 'read'
+                bookshelves.add('have_read')
             elif book_obj.states.readingNow:
-                bookshelves = 'reading'
+                bookshelves.add('reading')
             else:
-                bookshelf = 'not_read'
+                bookshelves.add('not_read')
             
             if book_obj.states.favorite:
-                pass # TODO add additionally to shelve 'favorites'
+                bookshelves.add('favorite')
             
-            book_notes = ''
-            # TODO extract from timeline first_date/last_date | century | location(s) | comment
+            book_notes, epoque = get_timeline_info(book_obj)
+            bookshelves.add(epoque)
                 
             data = {}
             data['_id'] = ''  # using book_uuid instead, see below
@@ -153,7 +246,7 @@ def export_books_bookcatalogue(export_path):
             data['date_published'] = ''
             data['rating'] = book_obj.userRating or ''
             data['bookshelf_id'] = ''
-            data['bookshelf'] = bookshelves
+            data['bookshelf'] = ','.join(bookshelves)
             data['read'] = book_obj.states.haveRead and '1' or '0'
             data['series_details'] = escape_text_csv(book_obj.book_serie)
             data['pages'] = ''  # length from onleihe (pages vs minutes)
@@ -161,8 +254,8 @@ def export_books_bookcatalogue(export_path):
             data['list_price'] = ''
             data['anthology'] = '0'
             data['location'] = ''
-            data['read_start'] = created
-            data['read_end'] = created  # set to sort by 'gelesen am'
+            data['read_start'] = book_obj.read_start or ''
+            data['read_end'] = book_obj.read_end or ''
             data['format'] = ''  # TODO book, ebook or eaudio?
             data['signed'] = '0'
             data['loaned_to'] = ''

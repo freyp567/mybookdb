@@ -96,6 +96,8 @@ class books(models.Model):
     subject = models.TextField(null=True, blank=True)
     created = models.DateField()
     updated = models.DateField(null=True)
+    read_start = models.DateField(null=True, blank=True)
+    read_end = models.DateField(null=True, blank=True)
     sync_mybookdroid = models.DateField(null=True)
     userRating = models.IntegerField(null = True)
     

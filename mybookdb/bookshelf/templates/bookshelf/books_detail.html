@@ -140,6 +140,10 @@
   Synced: {{ books.sync_mybookdroid|date:'c' }}
 </p>
 <p class="detail_brief">
+  Start Reading: {{ books.read_start|date:"c" }}, 
+  End Reading: {{ books.read_end|date:"c" }}
+</p>
+<p class="detail_brief">
   States:
   <span class="{% if books.states.state_conflict %}bg-danger{% endif %}">
     {{ books.states }}
