@@ -245,6 +245,9 @@ class BookUpdateForm(forms.ModelForm):
     created = forms.DateField(disabled=True)
     updated = forms.DateField(disabled=True)
     userRating = forms.IntegerField(max_value=5, min_value=1)
+
+    read_start = forms.DateField(disabled=False)
+    read_end = forms.DateField(disabled=False)
     
     class Meta:
         model = books
@@ -256,6 +259,8 @@ class BookUpdateForm(forms.ModelForm):
             'new_description', 
             'created',
             'updated',
+            'read_start',
+            'read_end',
             'authors',
             'isbn13', 
             'language',
@@ -297,6 +302,11 @@ class BookUpdateForm(forms.ModelForm):
                     Div(Field('updated', readonly=True), css_class='col-md-4',),
                     Div(Field('created', readonly=True), css_class='col-md-4',),
                     Div('publicationDate', css_class='col-md-4',),
+                    css_class='row',
+                ),
+                Div(
+                    Div(Field('read_start'), css_class='col-md-4',),
+                    Div(Field('read_end'), css_class='col-md-4',),
                     css_class='row',
                 ),
                 Div(
@@ -351,14 +361,18 @@ class BookUpdateForm(forms.ModelForm):
         self.fields['authors'].queryset = authors.objects.all()
         #self.fields['authors'].required = True
         
-        #self.fields['publicationDate'].widget = widgets.SelectDateWidget()  # years=years_tuple
         self.fields['publicationDate'].widget = widgets.DateInput()  # format=('%Y-%m-%d',)
+        self.fields['read_start'].widget = widgets.DateInput()
+        self.fields['read_end'].widget = widgets.DateInput()
         
         # https://stackoverflow.com/questions/46094811/change-django-required-form-field-to-false
         for field_name in ('new_description','isbn13','subject','publisher', 'publicationDate',
                            'created', 'updated', 'unified_title', 'book_serie', 'userRating'):
             self.fields[field_name].required = False
 
+
+    def clean(self):
+        return self.cleaned_data
         
     def clean_updated(self):
         data = self.cleaned_data['updated']
