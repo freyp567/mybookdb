@@ -367,7 +367,8 @@ class BookUpdateForm(forms.ModelForm):
         
         # https://stackoverflow.com/questions/46094811/change-django-required-form-field-to-false
         for field_name in ('new_description','isbn13','subject','publisher', 'publicationDate',
-                           'created', 'updated', 'unified_title', 'book_serie', 'userRating'):
+                           'created', 'updated', 'read_start', 'read_end', 
+                           'unified_title', 'book_serie', 'userRating'):
             self.fields[field_name].required = False
 
 
