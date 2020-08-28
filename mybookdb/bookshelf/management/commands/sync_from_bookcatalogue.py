@@ -64,6 +64,7 @@ class Command(BaseCommand):
         except ValueError as err:
             LOGGER.error("failed to determine date value - %s", err)
             return None
+        date_value = timezone.make_aware(date_value)
         return date_value.date()
 
     def safe_get_datetime_iso(self, value):
@@ -79,10 +80,11 @@ class Command(BaseCommand):
         except ValueError as err:
             LOGGER.error("failed to determine date value - %s", err)
             return None
+        date_value = timezone.make_aware(date_value)
         return date_value
 
     def add_book_authors(self, book_obj, author_names):
-        now = datetime.now(tz=timezone.utc)
+        now = timezone.now()
         added = []
         for author_info in author_names:
             author_name = self.transform_name_db(author_info)
@@ -104,7 +106,7 @@ class Command(BaseCommand):
     def create_book_comment(self, book_obj, title, comment):
         """ create comment object for given book 
         """
-        now = datetime.now(tz=timezone.utc)
+        now = timezone.now()
         comment_obj = comments()
         comment_obj.book = book_obj
         comment_obj.bookTitle = title
@@ -144,7 +146,7 @@ class Command(BaseCommand):
         if book_title != row['title']:
             LOGGER.debug(f"book title normalized to {book_title!r}")
         book_info = f"{book_title!r}"
-        now = datetime.now(tz=timezone.utc)
+        now = timezone.now()
 
         # create books object
         with transaction.atomic():
@@ -301,7 +303,7 @@ class Command(BaseCommand):
             author_name = self.transform_name_db(author) 
             if author_name in new_authors:
                 new_authors.discard(author_name)  # already set
-            else:
+            elif author != "Author, Unknown":
                 LOGGER.info(f"new author {author_name!r} for book {book_info}")
                 diff.add('authors/missing')
         if new_authors:
@@ -386,7 +388,7 @@ class Command(BaseCommand):
             # do not sync notes - unless created in BookCatalogue app directly
             book_comments = [cmt.text for cmt in comments.objects.filter(book=book_obj)]
             if not notes in book_comments and not notes + NOTE_SUFFIX in book_comments:
-                now = datetime.now()
+                now = timezone.now()
                 comment_obj = comments()
                 comment_obj.bookTitle = book_obj.book_title
                 comment_obj.dateCreatedInt = int(now.timestamp() *1000)

@@ -260,7 +260,7 @@ def export_books_bookcatalogue(export_path):
             data['signed'] = '0'
             data['loaned_to'] = ''
             data['anthology_titles'] = ''
-            data['description'] = escape_text_csv(book_obj.new_description)
+            data['description'] = escape_text_csv(book_obj.description)
             data['genre'] = ''  # TODO set this to what?
             data['language'] = book_obj.language
             data['date_added'] = ''
