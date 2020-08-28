@@ -206,12 +206,12 @@ LOGGING = {
     'loggers': {
         'mybookdb': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': os.getenv('LOGLEVEL', 'INFO'),
             'propagate': False,
         },
         'django': {
             'handlers': ['console'],
-            'level': os.getenv('LOGLEVEL_DJANGO', 'DEBUG'),
+            'level': os.getenv('LOGLEVEL_DJANGO', 'WARNING'),
             'propagate': True,
         }
     }
