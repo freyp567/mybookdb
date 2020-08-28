@@ -19,8 +19,26 @@ class Command(BaseCommand):
         super().__init__(stdout, stderr, no_color)
 
     def determine_read_start_end(self, book_obj):
+        read_start = getattr(book_obj, 'read_start', None)
+        read_end = getattr(book_obj, 'read_end', None)
+        if read_start is not None:
+            # know already, no need to guess
+            age = read_start - book_obj.created
+            if age > timedelta(days=30):
+                diff = age.days
+                self.stdout.write(f"read_start and created differ for {book_obj}, days={diff}")
+                diff = diff  #TODO examine
+            if read_end is None:
+                read_end = read_end  # guess, fix?
+                self.stdout.write(f"have read_start but no read_end for {book_obj}, set it to {read_end}")
+            return read_start, read_end
+        if read_end is not None:
+            # know end reading, but not start
+            read_start = read_end -timedelta(days=28)
+            self.stdout.write(f"have read_end but no read_start for {book_obj}, set it to {read_start}")
+            return read_start, read_end            
+        
         read_start = None
-        read_end = None
         for comment_obj in comments.objects.filter(book=book_obj).order_by('dateCreated'):
             if not read_start:
                 read_start = comment_obj.dateCreated
@@ -41,9 +59,17 @@ class Command(BaseCommand):
             assert read_end >= read_start
         else:
             read_end = None
-        if read_start and read_start == read_end:
-            # missing info on read_end, assume 28 days
-            read_end = read_start + timedelta(days=28)
+        if read_start:
+            self.stdout.write(f"guess read_start for {book_obj}: {read_start}")            
+            if read_start and read_start == read_end:
+                # missing info on read_end, assume 28 days
+                read_end = read_start + timedelta(days=28)
+                self.stdout.write(f"compute read_end for {book_obj}: {read_end}")
+            else:
+                self.stdout.write(f"guess read_end for {book_obj}: {read_end}")
+        else:
+            self.stdout.write(f"unable to guess read_start for {book_obj}")            
+        
         return read_start, read_end
         
         
