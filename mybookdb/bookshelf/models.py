@@ -99,7 +99,7 @@ class books(models.Model):
     read_start = models.DateField(null=True, blank=True)
     read_end = models.DateField(null=True, blank=True)
     sync_mybookdroid = models.DateField(null=True)
-    userRating = models.IntegerField(null = True)
+    userRating = models.DecimalField(decimal_places=1, max_digits=2, null = True)
     
     authors = models.ManyToManyField(authors)
     

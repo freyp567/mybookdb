@@ -244,7 +244,7 @@ class BookUpdateForm(forms.ModelForm):
     
     created = forms.DateField(disabled=True)
     updated = forms.DateField(disabled=True)
-    userRating = forms.IntegerField(max_value=5, min_value=1)
+    userRating = forms.DecimalField(max_value=5, min_value=1)
 
     read_start = forms.DateField(disabled=False)
     read_end = forms.DateField(disabled=False)

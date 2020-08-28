@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 import csv
 from datetime import datetime
+from decimal import Decimal
 import uuid
 
 from pyisbn import Isbn13
@@ -118,8 +119,19 @@ class Command(BaseCommand):
         states_obj.book = book_obj
         if have_read == '1':
             states_obj.haveRead = True
+            """
+            TODO clear also:
+            states_obj.readingNow = False
+            states_obj.toRead = False
+            states_obj.toBuy = False            
+            """
         else:
             states_obj.readingNow = True
+            """
+            TODO clear also:
+            states_obj.toRead = False
+            states_obj.toBuy = False            
+            """
         states_obj.save()
         return states_obj
 
@@ -143,11 +155,15 @@ class Command(BaseCommand):
             book_obj.new_description = row['description'] or None
             book_obj.publisher =row['publisher'] or None
             book_obj.publicationDate = self.safe_get_date_iso(row['date_published'])
-            book_obj.created = now
+            book_obj.created = self.safe_get_date_iso(row['date_added']) or now
             book_obj.updated = now
+            if row['read_start']:
+                book_obj.read_start = self.safe_get_date_iso(row['read_start'])
+            if row['read_end']:
+                book_obj.read_start = self.safe_get_date_iso(row['read_end'])
             
-            if row['rating'] not in (None, '', '0'):
-                book_obj.userRating = int(row['rating'])
+            if row['rating'] and Decimal(row['rating']) != Decimal(0):
+                book_obj.userRating = Decimal(row['rating'])
 
             # ignored: 'bookshelf_id', 'bookshelf', 'location', 'anthology', 'signed', 'loaned_to', 'anthology_titles'
             assert row['anthology'] == '0'  # what else, from bookcatalogue sync with goodreads ...?
@@ -165,8 +181,6 @@ class Command(BaseCommand):
             """
             FUTURE consider updating book_obj (and related) for the following properties:
             row['pages']  # vs length from onleihe (pages vs minutes)
-            row['read_start']  # for books added through bookcatalogue - FUTURE
-            row['read_end']
             row['format']  # book, ebook or eaudio?
             row['genre']
             row['goodreads_book_id']
@@ -244,7 +258,7 @@ class Command(BaseCommand):
     def transform_name_db(self, parts):
         """ transform name from (name), (forname) to (forname) (name) format"""
         if isinstance(parts, str):
-            parts = [a.strip() for a in parts.split(',')]
+            parts = [a.strip() for a in parts.split(',') if a.strip()]
         if len(parts) == 2:
             return "%s %s" % (parts[1], parts[0])
         else:
@@ -260,7 +274,7 @@ class Command(BaseCommand):
         book_info = f"{book_title!r} id={book_obj.id}"
         
         updated = []
-        diff = set()
+        diff = self.differs.get(book_info, set())
         if book_obj.states.obsolete or book_obj.states.private:
             LOGGER.warning(f"book should not be in bookcatalogue, check state: {book_info}")
             self._conflicts_books.append(f"{book_info} -- state {book_obj.states}")
@@ -279,23 +293,19 @@ class Command(BaseCommand):
                 diff.add('title')
             
         if self.check_differs('isbn', row['isbn'], book_obj.isbn13, book_info):
-            diff.add('title')
+            # TODO lookup ISBN, check plausibility
+            diff.add('isbn')
         
-        all_authors = set([a.name for a in book_obj.authors.all()])
+        new_authors = set([a.name for a in book_obj.authors.all()])
         for author in row['author_details'].split('|'):
             author_name = self.transform_name_db(author) 
-            if author_name in all_authors:
-                all_authors.discard(author_name)
-            #elif author.replace(',', '') in all_authors:
-            #    author = author.replace(',', '')
-            #    LOGGER.info(f"mangled author names: {author!r} vs {author_name!r} for book {book_info}")
-            #    all_authors.discard(author)
-            #    diff.add('authors/mangled')
+            if author_name in new_authors:
+                new_authors.discard(author_name)  # already set
             else:
                 LOGGER.info(f"new author {author_name!r} for book {book_info}")
                 diff.add('authors/missing')
-        if all_authors:
-            for author_name in all_authors:
+        if new_authors:
+            for author_name in new_authors:
                 found = authors.objects.filter(name=self.transform_name_db(author_name))
                 if not found:
                     LOGGER.warning(f"unknown author in mybookdb: {author_name!r}")
@@ -325,14 +335,20 @@ class Command(BaseCommand):
                     else:
                         diff.add('series_details')
         
-        if self.check_differs('read', row["read"], book_obj.states.haveRead and '1', book_info):
+        if self.check_differs('read', row["read"], book_obj.states.haveRead and '1' or '0', book_info):
             if row['read'] == '1':
                 # marked read in bookcatalogue, so update in mybookdb
-                LOGGER.info(f"update book state read={row['read']} => .haveRead")
+                LOGGER.info(f"update book {book_info}, state read={row['read']} => .haveRead")
+                book_obj.states.haveRead = True
+                book_obj.states.readingNow = False
+                book_obj.states.toRead = False
+                book_obj.toBuy = False
+                book_obj.states.save()
+                updated.append('read')
             else:
                 # do not attempt to fix that, report only
-                LOGGER.info(f"mismatch book state read={row['read']} != .haveRead={book_obj.state.haveRead!r}")
-            diff.add('read')
+                LOGGER.warning(f"mismatch book state read={row['read']} != .haveRead={book_obj.states.haveRead!r}")
+                diff.add('read')
 
         if self.check_differs('language', row['language'], book_obj.language, book_info):
             if book_obj.language is None:
@@ -347,15 +363,23 @@ class Command(BaseCommand):
             
         date_published = self.safe_get_date_iso(row['date_published'])
         if date_published and self.check_differs('date_published', date_published, book_obj.publicationDate, book_info):
-            if not date_published:
-                diff.add('date_published')
+            if book_obj.publicationDate:
+                # happens if book description for other format / different publisher
+                # use date from BookCatalogue to reduce logging for future syncs
+                book_obj.publicationDate = date_published
+                updated.append('date_published')
             else:
                 book_obj.publicationDate = date_published  # always update
                 updated.append('date_published')                
 
-        userRating = book_obj.userRating and str(book_obj.userRating) or '0'
-        if self.check_differs('rating', row['rating'], userRating, book_info):
-            diff.add('rating')
+        userRating = book_obj.userRating or Decimal('0.0')
+        userRatingBk = Decimal(row['rating'] or '0.0')
+        if self.check_differs('rating', userRatingBk, userRating, book_info):
+            if userRating == Decimal(0):  # not yet rated, take what Bk proposes
+                 book_obj.userRating = userRatingBk
+                 updated.append('userRating')
+            else:
+                diff.add('rating')
             
         notes = row['notes']
         if notes:
@@ -369,6 +393,7 @@ class Command(BaseCommand):
                 comment_obj.dateCreated = now
                 comment_obj.text = notes + NOTE_SUFFIX
                 comment_obj.book = book_obj
+                LOGGER.info(f"update {book_info} add note from Bk: {notes!r}")
                 comment_obj.save()
                 updated.append('notes') 
 
@@ -384,17 +409,25 @@ class Command(BaseCommand):
 
         book_description = self.normalize_description(book_obj.description)
         if not row['description']:
-            LOGGER.debug(f"no description for {book_info} in bookcatalogue")
-        elif row['description'] != book_description:                
-            LOGGER.info(f"difference in description for {book_info}:\ndb={book_description!r}\nbk={row['description']!r}\n.")
-            diff.add('description')
+            LOGGER.info(f"no description for {book_info} in bookcatalogue")
+            # FUTURE: how to handle / fix this?
+        elif row['description'] != book_description:
+            book_obj.orig_description = row['description']
+            LOGGER.warning(f"difference in description for {book_info} - see orig_description")
+            updated.append('orig_description')
+            diff.add('description')  # flag as different - backsync DB to Bk will overwrite
             
         assert row['anthology'] == '0'  # what else, from bookcatalogue sync with goodreads ...?
         
         read_start = self.safe_get_date_iso(row['read_start'])
         if read_start and self.check_differs('read_start', read_start, book_obj.read_start, book_info):
             if book_obj.read_start:
-                diff.add('read_start')
+                if read_start < book_obj.read_start:
+                    # update if date in mybookdb before 
+                    updated.append('read_start')
+                    book_obj.read_start = read_start
+                else:
+                    diff.add('read_start')
             else:
                 book_obj.read_start = read_start  # update if not yet set
                 updated.append('read_start')
@@ -402,9 +435,14 @@ class Command(BaseCommand):
         read_end = self.safe_get_date_iso(row['read_end'])
         if read_end and self.check_differs('read_end', read_end, book_obj.read_end, book_info):
             if book_obj.read_end:
-                diff.add('read_end')
+                if read_end < book_obj.read_end:
+                    # update if date in mybookdb before 
+                    book_obj.read_end = read_end
+                    updated.append('read_end')
+                else:
+                    diff.add('read_end')
             else:
-                book_obj.read_end = read_start  # update if not yet set
+                book_obj.read_end = read_end  # update if not yet set
                 updated.append('read_end')
         
         # 
@@ -418,7 +456,7 @@ class Command(BaseCommand):
         
         if updated:
             book_obj.save()
-            self.updated_books.append(book_info)
+            self.updated_books.add(book_info)
         if diff:
             self.differs[book_info] = diff
         return
@@ -448,14 +486,26 @@ class Command(BaseCommand):
             if not found:
                 found = books.objects.filter(unified_title=book_title)
             if found:
-                LOGGER.error(f'found book with title {book_title!r}')
-                assert len(found) == 1, f"multiple books for {book_title!r}"
-                book_obj = found[0]
-                self._conflicts_books.append(f"{book_obj.book_title!r} id={book_obj.id} -- not matching book_uuid={uuid.UUID(book_uuid)}")
-                # requires manual fixup - best we can do is change book title by prefixing with '[dup]'
-                self.create_book_comment(book_obj, book_obj.title, f"auto-renamed by sync_from_bookcatalogue, duplicate")                
-                book_obj.unified_title = f"[dup] {book_obj.book_title}"
-                return
+                books_found = [ b for b in found if not b.states.obsolete ]
+                if len(books_found) != 1:
+                    ids_found = ','.join([ str(b.id) for b in found ])
+                    LOGGER.error(f"multiple books for {book_title!r} - {ids_found}")
+                    # dont know how to handle this # FUTURE
+                    return
+                
+                book_obj = books_found[0]
+                # assume happend because book added both to BookCatalogue and MyBookDB - so fix to match
+                book_info = f"{book_title!r} id={book_obj.id}"
+                if book_obj.bookCatalogueId is not None:
+                    LOGGER.warning(f'found book with title {book_title!r} but different uuid - autocorrected')
+                    self.differs[book_info] = set(('uuid',))
+                    self.updated_books.add(book_info)                    
+                    #self._conflicts_books.append(f"{book_obj.book_title!r} id={book_obj.id} -- not matching book_uuid={uuid.UUID(book_uuid)}")
+                else:
+                    LOGGER.info(f"linked book from BkCatalog with {book_info} - assigning uuid {book_uuid}")
+                book_obj.bookCatalogueId = book_uuid
+                book_obj.save()
+                found = books_found
             
         if not found:
             self.handle_new(row)
@@ -475,7 +525,7 @@ class Command(BaseCommand):
         
         rows = updated = new = differs = 0
         self.new_books = []
-        self.updated_books = []
+        self.updated_books = set()
         self.differing = {}
         with csv_path.open('r', encoding='utf-8') as csv_f:
             reader = csv.DictReader(csv_f)
@@ -485,11 +535,11 @@ class Command(BaseCommand):
                 
         LOGGER.info(f"processed totally {rows} rows from {csv_path.name}")
         if self.new_books:
-            LOGGER.info(f"added %s books from {csv_path.name}:\n  + %s\n" % 
+            LOGGER.info(f"added books from {csv_path.name} (%s):\n  + %s\n" % 
                         (len(self.new_books), "\n  + ".join(self.new_books)))   
         if self.updated_books:
-            LOGGER.info(f"updated %s books from {csv_path.name}:\n  + %s\n" % 
-                        (len(self.updated_books), "\n  + ".join(self.new_books)))        
+            LOGGER.info(f"updated books from {csv_path.name} (%s):\n  + %s\n" % 
+                        (len(self.updated_books), "\n  + ".join(self.updated_books)))        
         if self.differs:
             diff_info = []
             for book_title in self.differs:
