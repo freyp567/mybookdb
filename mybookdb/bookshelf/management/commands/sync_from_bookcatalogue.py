@@ -303,7 +303,10 @@ class Command(BaseCommand):
             author_name = self.transform_name_db(author) 
             if author_name in new_authors:
                 new_authors.discard(author_name)  # already set
-            elif author != "Author, Unknown":
+            elif author == "Author, Unknown":
+                # get rid of / discard
+                LOGGER.warning(f"unknown author assigned to {book_obj}")
+            else:
                 LOGGER.info(f"new author {author_name!r} for book {book_info}")
                 diff.add('authors/missing')
         if new_authors:
