@@ -2,6 +2,8 @@ staticfiles/
 export/
 books.db*
 db.sqlite3*
+tmp/
+log/
 
 wingdbstub.py
 .vscode/

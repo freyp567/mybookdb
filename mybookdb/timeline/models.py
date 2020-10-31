@@ -8,22 +8,22 @@ from bookshelf.models import books
 from django.utils.translation import gettext as _
 
 
+class DatePrecision(models.TextChoices):
+    EXACT_YEAR = 'YR', _('Jahr')
+    EXACT_DATE = 'EX', _('Tag od Monat')
+    APPROX_YEAR = 'YA', _('ca Jahr')
+    APPROX_DECADE = 'DA', _('ca Jahrzehnt')
+    APPROX_CENTURY = 'CA', _('ca Jahrhundert')
+    APPROX_GUESSED = 'G?', _('vermutlich')
+    NEAR_FUTURE = 'FN', _('nahe Zukunft')
+    FAR_FUTURE = 'FF', _('ferne Zukunft')
+    FUTURE = 'FU', _('Zukunft')
+    NOTDETERMINED = 'ND', _('unbestimmt') # transition
+    UNKNOWN = 'UN', _('unbekannt od nicht datierbar')
+
+
 class timelineevent(models.Model):
-    """ timeline event with optional location and comment """
-    
-    class DatePrecision(models.TextChoices):
-        EXACT_YEAR = 'YR', _('Jahr')
-        EXACT_DATE = 'EX', _('Tag od Monat')
-        APPROX_YEAR = 'YA', _('ca Jahr')
-        APPROX_DECADE = 'DA', _('ca Jahrzehnt')
-        APPROX_CENTURY = 'CA', _('ca Jahrhundert')
-        APPROX_GUESSED = 'G?', _('vermutlich')
-        NEAR_FUTURE = 'FN', _('nahe Zukunft')
-        FAR_FUTURE = 'FF', _('ferne Zukunft')
-        FUTURE = 'FU', _('Zukunft')
-        NOTDETERMINED = 'ND', _('unbestimmt') # transition
-        UNKNOWN = 'UN', _('unbekannt od nicht datierbar')
-        
+    """ timeline event with optional location and comment """        
         
     book = models.ForeignKey(books, on_delete=models.CASCADE)
     date = PartialDateField()
@@ -37,9 +37,16 @@ class timelineevent(models.Model):
     location = models.TextField(null=True)
     comment = models.TextField(null=True)
     
+    def __str__(self):
+        if self.precision == 'unbestimmt': # DatePrecision.NOTDETERMINED.:
+            value = '%s' % (self.date,)
+        else:
+            value = '%s (%s)' % (self.date, self.date_precision)
+        return value
+    
     @property
     def date_precision(self):
         #value = self.precision
-        #value = dict(timelineevent.DatePrecision.choices)[self.precision]
+        #value = dict(DatePrecision.choices)[self.precision]
         value = self.get_precision_display()
         return value

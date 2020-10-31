@@ -30,14 +30,13 @@ from django_tables2.views import SingleTableMixin
 
 from bookshelf.models import books, authors, comments, states
 from bookshelf.forms import BookCreateForm, BookUpdateForm, StateUpdateForm, BookInfoForm, \
-    AuthorCreateForm, AuthorUpdateForm
-from bookshelf.bookstable import BooksTable, BooksTableFilter, MinimalBooksTable
+    AuthorCreateForm, AuthorUpdateForm, BOOK_LANGUAGE, get_lang_code, get_lang_text
+from bookshelf.bookstable import BooksTable, BooksTableFilter
 from bookshelf.authorstable import AuthorsTable, AuthorsTableFilter  # , MinimalAuthorsTable
 from bookshelf import metrics
 from timeline.models import timelineevent
 
 LOGGER = logging.getLogger(name='mybookdb.bookshelf.views')
-
 
 class HttpResponseTemporaryRedirect(HttpResponse):
     status_code = 307
@@ -88,6 +87,16 @@ class BookListGenericView(generic.ListView):
     uses template books_list.html
     
     used for Book List, /bookshelf/books/v1/?sort=
+    
+    /bookshelf/books/v1/?sort=
+    title 
+    created
+    updated
+    have_read
+    wishlist
+    onleihe_unkown     onleihe?
+    missing_timeline   no timeline event
+    
     """
     model = books
     paginate_by = 25
@@ -114,6 +123,16 @@ class BookListGenericView(generic.ListView):
                 elif ordering == 'reading':
                     ordering = [ '-updated' ]
                     qs = qs.filter(states__readingNow=True)
+                elif ordering == 'have_read':
+                    #TODO verify handling
+                    LOGGER.info("book list filtered, ordering=%s", ordering)
+                    ordering = [ '-read_start' ]  # read_end or read_start  # AND not null
+                    qs = qs.filter(states__haveRead=True, read_start__isnull=False)
+                elif ordering == 'have_read_unkn':
+                    #TODO verify handling
+                    LOGGER.info("book list filtered, ordering=%s", ordering)
+                    ordering = [ 'updated', ]  # read_end or read_start  # AND not null
+                    qs = qs.filter(states__haveRead=True, read_start__isnull=True)
                 else:
                     ordering = (ordering,)
             qs = qs.order_by(*ordering)
@@ -132,8 +151,10 @@ class BookListGenericView(generic.ListView):
             ordering = [ '-created' ]
         elif sort == 'updated':
             ordering = [ '-updated' ]
-        elif sort in ('reading', 'wishlist', 'onleihe_unkown', 'missing_timeline'):
+        elif sort in ('reading', 'wishlist', 'onleihe_unkown', 'missing_timeline', 'have_read', 'have_read_unkn'):
             ordering = sort  # mapped by get_queryset
+        elif not sort:
+            ordering = [] # unordered            
         else:
             LOGGER.info("book list unsorted, sort=%s", sort)
             ordering = [] # use default / unordered
@@ -280,15 +301,25 @@ def search_book_filtered(request, sort_field, filter=None):
 class BookDetailView(generic.DetailView):
     """
     detail view for a book.
-    template: books_detail.html
+    template: books_detail.html / form: 
     """
     model = books
-    if_paginated = False # KeyError else
-    # form see book_details.html
+    is_paginated = 0
     
     def get_context_data(self, **kwargs):
         context = super(BookDetailView, self).get_context_data(**kwargs)
         context['is_paginated'] = False  # avoid KeyError
+        context['onleihe_button_status'] = 'btn-secondary'
+        if hasattr(self.object, 'onleihebooks'):
+            status = self.object.onleihebooks.status
+            if status == 'notfound':
+                context['onleihe_button_status'] = 'btn-danger'                
+            elif status == 'confirmed':
+                context['onleihe_button_status'] = 'btn-success'
+            else:
+                # 'lookupfailed', ...
+                context['onleihe_button_status'] = 'btn-warning'
+            
         book_comments = self.object.comments_set.all()
         book_comments = book_comments.order_by('-dateCreatedInt')
         context['books_comments'] = book_comments
@@ -299,6 +330,8 @@ class BookDetailView(generic.DetailView):
         except Exception:
             event_count = "??"
         context['event_count'] = event_count
+        #context['languages'] = BOOK_LANGUAGE  
+        context['language_text'] =  get_lang_text(self.object.language)
         return context 
     
 class MaintainBooks(PermissionRequiredMixin, generic.View):

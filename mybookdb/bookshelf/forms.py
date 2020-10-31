@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 from datetime import datetime
 from pyisbn import Isbn13, Isbn10, IsbnError
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django import forms
@@ -17,6 +19,29 @@ from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Field, D
 from crispy_forms.bootstrap import FormActions, TabHolder, Tab
 
 
+BOOK_LANGUAGE = [
+    ('--', _('unknown')),
+    ('de', _('German')),
+    ('en', _('English')),
+    ('fr', _('French')),
+    ('xx', _('other language')),
+]
+
+def get_lang_code(lang):
+    if not lang:
+        return '--'
+    elif lang not in ('de', 'fr', 'en'):
+        return 'xx'
+    else:
+        return lang
+
+def get_lang_text(lang):
+    for item in BOOK_LANGUAGE:
+        if item[0] == lang:
+            return item[1]
+    return _('unknown')
+
+
 
 class BookCreateForm(forms.ModelForm):
     """
@@ -27,8 +52,8 @@ class BookCreateForm(forms.ModelForm):
     book_serie = forms.CharField(strip=True)
     orig_description = forms.CharField(disabled=True, label="Original description")
     new_description = forms.CharField()
-    isbn10 = forms.CharField(max_length=10, min_length=10)
     isbn13 = forms.CharField(max_length=13, min_length=13)
+    language = forms.ChoiceField(choices=BOOK_LANGUAGE)
     
     authors = forms.ModelMultipleChoiceField(
         queryset=authors.objects.none(), 
@@ -55,8 +80,8 @@ class BookCreateForm(forms.ModelForm):
             'created',
             'updated',
             'authors',
-            'isbn10',
             'isbn13', 
+            'language',
             'subject',
             'publisher',
             'publicationDate',
@@ -83,7 +108,7 @@ class BookCreateForm(forms.ModelForm):
                 ),
                 Div(
                     Div(Field('isbn13'), css_class='col-md-6',),
-                    Div(Field('isbn10'), css_class='col-md-6',),
+                    Div(Field('language'), css_class='col-md-6',),
                     css_class='row',
                 ),
             ),
@@ -109,6 +134,7 @@ class BookCreateForm(forms.ModelForm):
         self.fields['new_description'].widget = forms.Textarea(attrs={'cols': 80, 'rows': 7})
         self.fields['new_description'].label = False
         self.fields['orig_description'].label = False
+        self.fields['language'].initial = settings.DEFAULT_LANGUAGE
         
         book_authors = []
         self.fields['authors'].widget = AuthorsTagWidget(
@@ -128,22 +154,14 @@ class BookCreateForm(forms.ModelForm):
         self.fields['publicationDate'].widget = widgets.DateInput()
         
         # https://stackoverflow.com/questions/46094811/change-django-required-form-field-to-false
-        for field_name in ('new_description','isbn10','isbn13','subject','publisher', 'publicationDate',
+        for field_name in ('new_description','isbn13','subject','publisher', 'publicationDate',
                            'created', 'updated', 'unified_title', 'book_serie'):
             self.fields[field_name].required = False
 
 
     def clean(self):
-        isbn10_value = self.cleaned_data.get('isbn10')
         isbn13_value = self.cleaned_data.get('isbn13')
-        isbn10 = isbn10_value and Isbn10(isbn10_value)
-        isbn13 = isbn13_value and Isbn13(isbn13_value)
-        if isbn13:
-            if isbn10 is None:
-                self.cleaned_data['isbn10'] = isbn13.convert()
-            elif isbn10 != isbn13.convert():
-                self.add_error('isbn10', 'does not match value for ISBN13')
-        
+        isbn13 = isbn13_value and Isbn13(isbn13_value)        
         return self.cleaned_data
     
     def clean_title(self):
@@ -164,20 +182,6 @@ class BookCreateForm(forms.ModelForm):
             self.add_error('isbn13', 'ISBN13 not valid')
         return data
         
-    def clean_isbn10(self):
-        data = self.cleaned_data['isbn10']
-        if not data:
-            return None
-        try:
-            isbn10 = Isbn10(data)
-        except IsbnError as err:
-            raise ValidationError("not a valid ISBN10 - %s" % err)
-        if not isbn10.validate():
-            self.add_error('isbn10', 'ISBN10 not valid')
-        #if data and len(data) < 10:
-        #    raise ValidationError('Invalid value for ISBN10, expect 10 digits')
-        return data
-    
     def clean_updated(self):
         data = self.cleaned_data['updated']
         if data is None:
@@ -202,6 +206,13 @@ class BookCreateForm(forms.ModelForm):
         #    # numeric value e.g. '2018', but expect date 
         #   data += '-01-01'
         return data
+
+    def clean_language(self):
+        lang = self.cleaned_data['language']
+        if lang is '--':
+            return None
+        else:
+            return lang
     
     def orig_description(self):
         data = self.cleaned_data['orig_description']
@@ -219,8 +230,9 @@ class BookUpdateForm(forms.ModelForm):
     book_serie = forms.CharField(max_length=255)
     orig_description = forms.CharField(disabled=True, label="Original description")
     new_description = forms.CharField()
-    isbn10 = forms.CharField(max_length=10, min_length=10)
     isbn13 = forms.CharField(max_length=13, min_length=13)
+    
+    language = forms.ChoiceField(choices=BOOK_LANGUAGE)
     
     authors = forms.ModelMultipleChoiceField(
         queryset=authors.objects.none(), 
@@ -232,7 +244,10 @@ class BookUpdateForm(forms.ModelForm):
     
     created = forms.DateField(disabled=True)
     updated = forms.DateField(disabled=True)
-    userRating = forms.IntegerField(max_value=5, min_value=1)
+    userRating = forms.DecimalField(max_value=5, min_value=1)
+
+    read_start = forms.DateField(disabled=False)
+    read_end = forms.DateField(disabled=False)
     
     class Meta:
         model = books
@@ -244,9 +259,11 @@ class BookUpdateForm(forms.ModelForm):
             'new_description', 
             'created',
             'updated',
+            'read_start',
+            'read_end',
             'authors',
-            'isbn10',
             'isbn13', 
+            'language',
             'subject',
             'publisher',
             'publicationDate',
@@ -288,8 +305,13 @@ class BookUpdateForm(forms.ModelForm):
                     css_class='row',
                 ),
                 Div(
+                    Div(Field('read_start'), css_class='col-md-4',),
+                    Div(Field('read_end'), css_class='col-md-4',),
+                    css_class='row',
+                ),
+                Div(
                     Div(Field('isbn13'), css_class='col-md-6',),
-                    Div(Field('isbn10'), css_class='col-md-6',),
+                    Div(Field('language'), css_class='col-md-6',),
                     css_class='row',
                 ),
             ),
@@ -339,21 +361,20 @@ class BookUpdateForm(forms.ModelForm):
         self.fields['authors'].queryset = authors.objects.all()
         #self.fields['authors'].required = True
         
-        #self.fields['publicationDate'].widget = widgets.SelectDateWidget()  # years=years_tuple
         self.fields['publicationDate'].widget = widgets.DateInput()  # format=('%Y-%m-%d',)
+        self.fields['read_start'].widget = widgets.DateInput()
+        self.fields['read_end'].widget = widgets.DateInput()
         
         # https://stackoverflow.com/questions/46094811/change-django-required-form-field-to-false
-        for field_name in ('new_description','isbn10','isbn13','subject','publisher', 'publicationDate',
-                           'created', 'updated', 'unified_title', 'book_serie', 'userRating'):
+        for field_name in ('new_description','isbn13','subject','publisher', 'publicationDate',
+                           'created', 'updated', 'read_start', 'read_end', 
+                           'unified_title', 'book_serie', 'userRating'):
             self.fields[field_name].required = False
 
-    
-    def clean_isbn10(self):
-        data = self.cleaned_data['isbn10']
-        if data and len(data) < 10:
-            raise ValidationError('Invalid value for ISBN10, expect 10 digits')
-        return data
-    
+
+    def clean(self):
+        return self.cleaned_data
+        
     def clean_updated(self):
         data = self.cleaned_data['updated']
         data = datetime.now(tz=timezone.utc)
@@ -363,6 +384,13 @@ class BookUpdateForm(forms.ModelForm):
         data = self.cleaned_data['new_description']
         return data
     
+    def clean_language(self):
+        lang = self.cleaned_data['language']
+        if lang is '--':
+            return None
+        else:
+            return lang
+        
     def orig_description(self):
         data = self.cleaned_data['orig_description']
         return data or ''
@@ -446,7 +474,7 @@ class AuthorCreateForm(forms.ModelForm):
         if data is None:
             data = datetime.now(tz=timezone.utc)
         return data
-        
+    
         
 class AuthorUpdateForm(AuthorCreateForm):
 
@@ -527,10 +555,17 @@ class StateUpdateForm(forms.ModelForm):
 
 
 class BookExportForm(forms.Form):
+    
+    EXPORTTYPES = [
+        ('serialized', 'Django-Serialisiert'),
+        ('bookcatalog-csv', 'CSV für Book Catalogue'),        
+    ]
+    export_type = forms.ChoiceField(choices=EXPORTTYPES, )
     export_path = forms.CharField()
     
     def __init__(self, *args, **kwargs):
         super(BookExportForm, self).__init__(*args, **kwargs)
-        
-        self.fields['export_path'].initial = 'books_%s.zip' % datetime.now().strftime("%Y-%m-%d")
+
+        self.fields['export_type'].initial = 'serialized'
+        self.fields['export_path'].initial = 'books_%s' % datetime.now().strftime("%Y-%m-%d")
 

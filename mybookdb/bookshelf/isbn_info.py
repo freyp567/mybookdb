@@ -46,7 +46,7 @@ SERVICEURL_WIKI = 'https://de.wikipedia.org/api/rest_v1/data/citation/mediawiki/
 SERVICEURL_GOOBOOKS = 'https://www.googleapis.com/books/v1/volumes?q=isbn:{isbn}&maxResults=3'
 SERVICEURL_LIBTHING = 'http://www.librarything.com/api/thingISBN/{isbn}'
 
-SERVICE_UA = headers = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"
+SERVICEURL_OPENLIBRRAY = "https://openlibrary.org/api/books"
 
 
 class BookISBNinfoView(generic.DetailView):
@@ -61,10 +61,65 @@ class BookISBNinfoView(generic.DetailView):
             metadata = isbnlib.meta(isbn, service=service)
         except Exception as err:
             #DataNotFoundAtServiceError
-            LOGGER.debug("failed to lookup book metadata for isbn=%s service=%s: %r", isbn, service, err)
+            #socket.timeout
+            LOGGER.error("failed to lookup book metadata for isbn=%s service=%s: %r", isbn, service, err)
             metadata = {}
         return metadata
         
+    def get_openlibrary_info(self, isbn, context):
+        requests_s = requests.Session()
+        url = SERVICEURL_OPENLIBRRAY +"?bibkeys=ISBN:{isbn}&format=json"
+        url = url.format(isbn=isbn)
+        response = requests_s.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            if data:
+                LOGGER.debug("openlibrary data for isbn=%s: %r", isbn, data)
+                book_data = data[f'ISBN:{isbn}']
+                # 'bib_key', 'preview', 'thumbnail_url', 'preview_url', 'info_url'                
+                # TODO information using 'info_url'
+            else:
+                LOGGER.debug("openlibrary returned no data for isbn=%s", isbn)
+        else:
+            LOGGER.error("failed to lookup in openlibrary, status=%s", response.status_code)
+        return
+
+    def get_mediawiki_info(self, isbn, context):
+        requests_s = requests.Session()
+        response = requests_s.get(SERVICEURL_WIKI.format(isbn=isbn))
+        data = response.json()
+        if len(data) > 0:
+            context['wikiinfo'] = data[0]
+            if len(data) > 1:
+                context['wikiinfo']['info'] = 'multiple items from de.wikipedia.org (%s)' % len(data)
+        else:
+            context['wikiinfo'] = {'info': 'no info from de.wikipedia.org/mediawiki'}
+        return
+        
+    def get_googlebooks_info(self, isbn, context):
+        requests_s = requests.Session()
+        response = requests_s.get(SERVICEURL_GOOBOOKS.format(isbn=isbn))
+        data = response.json()
+        assert data['totalItems'] <= 1, f"more than one item for {{isbn}}"
+        if data and data.get('items'):
+            goob_id = data['items'][0]['id']
+            context['goob_url'] = 'https://books.google.de/books?id=%s' % goob_id
+            volumeinfo = data['items'][0].get('volumeInfo', {})
+            context['goob_title'] = '%s' % volumeinfo['title']
+            if 'subtitle' in volumeinfo:
+                context['goob_title'] += ' (%s)' % volumeinfo['subtitle']
+            context['goob_desc'] = volumeinfo.get('description', '---')
+            context['goob_vol'] = volumeinfo
+            accessinfo = data['items'][0].get('accessInfo', {})
+            context['reader_url'] = accessinfo.get('webReaderLink')
+        else:
+            LOGGER.warning("no items found in googlebooks for isbn=%s", isbn)
+            context['goob_url'] = ''
+            context['goob_title'] = '(not found)'
+            context['goob_desc'] = '---'
+            context['goob_vol'] = {}
+            context['reader_url'] = ''
+        return
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -82,37 +137,12 @@ class BookISBNinfoView(generic.DetailView):
 
         # 'ISBN-13', 'Title', 'Authors', 'Publisher', 'Year', 'Language'
         # determine link to google books ... and more
-        #headers = {"User-Agent": SERVICE_UA}        
-        response = requests_s.get(SERVICEURL_GOOBOOKS.format(isbn=isbn))
-        data = response.json()
-        assert data['totalItems'] <= 1, f"more than one item for {{isbn}}"
-        if data and data.get('items'):
-            goob_id = data['items'][0]['id']
-            context['goob_url'] = 'https://books.google.de/books?id=%s' % goob_id
-            volumeinfo = data['items'][0].get('volumeInfo', {})
-            context['goob_title'] = '%s' % volumeinfo['title']
-            if 'subtitle' in volumeinfo:
-                context['goob_title'] += ' (%s)' % volumeinfo['subtitle']
-            context['goob_desc'] = volumeinfo.get('description', '---')
-            context['goob_vol'] = volumeinfo
-            accessinfo = data['items'][0].get('accessInfo', {})
-            context['reader_url'] = accessinfo.get('webReaderLink')
-        else:
-            context['goob_url'] = ''
-            context['goob_title'] = '(not found)'
-            context['goob_desc'] = '---'
-            context['goob_vol'] = {}
-            context['reader_url'] = ''
-            
         
-        response = requests_s.get(SERVICEURL_WIKI.format(isbn=isbn))
-        data = response.json()
-        if len(data) > 0:
-            context['wikiinfo'] = data[0]
-            if len(data) > 1:
-                context['wikiinfo']['info'] = 'multiple items from de.wikipedia.org (%s)' % len(data)
-        else:
-            context['wikiinfo'] = {'info': 'no info from de.wikipedia.org'}
+        # update context to render page with from various services
+        self.get_googlebooks_info(isbn, context)
+        self.get_mediawiki_info(isbn, context)
+        self.get_openlibrary_info(isbn, context)
+        
         context['is_paginated'] = False
         return context
     

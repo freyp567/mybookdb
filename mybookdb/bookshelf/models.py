@@ -71,12 +71,13 @@ class books(models.Model):
     to achieve sqllite binary compatible
     """
 
-    isbn10 = models.TextField(null=True, max_length=10)
+    isbn10 = models.TextField(null=True, max_length=10)  #TODO cleanup, obsolete
     isbn13 = models.TextField(null=True, max_length=13)
     title = models.TextField(blank=False, max_length=255)
     unified_title = models.TextField(null=True)
       # unified title (may different from title synced with mybookdroid that is 'title')
     book_serie = models.TextField(null=True, max_length=255)
+    language = models.TextField(null=True, max_length="2")
     binding = models.CharField(max_length=80, null=True)
     orig_description = models.TextField(null=True, blank=True)  
       # original descriptin from MyBookDroid app
@@ -95,8 +96,10 @@ class books(models.Model):
     subject = models.TextField(null=True, blank=True)
     created = models.DateField()
     updated = models.DateField(null=True)
+    read_start = models.DateField(null=True, blank=True)
+    read_end = models.DateField(null=True, blank=True)
     sync_mybookdroid = models.DateField(null=True)
-    userRating = models.IntegerField(null = True)
+    userRating = models.DecimalField(decimal_places=1, max_digits=2, null = True)
     
     authors = models.ManyToManyField(authors)
     
@@ -105,6 +108,7 @@ class books(models.Model):
     thumbnailSmall = models.TextField(blank=True, null=True)
     thumbnailLarge = models.TextField(blank=True, null=True)
     amazonBookId = models.IntegerField(null=True)
+    bookCatalogueId = models.UUIDField(null=True)
     
     @property
     def book_title(self):
@@ -140,9 +144,9 @@ class books(models.Model):
             return ''
         status = self.onleihebooks.status
         if status == 'confirmed':
-            return 'onleihe'
+            return 'in Onleihe'
         if status == 'notfound':
-            return 'NOT onleihe'
+            return 'NOT in onleihe'
         return 'onleihe:%s' % status
 
     class Meta:
@@ -217,7 +221,7 @@ class onleiheBooks(models.Model):
     onleiheId = models.TextField(null=True)
     status = models.TextField(null=False)  # 'confirmed', ...
     bookCoverURL = models.TextField(null=True)
-    author = models.TextField(null=True)
+    author = models.TextField(null=True)  # TODO multiple
     translator = models.TextField(null=True)
     year = models.IntegerField(null=True)
     isbn = models.TextField(null=True, max_length=13)
@@ -227,15 +231,16 @@ class onleiheBooks(models.Model):
     #keywords = # Array or many to many # TODO fix later, for searching
     keywords = models.TextField(null=True) # string, comma separated
     publisher = models.TextField(null=True)
-    #language = models.TextField(null=True)
+    language = models.TextField(null=True)
     format = models.TextField(null=True)
-    pages = models.IntegerField(null=True)
+    pages = models.IntegerField(null=True)  # obsolete, to be replaced by length
+    length = models.TextField(null=True)
     # filesize', 'Dateigröße'],
     # copies', 'Exemplare'],
     # available', 'Verfügbar'],
     # reservations', 'Vormerker'],
     # available_after', 'Voraussichtlich verfügbar ab'],
-    allow_copy = models.NullBooleanField(null=True)
+    allow_copy = models.NullBooleanField(null=True)  #TODO obsolete, cleanup
     book_description = models.TextField(null=True)
     updated = models.DateField(null=True)
     comment = models.TextField(null=True, blank=True)
@@ -243,7 +248,14 @@ class onleiheBooks(models.Model):
     def __str__(self):
         value = []
         if self.onleiheId:
-            value.append(self.onleiheId)
+            onleihe_id = self.onleiheId
+            if onleihe_id:
+                # strip off boilerplate info from onleihe media id
+                if onleihe_id.endswith('-0-0-0-0-0-0-0.html'):
+                    onleihe_id = onleihe_id[:len(onleihe_id)-19]
+                if onleihe_id.startswith('mediaInfo,0-0-'):
+                    onleihe_id = onleihe_id[14:]
+            value.append(onleihe_id)
         if not self.status in ('confirmed',):
             value.append(self.status)
         if not value:

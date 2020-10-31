@@ -154,8 +154,8 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': 'mybookdb',
-            'USER': 'mybookdbusr',
+            'NAME': os.environ.get("DB_NAME", 'mybookdb'),
+            'USER': os.environ.get("DB_USER", 'mybookdbusr'),
             'PASSWORD': os.environ["DB_PWD"],
             'HOST': os.environ.get("DB_HOST", '127.0.0.1'),
             'PORT': os.environ.get("DB_PORT", '5432'),
@@ -206,12 +206,12 @@ LOGGING = {
     'loggers': {
         'mybookdb': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': os.getenv('LOGLEVEL', 'INFO'),
             'propagate': False,
         },
         'django': {
             'handlers': ['console'],
-            'level': os.getenv('LOGLEVEL_DJANGO', 'DEBUG'),
+            'level': os.getenv('LOGLEVEL_DJANGO', 'WARNING'),
             'propagate': True,
         }
     }
@@ -279,6 +279,8 @@ INTERNAL_IPS = [  # for debug_toolbar
     '127.0.0.1',
 ]
 
+
+DEFAULT_LANGUAGE = os.environ.get('DEFAULT_LANGUAGE', 'de')  # default book language
 
 assert TEMPLATES[0]['BACKEND'] == 'django.template.backends.django.DjangoTemplates'
 TEMPLATES[0]['OPTIONS']['context_processors'].append('mybookdb.context_processors.export_vars')
