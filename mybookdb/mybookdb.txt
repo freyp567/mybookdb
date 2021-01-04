@@ -1,6 +1,6 @@
 My Bookshelf
 implementation notes / index to views
-2019-01-26  updated
+2021-01-04  updated
 
 ***
 Book list  /bookshelf/books/v1/?sort=
@@ -9,7 +9,7 @@ Book list  /bookshelf/books/v1/?sort=
    template: books_list.html
 
 ***
-All books  /bookshelf/books/
+  /bookshelf/books/
    search for books 
    view: FilteredBookListView, SingleTableMixin+FilterView
    table_class: BooksTable
@@ -91,14 +91,9 @@ User Rating Update  (xeditable)
 ***
 ***
 TODO
-  ++ handle sync of comments with mybookdroid
   ++ edit comment for anonymous (or login lost), no error but rejected
   ++ field date-read with uncertainty (before, approx)
      https://pypi.org/project/django-partial-date/
-
-TODO 
-  ++ update javascript libraries to newer versions (fixes, compatibility issues)
-  ++ use packaging mechanism to include external libraries (bower, ...)
   
 TODO fix bug with user rating, default value
 
@@ -112,37 +107,4 @@ TODO
 
 TODO 
   + ChoiceField / bootstrap and validation / clean handling (django_select2?)
-  + bootstrap-table and + (action, e.g. show details) icon in first column
 
-***
-TODO to be resolved: (at various places)
-
-Traceback (most recent call last):
-  File "c:\Users\pifre\.virtualenvs\mybookdb-yEP07JDa\lib\site-packages\django\template\base.py", line 841, in _resolve_lookup
-    if isinstance(current, BaseContext) and getattr(type(current), bit):
-AttributeError: type object 'RequestContext' has no attribute 'is_paginated'
-
-
-***
-troublesome
-
-mutiple titles for search in onleihe,
-but none does match:
- bookhttp://127.0.0.1:8000/bookshelf/book/27/onleihe
-allow to set state notfound
-
-duplicates to be detected / resolved 
-for books, authors 
-
-
-add bookmark, Der Tuchhaendler (Dübell)
-https://www.histo-couch.de/richard-duebell-der-tuchhaendler.html
-Error bookmark does already exist
-
-missing book 
-see http://127.0.0.1:8000/bookshelf/author/156
-missed: http://127.0.0.1:8000/bookshelf/book/5010
-but have duplicates
-http://127.0.0.1:8000/bookshelf/books/285
-http://127.0.0.1:8000/bookshelf/books/286
-renaned, appended [duplicate] to title to differentiate
