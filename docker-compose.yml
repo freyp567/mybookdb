@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+      web:
+          build:
+            context: .
+            dockerfile: ./Dockerfile
+          #image: mybookdb_web
+          env_file: .env
+          volumes:
+            - .:/app
+          ports:
+            - "8000:8000"
+          depends_on:
+            - db
+          entrypoint: ./docker-entrypoint.sh
+          command: python manage.py runserver 0.0.0.0:8000
+          container_name: mybookdbapp
+
+      # prepared, but not needed as long as using DJANGO_DEBUG=1
+      #nginx:
+      #    image: nginx:latest
+      #    container_name: ng
+      #    ports:
+      #      - "443:443"
+      #      - "80:80"
+      #    volumes:
+      #      - ./config/nginx/:/etc/nginx/conf.d
+      #    depends_on:
+      #      - web
+
+      db:
+        image: postgres
+        #restart: always
+        environment:
+          #  pg_hba.conf ??
+          #-POSTGRES_HOST_AUTH_METHOD: "trust"
+          POSTGRES_USER: ${POSTGRES_USER}
+          POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+          POSTGRES_DB: ${POSTGRES_DB}
+          PGDATA: /var/lib/postgresql/data/pgdata
+        ports:
+          - "5432:5432"
+        volumes:
+          - ./data/postgres/pgdata:/var/lib/postgresql/data/pgdata
+          #- ./postgres.conf:/etc/postgresql/postgresql.conf
+        #command: postgres -c config_file=/etc/postgresql/postgresql.conf
+      

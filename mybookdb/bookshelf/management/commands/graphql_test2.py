@@ -56,7 +56,7 @@ class Command(BaseCommand):
         self.stdout.write("\n")
         
     def all_books(self):
-        self.stdout.write("list all books")
+        self.stdout.write("list ")
         query = '''
             query
             { allBooks { id title }}

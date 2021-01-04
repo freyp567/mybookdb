@@ -60,7 +60,8 @@ INSTALLED_APPS = [
     'graphene_django',
     'django_extensions',
     'crispy_forms',
-    'django_prometheus',
+    # 'django_prometheus',  # troubles if deployed in Docker container
+    'mybookdb',
 ]
 USE_DEBUG_TOOLBAR =os.environ.get("USE_DEBUG_TOOLBAR", False)
 if USE_DEBUG_TOOLBAR:
@@ -81,6 +82,7 @@ STATICFILES_FINDERS = [
 ]
 
 YARN_ROOT_PATH = os.path.abspath(os.path.join(BASE_DIR, '..'))
+print("YARN_ROOT_PATH=" + YARN_ROOT_PATH)
 YARN_EXECUTABLE_PATH = os.environ.get("YARN_EXECUTABLE_PATH")
 
 #YARN_STATIC_FILES_PREFIX = ''
@@ -100,7 +102,7 @@ YARN_FILE_PATTERNS = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django_prometheus.middleware.PrometheusBeforeMiddleware',
+    # 'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -108,7 +110,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allow_cidr.middleware.AllowCIDRMiddleware',
-    'django_prometheus.middleware.PrometheusAfterMiddleware',
+    # 'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 if USE_DEBUG_TOOLBAR:
@@ -116,7 +118,6 @@ if USE_DEBUG_TOOLBAR:
     MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'mybookdb.urls'
-#ROOT_URLCONF = "graphite.urls_prometheus_wrapper" ?
 
 TEMPLATES = [
     {
@@ -146,7 +147,7 @@ if USE_SQLLITE:
     DATABASES = {
         'default': {
             # 'ENGINE': 'django.db.backends.sqlite3',
-            'ENGINE': 'django_prometheus.db.backends.sqlite3',
+            # 'ENGINE': 'django_prometheus.db.backends.sqlite3',
             'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
@@ -195,27 +196,49 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
+# for docker deployment:
+# see https://stackoverflow.com/questions/52004910/django-and-docker-outputting-information-to-console/52010919
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            'format': '[DJANGO] %(levelname)s %(asctime)s %(module)s '
+            '%(name)s.%(funcName)s:%(lineno)s: %(message)s'
+        },
+    },
     'handlers': {
         'console': {
+            'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-        },
+            'formatter': 'default',
+        }
     },
     'loggers': {
         'mybookdb': {
             'handlers': ['console'],
-            'level': os.getenv('LOGLEVEL', 'INFO'),
+            'level': os.getenv('LOGLEVEL', 'DEBUG'),
+            'propagate': False,
+        },
+        'django.utils.autoreload': {
+            'handlers': ['console'],
+            'level': 'INFO',
             'propagate': False,
         },
         'django': {
             'handlers': ['console'],
-            'level': os.getenv('LOGLEVEL_DJANGO', 'WARNING'),
+            'level': os.getenv('LOGLEVEL_DJANGO', 'DEBUG'),
+            'propagate': False,
+        },
+        '*': {
+            'handlers': ['console'],
+            'level': 'INFO',
             'propagate': True,
-        }
-    }
+        },
+    },
 }
+
+
 
 # Redirect to home URL after login (Default redirects to /accounts/profile/)
 LOGIN_REDIRECT_URL = '/'
@@ -230,8 +253,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 STATIC_URL = '/static/'
 
-#class StaticWrapper:
-
 
 BOOTSTRAP4 = {
     'css_url': STATIC_URL +'js/lib/bootstrap/dist/css/bootstrap.css',
@@ -244,7 +265,7 @@ BOOTSTRAP4 = {
     'jquery_slim_url': STATIC_URL +'js/lib/jquery/dist/jquery.slim.js',
 }
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static') 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'templates', 'static'),
 ]

@@ -3,6 +3,7 @@ export/
 books.db*
 db.sqlite3*
 tmp/
+data/
 log/
 
 wingdbstub.py
