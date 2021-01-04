@@ -141,5 +141,5 @@ class BooksTable(tables.Table):
             return "-"
         if int(value) != value:
             value = int(value)
-            return "%s+" % (value, value+1)
+            return "%s+" % value
         return int(value)
