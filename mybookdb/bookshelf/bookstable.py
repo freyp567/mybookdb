@@ -12,45 +12,12 @@ from django.template.defaultfilters import striptags
 from django import forms
 
 import django_filters
+from django_filters.views import FilterView
+
 import django_tables2 as tables
+from django_tables2.views import SingleTableMixin
 
 from .models import books
-
-
-class BooksFilterForm(forms.Form):
-    
-    title = forms.CharField(label='Title', max_length=20) # verbose_name='Book Title'
-
-    # [ f.name for f in books.get_fields() ]
-    # ['comments', 'googleBookId', 'grBookId', 'reviews', 'states', 'id', 
-    #  'isbn10', 'isbn13', 'title', 'binding', 'description', 'numberOfPages', 
-    #  'publisher', 'publicationDate', 'reviewsFetchedDate', 'offersFetchedDate', 
-    #  'grRating', 'grRatingsCount', 'subject', 'created', 'updated', 'userRating', 
-    #  'lentToName', 'lentToUri', 'thumbnailSmall', 'thumbnailLarge', 
-    #  'amazonBookId', 'authors',
-    # ]
-
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def is_valid(self):
-        """Return True if the form has no errors, or False otherwise."""
-        #return self.is_bound and not self.errors
-        return True
-                
-        
-
-class BooksTableFilter(django_filters.FilterSet):
-    
-    title = django_filters.CharFilter(label='title', lookup_expr='icontains')
-    # TODO author
-    userRating_gt = django_filters.NumberFilter(label='Rating', field_name='userRating', lookup_expr='gt')
-      # TODO field width smaller for Rating
-    
-    class meta:
-        model = books
-        #form = BooksFilterForm
 
 
 class IDColumn(tables.Column):
@@ -143,3 +110,55 @@ class BooksTable(tables.Table):
             value = int(value)
             return "%s+" % value
         return int(value)
+
+
+class BooksTableFilterForm(forms.Form):  #TODO control form field width for BooksTableFilter
+    
+    title = forms.CharField(label='Title', max_length=32) # verbose_name='Book Title'
+
+    # [ f.name for f in books.get_fields() ]
+    # ['comments', 'googleBookId', 'grBookId', 'reviews', 'states', 'id', 
+    #  'isbn10', 'isbn13', 'title', 'binding', 'description', 'numberOfPages', 
+    #  'publisher', 'publicationDate', 'reviewsFetchedDate', 'offersFetchedDate', 
+    #  'grRating', 'grRatingsCount', 'subject', 'created', 'updated', 'userRating', 
+    #  'lentToName', 'lentToUri', 'thumbnailSmall', 'thumbnailLarge', 
+    #  'amazonBookId', 'authors',
+    # ]
+
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def is_valid(self):
+        """Return True if the form has no errors, or False otherwise."""
+        #return self.is_bound and not self.errors
+        return True
+                    
+            
+
+class BooksTableFilter(django_filters.FilterSet):
+    
+    title = django_filters.CharFilter(label='title', lookup_expr='icontains')
+    authors__name = django_filters.CharFilter(label='authors', lookup_expr='icontains')
+    userRating_gt = django_filters.NumberFilter(label='Rating', field_name='userRating', lookup_expr='gte')
+      ## TODO field width smaller for Rating
+    
+    class meta:
+        model = books
+        # form = BooksTableFilterForm  # ignored??
+
+    def __init__(self, **kwargs):
+        #attribute = kwargs.pop['attribute']
+        super(BooksTableFilter, self).__init__(**kwargs)
+
+
+class BooksTableFilterView(SingleTableMixin, FilterView):
+    table_class = BooksTable
+    model = books
+    template_name = "books_table_filtered.html"
+    filterset_class = BooksTableFilter
+
+    def get_filterset_kwargs(self, filterset_class):
+        kwargs = super(BooksTableFilterView, self).get_filterset_kwargs(filterset_class)
+        # kwargs['attribute'] = 'width'
+        return kwargs
