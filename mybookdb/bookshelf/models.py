@@ -237,12 +237,12 @@ class onleiheBooks(models.Model):
     format = models.TextField(null=True)
     pages = models.IntegerField(null=True)  # obsolete, to be replaced by length
     length = models.TextField(null=True)
-    # filesize', 'Dateigr��e'],
+    # filesize', 'Dateigroesse'],
     # copies', 'Exemplare'],
-    # available', 'Verf�gbar'],
+    # available', 'Verfuegbar'],
     # reservations', 'Vormerker'],
-    # available_after', 'Voraussichtlich verf�gbar ab'],
-    allow_copy = models.NullBooleanField(null=True)  #TODO obsolete, cleanup
+    # available_after', 'Voraussichtlich verfuegbar ab'],
+    allow_copy = models.BooleanField(null=True)  # obsolete
     book_description = models.TextField(null=True)
     updated = models.DateField(null=True)
     comment = models.TextField(null=True, blank=True)

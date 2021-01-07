@@ -1,3 +1,4 @@
+# -*- coding: latin-1 -*-
 """
 sync mybookdb with information from Book Catalogue export.csv
 
@@ -10,6 +11,7 @@ import csv
 from datetime import datetime
 from decimal import Decimal
 import uuid
+import difflib
 import isbnlib
 from isbnlib.dev._exceptions import DataNotFoundAtServiceError
 
@@ -156,7 +158,8 @@ class Command(BaseCommand):
             book_obj.title = book_title
             assert Isbn13(row['isbn']).validate(), f"book isbn is invalid: {row['isbn']} {book_info}"
             book_obj.isbn13 = row['isbn']
-            book_obj.new_description = row['description'] or None
+            book_obj.new_description = row['description'] or None  # normalize?
+            book_obj.orig_description = row['description'] or ''
             book_obj.publisher =row['publisher'] or None
             book_obj.publicationDate = self.safe_get_date_iso(row['date_published'])
             book_obj.created = self.safe_get_date_iso(row['date_added']) or now
@@ -164,7 +167,7 @@ class Command(BaseCommand):
             if row['read_start']:
                 book_obj.read_start = self.safe_get_date_iso(row['read_start'])
             if row['read_end']:
-                book_obj.read_start = self.safe_get_date_iso(row['read_end'])
+                book_obj.read_end = self.safe_get_date_iso(row['read_end'])
             
             if row['rating'] and Decimal(row['rating']) != Decimal(0):
                 book_obj.userRating = Decimal(row['rating'])
@@ -243,16 +246,23 @@ class Command(BaseCommand):
             return False
 
     def lookup_isbn(self, isbn):
+        metadata = {}
         for service in ('goob','openl','wiki'):
             # 'goob' for google books, 'wiki' for wikipedia, 'openl' for openlibrary
             try:          
                 metadata = isbnlib.meta(isbn, service=service)
+                metadata['ISBN'] = isbn
                 if metadata:
                     break
             except DataNotFoundAtServiceError:
                 LOGGER.debug("lookup isbn %r service=%r - not found", isbn, service)
+            except isbnlib._exceptions.NotValidISBNError:
+                LOGGER.warning("not a valid ISBN number: %r", isbn)
+                metadata['Title'] = "ISBN not valid: %s" % isbn
+                break
             except Exception as err:
                 # socket.timeout if no access to internet or backend service
+                # NotValidISBNError
                 LOGGER.error("failed to lookup book metadata for isbn=%s service=%r: %r", isbn, service, err)
             metadata = {}
         return metadata
@@ -302,6 +312,7 @@ class Command(BaseCommand):
         description = description.replace('\r\n', '\n')  # linux style line-ends
         description = description.replace('\n', '\\n')  # single line, so escape newlines
         description = description.replace('\t', '\\t')  # single line, so escape newlines
+        description = description.replace(u'\u2013', '-')  # endash x8211
         #description = description.replace('"', '""')  #TODO drop this
         return description
     
@@ -389,10 +400,11 @@ class Command(BaseCommand):
                     else:
                         diff.add('series_details')
         
-        if self.check_differs('read', row["read"], book_obj.states.haveRead and '1' or '0', book_info):
+        show_diff = (book_obj.states.haveRead == '1') and book_info or None
+        if self.check_differs('read', row["read"], book_obj.states.haveRead and '1' or '0', show_diff):
             if row['read'] == '1':
                 # marked read in bookcatalogue, so update in mybookdb
-                LOGGER.info(f"update book {book_info}, state read={row['read']} => .haveRead")
+                LOGGER.info(f"auto-update book {book_info}, state read={row['read']} => .haveRead")
                 book_obj.states.haveRead = True
                 book_obj.states.readingNow = False
                 book_obj.states.toRead = False
@@ -404,7 +416,8 @@ class Command(BaseCommand):
                 LOGGER.warning(f"mismatch book state read={row['read']} != .haveRead={book_obj.states.haveRead!r}")
                 diff.add('read')
 
-        if self.check_differs('language', row['language'], book_obj.language, book_info):
+        show_diff = (book_obj.language != None) and book_info or None
+        if self.check_differs('language', row['language'], book_obj.language, show_diff):
             if book_obj.language is None:
                 book_obj.language = row['language']
                 updated.append('language')                
@@ -412,14 +425,17 @@ class Command(BaseCommand):
                 diff.add('language')
         
         if self.check_differs('publisher', row['publisher'], book_obj.publisher, None):
+            LOGGER.info("auto-update publisher for %s: %r -> %r", book_info, book_obj.publisher, row['publisher'])
             book_obj.publisher = row['publisher']  # always update if not set or different
             updated.append('publisher') 
             
         date_published = self.safe_get_date_iso(row['date_published'])
-        if date_published and self.check_differs('date_published', date_published, book_obj.publicationDate, book_info):
+        show_diff = (book_obj.publicationDate != None) and book_info or None
+        if date_published and self.check_differs('date_published', date_published, book_obj.publicationDate, show_diff):
             if book_obj.publicationDate:
                 # happens if book description for other format / different publisher
                 # use date from BookCatalogue to reduce logging for future syncs
+                LOGGER.info("autp-update date_published for %s: %r -> %r", book_info, book_obj.publicationDate, date_published)
                 book_obj.publicationDate = date_published
                 updated.append('date_published')
             else:
@@ -428,7 +444,8 @@ class Command(BaseCommand):
 
         userRating = book_obj.userRating or Decimal('0.0')
         userRatingBk = Decimal(row['rating'] or '0.0')
-        if self.check_differs('rating', userRatingBk, userRating, book_info):
+        show_diff = (userRating != Decimal('0.0')) and book_info or None
+        if self.check_differs('rating', userRatingBk, userRating, show_diff):
             if userRating == Decimal(0):  # not yet rated, take what Bk proposes
                  book_obj.userRating = userRatingBk
                  updated.append('userRating')
@@ -463,26 +480,40 @@ class Command(BaseCommand):
 
         book_description = self.normalize_description(book_obj.description)
         orig_description = book_obj.orig_description
-        if not row['description']:
-            LOGGER.info(f"no description for {book_info} in bookcatalogue")
-            FUTURE = 1 # FUTURE: how to handle / fix this?
-        elif row['description'] != book_description:
+        bk_description = self.normalize_description(row['description'])
+        if not bk_description:
+            LOGGER.warning(f"no description for {book_info} in bookcatalogue")
+            FUTURE = 1 # FUTURE: how to handle this?
+        elif bk_description != book_description:
+            diff_pos = [pos for pos, li in enumerate(difflib.ndiff(bk_description, book_description)) if li[0] != ' ']
+            pos_start = diff_pos[0]
+            if pos_start != 0:
+                LOGGER.info('differences in pos %s ...', diff_pos[:3])
             if not orig_description:
-                LOGGER.info(f"set description for {book_info}")
+                LOGGER.info(f"auto-set orig_description for {book_info}")
                 book_obj.orig_description = row['description']
                 updated.append('orig_description')
-            elif row['description'] != orig_description:
-                LOGGER.warning(f"difference in description for {book_info} - see orig_description")
+            elif row['description'] != orig_description and bk_description != orig_description:
+                LOGGER.warning(f"difference in description for {book_info} - updating orig_description\n  bk: %s\n  db: %s\n  ..  %s",
+                               self.pp_description(row['description']),
+                               self.pp_description(orig_description),
+                               self.pp_description(book_obj.description)
+                               )
                 book_obj.orig_description = row['description']
                 updated.append('orig_description')
-                diff.add('description')  # flag as different - backsync DB to Bk will overwrite
+                diff.add('description')  # flag as different - backsync DB to Bk may overwrite, so need to verify
             else:
-                diff.add('orig_description')
+                LOGGER.warning(f"difference in description for {book_info}\n  bk: %s\n  db: %s",
+                               self.pp_description(row['description'], start=pos_start-3),
+                               self.pp_description(book_obj.description, start=pos_start-3)
+                               )
+                diff.add('description')
             
-        assert row['anthology'] == '0'  # not yet supported by sync
+        assert row['anthology'] == '0'  # anthology not supported by sync
         
         read_start = self.safe_get_date_iso(row['read_start'])
-        if read_start and self.check_differs('read_start', read_start, book_obj.read_start, book_info):
+        show_diff = (book_obj.read_start is not None) and book_info or None
+        if read_start and self.check_differs('read_start', read_start, book_obj.read_start, show_diff):
             if book_obj.read_start:
                 if read_start < book_obj.read_start:
                     # update if date in mybookdb before 
@@ -495,7 +526,8 @@ class Command(BaseCommand):
                 updated.append('read_start')
         
         read_end = self.safe_get_date_iso(row['read_end'])
-        if read_end and self.check_differs('read_end', read_end, book_obj.read_end, book_info):
+        show_diff = (book_obj.read_end is not None) and book_info or None
+        if read_end and self.check_differs('read_end', read_end, book_obj.read_end, show_diff):
             if book_obj.read_end:
                 if read_end < book_obj.read_end:
                     # update if date in mybookdb before 
@@ -538,6 +570,18 @@ class Command(BaseCommand):
             log_handler.setLevel('INFO')            
         LOGGER.addHandler(log_handler)
         
+    def pp_description(self, value, start=0, maxlength=96):
+        if start < 0:
+            start = 0
+        ppv = value.replace('\n', '| ')
+        if start > 0:
+            ppv = '..' +ppv[start:]            
+        if len(ppv) > maxlength:
+            ppv = '%r..' % ppv[:maxlength]
+        else:
+            ppv = '%r' % ppv
+        return ppv
+    
     def handle_book(self, row):
         """ handle book info from bookcatalogue """
         book_title = row['title']
@@ -608,7 +652,7 @@ class Command(BaseCommand):
             for book_title in self.differs:
                 diff = self.differs[book_title]
                 diff_info.append(f"{book_title} differs in {diff}")
-            LOGGER.warning(f"found {len(self.differs)} books with differences:\n%s\n.", '\n   '.join(diff_info))
+            LOGGER.warning(f"found {len(self.differs)} books with differences:\n   %s\n.", '\n   '.join(diff_info))
         
         if self._conflicts_books:
             LOGGER.warning("conflicting books in bookcatalogue (%s):\n- %s\n.", 
