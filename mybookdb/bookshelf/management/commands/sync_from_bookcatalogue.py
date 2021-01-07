@@ -271,7 +271,7 @@ class Command(BaseCommand):
     def handle_existing(self, row, found):
         book_title = row['title']
         LOGGER.debug(f"syncing book {book_title!r} {row['book_uuid']}...")
-        assert len(found) == 1, "result not unique"
+        assert len(found) == 1, "result not unique for %r" % book_title
         book_obj = found[0]
         book_info = f"{book_title!r} id={book_obj.id}"
         
@@ -295,7 +295,7 @@ class Command(BaseCommand):
                 diff.add('title')
             
         if self.check_differs('isbn', row['isbn'], book_obj.isbn13, book_info):
-            # TODO lookup ISBN, check plausibility
+            # TODO lookup ISBN using isbnlib, check titles / author
             diff.add('isbn')
         
         new_authors = set([a.name for a in book_obj.authors.all()])
@@ -364,7 +364,7 @@ class Command(BaseCommand):
         
         if self.check_differs('publisher', row['publisher'], book_obj.publisher, None):
             book_obj.publisher = row['publisher']  # always update if not set or different
-            updated.append('publisher')                
+            updated.append('publisher') 
             
         date_published = self.safe_get_date_iso(row['date_published'])
         if date_published and self.check_differs('date_published', date_published, book_obj.publicationDate, book_info):
@@ -374,7 +374,7 @@ class Command(BaseCommand):
                 book_obj.publicationDate = date_published
                 updated.append('date_published')
             else:
-                book_obj.publicationDate = date_published  # always update
+                book_obj.publicationDate = date_published  # always update from Bk
                 updated.append('date_published')                
 
         userRating = book_obj.userRating or Decimal('0.0')
@@ -413,16 +413,20 @@ class Command(BaseCommand):
             LOGGER.debug(f"book genre {row['genre']!r} - {book_info}")
 
         book_description = self.normalize_description(book_obj.description)
+        orig_description = book_obj.orig_description
         if not row['description']:
             LOGGER.info(f"no description for {book_info} in bookcatalogue")
-            # FUTURE: how to handle / fix this?
+            FUTURE = 1 # FUTURE: how to handle / fix this?
         elif row['description'] != book_description:
-            book_obj.orig_description = row['description']
-            LOGGER.warning(f"difference in description for {book_info} - see orig_description")
-            updated.append('orig_description')
-            diff.add('description')  # flag as different - backsync DB to Bk will overwrite
+            if row['description'] != orig_description:
+                book_obj.orig_description = row['description']
+                LOGGER.warning(f"difference in description for {book_info} - see orig_description")
+                updated.append('orig_description')
+                diff.add('description')  # flag as different - backsync DB to Bk will overwrite
+            else:
+                diff.add('orig_description')
             
-        assert row['anthology'] == '0'  # what else, from bookcatalogue sync with goodreads ...?
+        assert row['anthology'] == '0'  # not yet supported by sync
         
         read_start = self.safe_get_date_iso(row['read_start'])
         if read_start and self.check_differs('read_start', read_start, book_obj.read_start, book_info):
