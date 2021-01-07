@@ -10,6 +10,8 @@ import csv
 from datetime import datetime
 from decimal import Decimal
 import uuid
+import isbnlib
+from isbnlib.dev._exceptions import DataNotFoundAtServiceError
 
 from pyisbn import Isbn13
 
@@ -240,6 +242,59 @@ class Command(BaseCommand):
         else:
             return False
 
+    def lookup_isbn(self, isbn):
+        for service in ('goob','openl','wiki'):
+            # 'goob' for google books, 'wiki' for wikipedia, 'openl' for openlibrary
+            try:          
+                metadata = isbnlib.meta(isbn, service=service)
+                if metadata:
+                    break
+            except DataNotFoundAtServiceError:
+                LOGGER.debug("lookup isbn %r service=%r - not found", isbn, service)
+            except Exception as err:
+                # socket.timeout if no access to internet or backend service
+                LOGGER.error("failed to lookup book metadata for isbn=%s service=%r: %r", isbn, service, err)
+            metadata = {}
+        return metadata
+        
+    def check_isbn_differs(self, bk_value, db_obj, book_info):
+        db_value = db_obj.isbn13
+        if db_value != bk_value:
+            # lookup ISBN using isbnlib, check titles / author
+            meta_db = self.lookup_isbn(db_obj.isbn13)
+            meta_bk = self.lookup_isbn(bk_value)
+            if book_info is not None:
+                LOGGER.warning(f"""book isbn differs for {book_info}:
+                  bk_isbn={bk_value!r} - {meta_bk.get('Title', None)!r} {', '.join(meta_bk.get('Authos', []))} {meta_bk.get('Publisher','--')}
+                  db_isbn={db_value!r} - {meta_db.get('Title', None)!r} {', '.join(meta_db.get('Authos', []))} {meta_db.get('Publisher','--')}
+                  """)
+            return True
+        return False
+            
+    def check_title_differs(self, bk_value, db_obj, book_info):
+        titles = set()
+        db_title = db_obj.title
+        titles.add(db_obj.book_title)
+        titles.add(db_title)
+        for title in list(titles): 
+           for part in ('A', 'The'):
+                if title.endswith(', '+part):
+                    # e.g. 'Princess of Mars, A' => 'A Princess of Mars'
+                    new_title = part + ' ' + title[:-len(part)-2]
+                    titles.add(new_title)
+                elif title.endswith(part):
+                    TODOverify = title
+        
+        if bk_value not in titles:
+            if book_info is not None:
+                LOGGER.warning(f"""book title differs for {book_info}:
+                  bk_title={bk_value!r}
+                  db_title={db_title!r}
+                  """)
+            return True
+        else:
+            return False
+
     def normalize_description(self, description):
         """ normalize book description so it can be compared what is written to export.csv by bookcatalogue """
         if not description:
@@ -281,21 +336,15 @@ class Command(BaseCommand):
             LOGGER.warning(f"book should not be in bookcatalogue, check state: {book_info}")
             self._conflicts_books.append(f"{book_info} -- state {book_obj.states}")
             return
+        
+        if self.check_title_differs(book_title, book_obj, book_info):
+            if not book_obj.unified_title:
+                book_obj.unified_title = book_obj.title
+            book_obj.title = book_title    
+            updated.append('title')
 
-        if self.check_differs('title', book_title, book_obj.book_title, book_info):
-            new_title = None
-            for part in ('A', 'The'):
-                if book_title.endswith(', '+part) and book_obj.book_title.startswith(part):
-                    new_title = book_title
-                    break
-            if new_title:
-                book_obj.unified_title = new_title
-                updated.append('title')
-            else:
-                diff.add('title')
-            
-        if self.check_differs('isbn', row['isbn'], book_obj.isbn13, book_info):
-            # TODO lookup ISBN using isbnlib, check titles / author
+        if self.check_isbn_differs(row['isbn'], book_obj, book_info):
+            # requires manual correction in BookCatalogue (or myBookDb)
             diff.add('isbn')
         
         new_authors = set([a.name for a in book_obj.authors.all()])
@@ -418,9 +467,13 @@ class Command(BaseCommand):
             LOGGER.info(f"no description for {book_info} in bookcatalogue")
             FUTURE = 1 # FUTURE: how to handle / fix this?
         elif row['description'] != book_description:
-            if row['description'] != orig_description:
+            if not orig_description:
+                LOGGER.info(f"set description for {book_info}")
                 book_obj.orig_description = row['description']
+                updated.append('orig_description')
+            elif row['description'] != orig_description:
                 LOGGER.warning(f"difference in description for {book_info} - see orig_description")
+                book_obj.orig_description = row['description']
                 updated.append('orig_description')
                 diff.add('description')  # flag as different - backsync DB to Bk will overwrite
             else:
@@ -464,6 +517,7 @@ class Command(BaseCommand):
         # 'location', 'list_price', 'anthology', 
         
         if updated:
+            book_obj.synced = datetime.now(timezone.utc)
             book_obj.save()
             self.updated_books.add(book_info)
         if diff:

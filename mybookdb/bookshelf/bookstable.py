@@ -54,12 +54,12 @@ class BooksTable(tables.Table):
     class Meta:
         model = books
         template_name = 'django_tables2/bootstrap4.html'
-        fields = ('id', 'title', 'authors__name', 'userRating', 'created', 'updated', 'read_start', 'read_end', 'sync_mybookdroid')
+        fields = ('id', 'title', 'authors', 'userRating', 'created', 'updated', 'read_start', 'read_end', 'synced')
 
     def render_title(self, record):
         if record.unified_title:
             if record.book_serie:
-                value = "%ss - %s" % (record.unified_title, record.book_serie)
+                value = "%s - %s" % (record.unified_title, record.book_serie)
             else:
                 value = record.unified_title
         else:
@@ -101,40 +101,17 @@ class BooksTable(tables.Table):
     render_updated = render_isodate
     render_read_start = render_isodate
     render_read_end = render_isodate
-    render_sync_mybookdroid = render_isodate
+    render_synced = render_isodate
 
     def render_userRating(self, value):
         if not value:
             return "-"
         if int(value) != value:
+            # e.g. 4.5 -> '4+'
             value = int(value)
             return "%s+" % value
         return int(value)
 
-
-class BooksTableFilterForm(forms.Form):  #TODO control form field width for BooksTableFilter
-    
-    title = forms.CharField(label='Title', max_length=32) # verbose_name='Book Title'
-
-    # [ f.name for f in books.get_fields() ]
-    # ['comments', 'googleBookId', 'grBookId', 'reviews', 'states', 'id', 
-    #  'isbn10', 'isbn13', 'title', 'binding', 'description', 'numberOfPages', 
-    #  'publisher', 'publicationDate', 'reviewsFetchedDate', 'offersFetchedDate', 
-    #  'grRating', 'grRatingsCount', 'subject', 'created', 'updated', 'userRating', 
-    #  'lentToName', 'lentToUri', 'thumbnailSmall', 'thumbnailLarge', 
-    #  'amazonBookId', 'authors',
-    # ]
-
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def is_valid(self):
-        """Return True if the form has no errors, or False otherwise."""
-        #return self.is_bound and not self.errors
-        return True
-                    
-            
 
 class BooksTableFilter(django_filters.FilterSet):
     
@@ -145,11 +122,6 @@ class BooksTableFilter(django_filters.FilterSet):
     
     class meta:
         model = books
-        # form = BooksTableFilterForm  # ignored??
-
-    def __init__(self, **kwargs):
-        #attribute = kwargs.pop['attribute']
-        super(BooksTableFilter, self).__init__(**kwargs)
 
 
 class BooksTableFilterView(SingleTableMixin, FilterView):
@@ -157,6 +129,9 @@ class BooksTableFilterView(SingleTableMixin, FilterView):
     model = books
     template_name = "books_table_filtered.html"
     filterset_class = BooksTableFilter
+    
+    def __init__(self, *args, **kwargs):
+        super(BooksTableFilterView, self).__init__(*args, **kwargs)
 
     def get_filterset_kwargs(self, filterset_class):
         kwargs = super(BooksTableFilterView, self).get_filterset_kwargs(filterset_class)
