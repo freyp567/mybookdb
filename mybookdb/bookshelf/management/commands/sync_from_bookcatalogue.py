@@ -125,19 +125,13 @@ class Command(BaseCommand):
         states_obj.book = book_obj
         if have_read == '1':
             states_obj.haveRead = True
-            """
-            TODO clear also:
             states_obj.readingNow = False
             states_obj.toRead = False
-            states_obj.toBuy = False            
-            """
+            states_obj.toBuy = False
         else:
             states_obj.readingNow = True
-            """
-            TODO clear also:
             states_obj.toRead = False
             states_obj.toBuy = False            
-            """
         states_obj.save()
         return states_obj
 
@@ -199,6 +193,7 @@ class Command(BaseCommand):
             
             book_obj.language = row['language']
             book_obj.bookCatalogueId = uuid.UUID(row['book_uuid'])
+            book_obj.synced = datetime.now(timezone.utc)
             book_obj.save()
             book_info = f"{book_title!r} id={book_obj.id}"
 
@@ -489,25 +484,19 @@ class Command(BaseCommand):
             pos_start = diff_pos[0]
             if pos_start != 0:
                 LOGGER.info('differences in pos %s ...', diff_pos[:3])
-            if not orig_description:
-                LOGGER.info(f"auto-set orig_description for {book_info}")
-                book_obj.orig_description = row['description']
+
+            if book_obj.orig_description != book_obj.description:                
+                LOGGER.info(f"save former description in orig_description for {book_info}")
+                book_obj.orig_description = book_obj.description
                 updated.append('orig_description')
-            elif row['description'] != orig_description and bk_description != orig_description:
-                LOGGER.warning(f"difference in description for {book_info} - updating orig_description\n  bk: %s\n  db: %s\n  ..  %s",
-                               self.pp_description(row['description']),
-                               self.pp_description(orig_description),
-                               self.pp_description(book_obj.description)
-                               )
-                book_obj.orig_description = row['description']
-                updated.append('orig_description')
-                diff.add('description')  # flag as different - backsync DB to Bk may overwrite, so need to verify
-            else:
-                LOGGER.warning(f"difference in description for {book_info}\n  bk: %s\n  db: %s",
-                               self.pp_description(row['description'], start=pos_start-3),
-                               self.pp_description(book_obj.description, start=pos_start-3)
-                               )
-                diff.add('description')
+                
+            LOGGER.warning(f"difference in description for {book_info}\n  bk: %s\n  db: %s",
+                           self.pp_description(row['description']),
+                           self.pp_description(book_obj.description)
+                           )
+            book_obj.description = row['description']
+            updated.append('description')
+            diff.add('description')
             
         assert row['anthology'] == '0'  # anthology not supported by sync
         
