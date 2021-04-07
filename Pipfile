@@ -37,6 +37,7 @@ pipenv-to-requirements = "*"
 #django-compressor = "*"
 #django-compressor-toolkit = "*"
 #django-npm = "*"
+csv-diff = "*"
 
 [requires]
 python_version = "3.7"
