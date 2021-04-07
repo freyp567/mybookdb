@@ -481,6 +481,7 @@ class Command(BaseCommand):
             FUTURE = 1 # FUTURE: how to handle this?
         elif bk_description != book_description:
             diff_pos = [pos for pos, li in enumerate(difflib.ndiff(bk_description, book_description)) if li[0] != ' ']
+            # SequenceMatcher .find_longest_match, .ratio
             pos_start = diff_pos[0]
             if pos_start != 0:
                 LOGGER.info('differences in pos %s ...', diff_pos[:3])
@@ -540,7 +541,7 @@ class Command(BaseCommand):
         if updated:
             book_obj.synced = datetime.now(timezone.utc)
             book_obj.save()
-            self.updated_books.add(book_info)
+            self.updated_books[book_info] = updated
         if diff:
             self.differs[book_info] = diff
         return
@@ -621,7 +622,7 @@ class Command(BaseCommand):
         
         rows = updated = new = differs = 0
         self.new_books = []
-        self.updated_books = set()
+        self.updated_books = dict()
         self.differing = {}
         with csv_path.open('r', encoding='utf-8') as csv_f:
             reader = csv.DictReader(csv_f)
@@ -634,8 +635,11 @@ class Command(BaseCommand):
             LOGGER.info(f"added books from {csv_path.name} (%s):\n  + %s\n" % 
                         (len(self.new_books), "\n  + ".join(self.new_books)))   
         if self.updated_books:
+            update_info = []
+            for book_info, updated in self.updated_books:
+                update_info.append("%s - %s" % (book_info, updated))
             LOGGER.info(f"updated books from {csv_path.name} (%s):\n  + %s\n" % 
-                        (len(self.updated_books), "\n  + ".join(self.updated_books)))        
+                        (len(self.updated_books), "\n  + ".join(update_info)))        
         if self.differs:
             diff_info = []
             for book_title in self.differs:
