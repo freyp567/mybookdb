@@ -8,15 +8,20 @@ from django.contrib.staticfiles.finders import FileSystemFinder
 from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 
+import logging
+LOGGER = logging.getLogger(name='mybookdb.finders')
+
 try:
     from collections import OrderedDict
 except ImportError:
     from ordereddict import OrderedDict
 
+LOGGER.info("using yarn finder")
 
 def yarn_add():
     yarn_executable_path = getattr(settings, 'YARN_EXECUTABLE_PATH', 'yarn')
     command = [yarn_executable_path, 'add', '--prefix=' + get_yarn_root_path()]
+    LOGGER.info("yarn exec: %s", command)
     proc = subprocess.Popen(
         command,
         env={'PATH': os.environ.get('PATH')},
@@ -62,6 +67,7 @@ def get_files(storage, match_patterns='*', ignore_patterns=None, location=''):
     if not os.path.isdir(storage.path(location)):
         return
 
+    LOGGER.debug("yarn get_files: %s", location)
     directories, files = storage.listdir(location)
     for fn in files:
         if django_utils.matches_patterns(fn, ignore_patterns):
@@ -70,12 +76,14 @@ def get_files(storage, match_patterns='*', ignore_patterns=None, location=''):
             fn = os.path.join(location, fn)
         if not django_utils.matches_patterns(fn, match_patterns):
             continue
+        LOGGER.info("yarn file: %s", fn)
         yield fn
     for dir in directories:
         if django_utils.matches_patterns(dir, ignore_patterns):
             continue
         if location:
             dir = os.path.join(location, dir)
+        LOGGER.debug("yarn subdir: %s", dir)
         if may_contain_match(dir, match_patterns) or django_utils.matches_patterns(dir, match_patterns):
             for fn in get_files(storage, match_patterns, ignore_patterns, dir):
                 yield fn

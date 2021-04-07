@@ -1,8 +1,7 @@
 # MyBookDb
 ## Purpose
 Originally concepted and implemented as replacement for the MyBookDroid application I used several years on my Android device. 
-The app is no longer maintained, so my intention was to have a replacement that can synchronize all book information maintained in MyBookDroid.
-This was the original intention behind developing a web based application that can do all MyBookDroid could (at least the part I used).
+As MyBookDB was no longer updated and then disappeared, my intention was to have a replacement that can synchronize all book information maintained in MyBookDroid to a database / web application of my choice. This was the original intention behind developing a web based application that can do all MyBookDroid could (at least the part I used).
 
 Nowadays, I no longer use MyBookDroid ... but I use BookCatalogue instead. An other Android application for storing information on books read.
 So the focus of MyBookDb changed, and allows now to sync information from and to BookCatalogue. And it does it's job, with a couple of known issues like duplicate handling and ratings.

@@ -98,7 +98,7 @@ class books(models.Model):
     updated = models.DateField(null=True)
     read_start = models.DateField(null=True, blank=True)
     read_end = models.DateField(null=True, blank=True)
-    sync_mybookdroid = models.DateField(null=True)
+    sync_mybookdroid = models.DateField(null=True)  # obsolete, to be replaced by synced
     userRating = models.DecimalField(decimal_places=1, max_digits=2, null = True)
     
     authors = models.ManyToManyField(authors)
@@ -108,8 +108,10 @@ class books(models.Model):
     thumbnailSmall = models.TextField(blank=True, null=True)
     thumbnailLarge = models.TextField(blank=True, null=True)
     amazonBookId = models.IntegerField(null=True)
+
     bookCatalogueId = models.UUIDField(null=True)
-    
+    synced = models.DateField(null=True)
+
     @property
     def book_title(self):
         if self.unified_title:
@@ -235,12 +237,12 @@ class onleiheBooks(models.Model):
     format = models.TextField(null=True)
     pages = models.IntegerField(null=True)  # obsolete, to be replaced by length
     length = models.TextField(null=True)
-    # filesize', 'Dateigröße'],
+    # filesize', 'Dateigroesse'],
     # copies', 'Exemplare'],
-    # available', 'Verfügbar'],
+    # available', 'Verfuegbar'],
     # reservations', 'Vormerker'],
-    # available_after', 'Voraussichtlich verfügbar ab'],
-    allow_copy = models.NullBooleanField(null=True)  #TODO obsolete, cleanup
+    # available_after', 'Voraussichtlich verfuegbar ab'],
+    allow_copy = models.BooleanField(null=True)  # obsolete
     book_description = models.TextField(null=True)
     updated = models.DateField(null=True)
     comment = models.TextField(null=True, blank=True)
