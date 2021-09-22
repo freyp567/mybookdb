@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 #Django = "<=3.1.0"
-Django = "==3.1.8"
+Django = "==3.1.13"
 "django-tables2" = "*"
 django-filter = "*"
 "django-bootstrap4" = "*"
