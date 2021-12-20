@@ -29,7 +29,8 @@ LOG_FORMAT_EX = "%(asctime)-15s %(levelname)-8s %(message)s"  # for file logging
 LOG_DATE_FORMAT = "%m-%dT%H:%M:%S"
 LOGLEVEL = os.environ.get('LOGLEVEL') or logging.INFO
 logging.basicConfig(stream=sys.stdout, level=LOGLEVEL, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
-#logging.basicConfig()
+# see setup_logging for logfile handling
+    
 for logname in ('', 'django.db.backends'):
     logging.getLogger(logname).setLevel('INFO')
 LOGGER = logging.getLogger('sync_from_bookcatalogue')
@@ -44,10 +45,12 @@ class Command(BaseCommand):
     def __init__(self, stdout=None, stderr=None, no_color=False):
         self._conflicts_books = []
         self.differs = {}
+        self.dryrun = False
         super().__init__(stdout, stderr, no_color)
         
     def add_arguments(self, parser):
         parser.add_argument('--csv', default="export.csv") 
+        parser.add_argument('--dryrun', action='store_true') 
 
     def normalize_title(self, title):
         title = title.replace('\u00ac', '')
@@ -194,7 +197,8 @@ class Command(BaseCommand):
             book_obj.language = row['language']
             book_obj.bookCatalogueId = uuid.UUID(row['book_uuid'])
             book_obj.synced = datetime.now(timezone.utc)
-            book_obj.save()
+            if not self.dryrun:
+                book_obj.save()
             book_info = f"{book_title!r} id={book_obj.id}"
 
             # comment book creation in BookCatalogue app
@@ -360,6 +364,7 @@ class Command(BaseCommand):
                 new_authors.discard(author_name)  # already set
             elif author == "Author, Unknown":
                 # get rid of / discard
+                # caused by Authors not having Vornamen, e.g. Serotonin and Klabund
                 LOGGER.warning(f"unknown author assigned to {book_obj}")
             else:
                 LOGGER.info(f"new author {author_name!r} for book {book_info}")
@@ -404,7 +409,8 @@ class Command(BaseCommand):
                 book_obj.states.readingNow = False
                 book_obj.states.toRead = False
                 book_obj.toBuy = False
-                book_obj.states.save()
+                if not self.dryrun:
+                    book_obj.states.save()
                 updated.append('read')
             else:
                 # do not attempt to fix that, report only
@@ -495,7 +501,7 @@ class Command(BaseCommand):
                            self.pp_description(row['description']),
                            self.pp_description(book_obj.description)
                            )
-            book_obj.description = row['description']
+            book_obj.new_description = row['description']
             updated.append('description')
             diff.add('description')
             
@@ -539,8 +545,9 @@ class Command(BaseCommand):
         # 'location', 'list_price', 'anthology', 
         
         if updated:
-            book_obj.synced = datetime.now(timezone.utc)
-            book_obj.save()
+            if not self.dryrun:
+                book_obj.synced = datetime.now(timezone.utc)
+                book_obj.save()
             self.updated_books[book_info] = updated
         if diff:
             self.differs[book_info] = diff
@@ -550,7 +557,10 @@ class Command(BaseCommand):
         """ setup file logging """
         # ATTN to be called only once
         now = datetime.now().isoformat('T').replace(':', '')
-        log_path = Path('log', 'sync_from_bookcatalogue.%s.log' % now)
+        if self.dryrun:
+            log_path = Path('log', 'sync_from_bookcatalogue.%s.log.dryrun' % now)
+        else:            
+            log_path = Path('log', 'sync_from_bookcatalogue.%s.log' % now)
         log_handler = logging.FileHandler(log_path.as_posix(), encoding='utf-8-sig', delay=True)
         log_fmt = logging.Formatter(fmt=LOG_FORMAT_EX, datefmt=LOG_DATE_FORMAT)
         log_handler.setFormatter(log_fmt)
@@ -559,8 +569,11 @@ class Command(BaseCommand):
         else:
             log_handler.setLevel('INFO')            
         LOGGER.addHandler(log_handler)
+            
         
     def pp_description(self, value, start=0, maxlength=96):
+        if value is None:            
+            return '(missing)'
         if start < 0:
             start = 0
         ppv = value.replace('\n', '| ')
@@ -601,7 +614,8 @@ class Command(BaseCommand):
                 else:
                     LOGGER.info(f"linked book from BkCatalog with {book_info} - assigning uuid {book_uuid}")
                 book_obj.bookCatalogueId = book_uuid
-                book_obj.save()
+                if not self.dryrun:
+                    book_obj.save()
                 found = books_found
             
         if not found:
@@ -613,22 +627,31 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         csv_path = Path(options['csv'])
         modified = datetime.fromtimestamp(csv_path.stat().st_mtime).date().isoformat()
+        if options.get('dryrun') in ('1', 'True', True):
+            self.dryrun = True
         
         # send log msgs to logfile
         self.setup_logging()
         
         LOGGER.info(f"sync with bookcatalog export {csv_path!r} modified {modified}")
         assert csv_path.is_file(), f"missing csv path {csv_path!r}"
-        
+
+        if self.dryrun:
+            LOGGER.warning('running in dryrun mode, not updating books and book states')
+            
         rows = updated = new = differs = 0
         self.new_books = []
         self.updated_books = dict()
         self.differing = {}
-        with csv_path.open('r', encoding='utf-8') as csv_f:
-            reader = csv.DictReader(csv_f)
-            for row in reader:
-                rows += 1
-                self.handle_book(row)
+        try:
+            with csv_path.open('r', encoding='utf-8') as csv_f:
+                reader = csv.DictReader(csv_f)
+                for row in reader:
+                    rows += 1
+                    self.handle_book(row)
+        except:
+            LOGGER.exception('failed to process export.csv')
+            raise
                 
         LOGGER.info(f"processed totally {rows} rows from {csv_path.name}")
         if self.new_books:

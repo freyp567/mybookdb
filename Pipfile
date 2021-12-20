@@ -4,19 +4,18 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-#Django = "<=3.1.0"
-Django = "==3.1.8"
+Django = "==3.1.13"
 "django-tables2" = "*"
 django-filter = "*"
 "django-bootstrap4" = "*"
 "Django-Select2" = "*"
-graphene = ">=2.0"
-graphene-django = ">=2.8"
+#graphene = "*"
+graphene-django = "*"
 django-extensions = "*"
 werkzeug = "*"
 requests = "*"
 pyisbn = "*"
-lxml = "==4.6.2"
+lxml = "*"
 django-crispy-forms = "*"
 django-prometheus = "*"
 django-allow-cidr = "*"
@@ -24,7 +23,7 @@ psycopg2-binary = "*"
 #django-yarn = {editable = true,git = "https://github.com/epineda/django-yarn.git"}
 r-django-partial-date = "*"
 pyyaml = "*"
-isbnlib = "==3.10.5"
+isbnlib = ">=3.10.5"
 requests-random-user-agent = "*"
 #openlibrary-client = "*"
 
@@ -40,7 +39,7 @@ pipenv-to-requirements = "*"
 csv-diff = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"
 
 [pipenv]
 allow_prereleases = false
