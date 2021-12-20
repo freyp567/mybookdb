@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "809405517cb86e15c434b6b78ce8a9f3e3b0a9ca59be1def6066dab5041068e8"
+            "sha256": "d944a4643eb8e6863e52ca12c670e3850ace83b930a799759778005e22e2c363"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -56,11 +56,11 @@
         },
         "django": {
             "hashes": [
-                "sha256:9f8be75646f62204320b195062b1d696ba28aa3d45ee72fb7c888ffaebc5bdb2",
-                "sha256:a6e0d1ff11095b7394c079ade7094c73b2dc3df4a7a373c9b58ed73b77a97feb"
+                "sha256:0fabc786489af16ad87a8c170ba9d42bfd23f7b699bd5ef05675864e8d012859",
+                "sha256:72a4a5a136a214c39cf016ccdd6b69e2aa08c7479c66d93f3a9b5e4bb9d8a347"
             ],
             "index": "pypi",
-            "version": "==3.1.13"
+            "version": "==3.1.14"
         },
         "django-allow-cidr": {
             "hashes": [
@@ -518,14 +518,6 @@
             "markers": "python_version >= '3.6'",
             "version": "==8.0.3"
         },
-        "colorama": {
-            "hashes": [
-                "sha256:5941b2b48a20143d2267e95b1c2a7603ce057ee39fd88e7329b0c292aa16869b",
-                "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"
-            ],
-            "markers": "sys_platform == 'win32'",
-            "version": "==0.4.4"
-        },
         "csv-diff": {
             "hashes": [
                 "sha256:f41447fb69165c4b4ae04bb0081884162502ff932e3471e78c97b053dc7ce0ef",
@@ -550,11 +542,11 @@
         },
         "django": {
             "hashes": [
-                "sha256:9f8be75646f62204320b195062b1d696ba28aa3d45ee72fb7c888ffaebc5bdb2",
-                "sha256:a6e0d1ff11095b7394c079ade7094c73b2dc3df4a7a373c9b58ed73b77a97feb"
+                "sha256:0fabc786489af16ad87a8c170ba9d42bfd23f7b699bd5ef05675864e8d012859",
+                "sha256:72a4a5a136a214c39cf016ccdd6b69e2aa08c7479c66d93f3a9b5e4bb9d8a347"
             ],
             "index": "pypi",
-            "version": "==3.1.13"
+            "version": "==3.1.14"
         },
         "django-debug-toolbar": {
             "hashes": [
@@ -741,14 +733,6 @@
             ],
             "markers": "python_version < '3.10'",
             "version": "==4.0.1"
-        },
-        "tzdata": {
-            "hashes": [
-                "sha256:3eee491e22ebfe1e5cfcc97a4137cd70f092ce59144d81f8924a844de05ba8f5",
-                "sha256:68dbe41afd01b867894bbdfd54fa03f468cfa4f0086bfb4adcd8de8f24f3ee21"
-            ],
-            "markers": "sys_platform == 'win32'",
-            "version": "==2021.5"
         },
         "virtualenv": {
             "hashes": [
