@@ -141,7 +141,7 @@ class TimelineView(generic.ListView):
     template_name = "timeline/timeline.html"
     model = timelineevent
     paginate_by = 25
-    ordering = ['-is_bc', 'date']
+    ordering = ['is_bc', '-date']
 
     def get(self, request, *args, **kwargs):
         return super(TimelineView, self).get(request, *args, **kwargs)
