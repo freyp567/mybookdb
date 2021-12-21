@@ -57,7 +57,7 @@ INSTALLED_APPS = [
     'django_tables2',
     'django_filters',
     'django_select2',
-    'graphene_django',
+    #'graphene_django',
     'django_extensions',
     'crispy_forms',
     # 'django_prometheus',  # troubles if deployed in Docker container
@@ -274,27 +274,28 @@ MEDIA_URL = "/media/"
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'templates', 'media')
 
-GRAPHENE = {
-    'SCHEMA': 'mybookdb.schema.schema'
-}
-if DEBUG:
-    GRAPHENE['MIDDLEWARE'] = (
-        'graphene_django.debug.DjangoDebugMiddleware',
-    )
+# 2021-12 disabled graphe-django, because of issues with Django 4
+# GRAPHENE = {
+#     'SCHEMA': 'mybookdb.schema.schema'
+# }
+# if DEBUG:
+#     GRAPHENE['MIDDLEWARE'] = (
+#         'graphene_django.debug.DjangoDebugMiddleware',
+#     )
 
-GRAPHIQL_DEFAULT_QUERY = """
-{
-  users {
-    id
-    username
-    lastLogin
-    email
-    #isStaff
-    #isActive
-    #dateJoined
-  }
-}
-"""
+# GRAPHIQL_DEFAULT_QUERY = """
+# {
+#   users {
+#     id
+#     username
+#     lastLogin
+#     email
+#     #isStaff
+#     #isActive
+#     #dateJoined
+#   }
+# }
+# """
 
 INTERNAL_IPS = [  # for debug_toolbar
     '127.0.0.1',
