@@ -3,7 +3,7 @@ timeline add-on for mybookdb
 record timeline events
 """
 from django.db import models
-from partial_date import PartialDateField
+from partial_date.fields import PartialDateField
 from bookshelf.models import books
 from django.utils.translation import gettext as _
 
