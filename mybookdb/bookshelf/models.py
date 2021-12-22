@@ -10,6 +10,7 @@ import datetime
 
 class authors(models.Model):
     """ authors """
+    id = models.AutoField(primary_key=True)
     name = models.TextField()
     lowerCaseName = models.TextField()
     familyName = models.TextField()
@@ -70,7 +71,7 @@ class books(models.Model):
     adapted as closely as possible from MyBookDroid table book - 
     to achieve sqllite binary compatible
     """
-
+    id = models.AutoField(primary_key=True)
     isbn10 = models.TextField(null=True, max_length=10)  #TODO cleanup, obsolete
     isbn13 = models.TextField(null=True, max_length=13)
     title = models.TextField(blank=False, max_length=255)
@@ -173,6 +174,7 @@ class books(models.Model):
 
 class comments(models.Model):
     """ comments on books """
+    id = models.AutoField(primary_key=True)
     #bookId  ... REFERENCES books ON DELETE SET NULL ON UPDATE SET NULL,
     book = models.ForeignKey(books, 
         null = True,
@@ -216,7 +218,8 @@ class comments(models.Model):
 
 class onleiheBooks(models.Model):
     """ onleihe infos """
-    book = models.OneToOneField(books, 
+    id = models.AutoField(primary_key=True)
+    book = models.OneToOneField(books,
         # related_name="onleiheBookId",
         on_delete=models.CASCADE,
         )
@@ -269,7 +272,8 @@ class onleiheBooks(models.Model):
     
 class googleBooks(models.Model):
     """ googlebooks infos """
-    book = models.OneToOneField(books, 
+    id = models.AutoField(primary_key=True)
+    book = models.OneToOneField(books,
         related_name="googleBookId",
         on_delete=models.CASCADE,
         )
@@ -284,7 +288,8 @@ class googleBooks(models.Model):
 
 class grBooks(models.Model):
     """ goodreads books infos """
-    book = models.OneToOneField(books, 
+    id = models.AutoField(primary_key=True)
+    book = models.OneToOneField(books,
         related_name="grBookId",
         on_delete=models.CASCADE,
         )
@@ -302,12 +307,14 @@ class grBooks(models.Model):
 
 class groups(models.Model):
     """ book categories """
+    id = models.AutoField(primary_key=True)
     name = models.TextField()
 
 
 class reviews(models.Model):
     """ reviews """
-    book = models.OneToOneField(books, 
+    id = models.AutoField(primary_key=True)
+    book = models.OneToOneField(books,
         null=True,
         on_delete=models.CASCADE,
         )
@@ -326,7 +333,8 @@ class reviews(models.Model):
 
 class states(models.Model):
     """ book status read/unread/... """
-    book = models.OneToOneField(books, 
+    id = models.AutoField(primary_key=True)
+    book = models.OneToOneField(books,
         null=True,
         on_delete=models.CASCADE,
         )

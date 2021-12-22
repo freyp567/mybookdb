@@ -4,11 +4,13 @@ from bookshelf.models import books, authors
 
 class linksites(models.Model):
     # valid link sites
+    id = models.AutoField(primary_key=True)
     name = models.TextField(null=False)
     description = models.TextField(null=True)
     base_url = models.TextField(null=False)
  
 class linksites_url(models.Model):
+    id = models.AutoField(primary_key=True)
     site = models.ForeignKey(
         'linksites',
         related_name='site',
@@ -18,6 +20,7 @@ class linksites_url(models.Model):
 
 class links(models.Model):
     # link (URL, ...) to external content
+    id = models.AutoField(primary_key=True)
     link_name = models.TextField(null=False)  # short name describing link
     link_site = models.TextField(null=False) # values from linksites
     link_uri = models.TextField(null=False)

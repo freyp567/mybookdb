@@ -24,7 +24,7 @@ class DatePrecision(models.TextChoices):
 
 class timelineevent(models.Model):
     """ timeline event with optional location and comment """        
-        
+    id = models.AutoField(primary_key=True)
     book = models.ForeignKey(books, on_delete=models.CASCADE)
     date = PartialDateField()
     is_bc = models.BooleanField(default=False)
