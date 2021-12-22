@@ -6,6 +6,9 @@ tmp/
 data/
 log/
 
+static/
+sav/
+
 wingdbstub.py
 .vscode/
 .idea/

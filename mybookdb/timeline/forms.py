@@ -14,7 +14,7 @@ from timeline.models import timelineevent
 class BookEventCreateForm(forms.ModelForm):
     """ add timeline event to current book """
 
-    date = partial_date.PartialDateField()
+    date = partial_date.fields.PartialDateField()
     book_id = forms.CharField(widget=forms.HiddenInput())    
     location = forms.CharField(required=False)
     comment = forms.CharField(widget=forms.Textarea(), required=False)  # columns=60, rows=5

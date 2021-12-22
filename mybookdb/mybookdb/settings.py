@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'bookshelf.apps.BookshelfConfig',
     'bookmarks.apps.BookmarksConfig',
     'timeline.apps.TimelineConfig',
+    'partial_date.apps.PartialDateConfig',
     'bootstrap4',
     'django_tables2',
     'django_filters',
