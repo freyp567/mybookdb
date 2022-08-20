@@ -4,8 +4,10 @@
 from django.contrib import admin
 from django.urls import path, include
 #from mybookdb.settings import DEBUG
+from mybookdb.views import error_404
 
 from django.conf import settings
+from django.conf.urls import handler404
 from django.conf.urls.static import static
 from django.urls import re_path
 
@@ -15,6 +17,9 @@ from django.views.generic import RedirectView
 import django_prometheus
 
 favicon_view = RedirectView.as_view(url='/static/favicon.ico', permanent=True)
+
+handler404 = error_404  # 'mybooksdb.views.error_404'
+
 
 urlpatterns = [
     re_path(r'^favicon\.ico$', favicon_view),
