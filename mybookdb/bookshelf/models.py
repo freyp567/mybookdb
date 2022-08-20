@@ -220,7 +220,7 @@ class onleiheBooks(models.Model):
     """ onleihe infos """
     id = models.AutoField(primary_key=True)
     book = models.OneToOneField(books,
-        # related_name="onleiheBookId",
+        # related_name="onleihebook",
         on_delete=models.CASCADE,
         )
     onleiheId = models.TextField(null=True)
