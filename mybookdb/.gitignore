@@ -7,6 +7,9 @@ data/
 log/
 static/
 
+static/
+sav/
+
 wingdbstub.py
 .vscode/
 .idea/

@@ -18,9 +18,16 @@ Some things I added over time on top of what MyBookDroid was able to store (and 
 + integration with german onleihe, for lookup and merkliste
 + integration with other book catalogs for checking
 
+## GraphQL support - disabled for Django 4.0
+
+As there currently is an issue with the graphene-django extension and Django 4, see
+https://github.com/graphql-python/graphene-django/issues/1284
+we decided to deactivate GraphQL support for time beeing. 
+As it anyway was an experimental feature not required to use the application, it should have no serious drawbacks to do so. 
+When time comes (and bugs get fixed) we will think about readding GraphQL support.
 
 ## prerequisites
-+ Django 3.0  (3.0.3 or newer)
++ Django 4.0  (4.0 or newer)
 + PostgreSQL (or SQLListe, formerly used but due to some performance problems replaced)
 + more prerequisites, see requirements.txt and Pipfile
 

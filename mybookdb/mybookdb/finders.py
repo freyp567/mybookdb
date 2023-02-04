@@ -11,10 +11,7 @@ from django.conf import settings
 import logging
 LOGGER = logging.getLogger(name='mybookdb.finders')
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ordereddict import OrderedDict
+from collections import OrderedDict
 
 LOGGER.info("using yarn finder")
 

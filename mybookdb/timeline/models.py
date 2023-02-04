@@ -3,7 +3,7 @@ timeline add-on for mybookdb
 record timeline events
 """
 from django.db import models
-from partial_date import PartialDateField
+from partial_date.fields import PartialDateField
 from bookshelf.models import books
 from django.utils.translation import gettext as _
 
@@ -24,7 +24,7 @@ class DatePrecision(models.TextChoices):
 
 class timelineevent(models.Model):
     """ timeline event with optional location and comment """        
-        
+    id = models.AutoField(primary_key=True)
     book = models.ForeignKey(books, on_delete=models.CASCADE)
     date = PartialDateField()
     is_bc = models.BooleanField(default=False)

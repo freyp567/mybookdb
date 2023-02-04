@@ -2,6 +2,7 @@
 """
 views on bookshelf (books, authors, ...)
 """
+import os
 import logging
 import json
 from datetime import datetime
@@ -310,8 +311,9 @@ class BookDetailView(generic.DetailView):
         context = super(BookDetailView, self).get_context_data(**kwargs)
         context['is_paginated'] = False  # avoid KeyError
         context['onleihe_button_status'] = 'btn-secondary'
-        if hasattr(self.object, 'onleihebooks'):
-            status = self.object.onleihebooks.status
+        onleihebooks = getattr(self.object, "onleihebooks", None)
+        if onleihebooks is not None:
+            status = onleihebooks.status
             if status == 'notfound':
                 context['onleihe_button_status'] = 'btn-danger'                
             elif status == 'confirmed':
@@ -319,7 +321,13 @@ class BookDetailView(generic.DetailView):
             else:
                 # 'lookupfailed', ...
                 context['onleihe_button_status'] = 'btn-warning'
-            
+            context['onleihe_info'] = str(onleihebooks)
+        else:
+            # status not available
+            context['onleihe_button_status'] = 'btn-error'
+            context['onleihe_info'] = '---'
+
+
         book_comments = self.object.comments_set.all()
         book_comments = book_comments.order_by('-dateCreatedInt')
         context['books_comments'] = book_comments
@@ -332,6 +340,7 @@ class BookDetailView(generic.DetailView):
         context['event_count'] = event_count
         #context['languages'] = BOOK_LANGUAGE  
         context['language_text'] =  get_lang_text(self.object.language)
+        context['USE_LIBRARYTHING'] = os.getenv("USE_LIBRARYTHING") in ("1",)
         return context 
     
 class MaintainBooks(PermissionRequiredMixin, generic.View):
