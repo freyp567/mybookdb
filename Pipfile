@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-Django = "==4.1"
+Django = "==4.1.6"
 "django-tables2" = "*"
 django-filter = "*"
 "django-bootstrap4" = "*"
@@ -39,7 +39,7 @@ pipenv-to-requirements = "*"
 csv-diff = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "3.11"
 
 [pipenv]
 allow_prereleases = false
