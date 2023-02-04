@@ -1,0 +1,6 @@
+# PostgreSQL data (if using dockerized runtime environment)
+
+pg_hba.conf 
+postgres/ 
+postgresql.conf
+

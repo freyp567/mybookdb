@@ -5,6 +5,7 @@ db.sqlite3*
 tmp/
 data/
 log/
+static/
 
 static/
 sav/
