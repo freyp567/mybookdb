@@ -54,7 +54,7 @@ class Command(BaseCommand):
 
     def normalize_title(self, title):
         title = title.replace('\u00ac', '')
-        # &#172;, NOT SIGN / angled dash - used to delimit optional title parts, e.g. ¬Der¬ Besucher
+        # &#172;, NOT SIGN / angled dash - used to delimit optional title parts, e.g. ï¿½Derï¿½ Besucher
         return title
 
     def safe_get_date_iso(self, value):
@@ -105,14 +105,22 @@ class Command(BaseCommand):
                 author_obj.lowerCaseName = author_name.lower()
                 author_obj.familyName = author_parts[0]
                 author_obj.updated = now
-                author_obj.save()
-            book_obj.authors.add(author_obj)
+                if not self.dryrun:
+                    author_obj.save()
+            
+            if not self.dryrun:
+                book_obj.authors.add(author_obj)
             added.append(author_obj)
         return added
     
     def create_book_comment(self, book_obj, title, comment):
         """ create comment object for given book 
         """
+        if self.dryrun:
+            LOGGER.warning("add comment to book %s: '%s' (skip, dryrun)" % (book_obj, comment))
+            return
+
+        LOGGER.info("add comment to book %s: '%s'" % (book_obj, comment))
         now = timezone.now()
         comment_obj = comments()
         comment_obj.book = book_obj
@@ -124,6 +132,9 @@ class Command(BaseCommand):
         return comment_obj
     
     def set_book_state(self, book_obj, have_read):
+        if self.dryrun:
+            LOGGER.debug("dryrun so ignore state update for book %s" % book_obj)
+            return None
         states_obj = states(pk=book_obj.id)
         states_obj.book = book_obj
         if have_read == '1':
@@ -153,8 +164,11 @@ class Command(BaseCommand):
         with transaction.atomic():
             book_obj = books()            
             book_obj.title = book_title
-            assert Isbn13(row['isbn']).validate(), f"book isbn is invalid: {row['isbn']} {book_info}"
-            book_obj.isbn13 = row['isbn']
+            if row.get('isbn'):
+                assert Isbn13(row['isbn']).validate(), f"book isbn is invalid: {row['isbn']} {book_info}"
+                book_obj.isbn13 = row['isbn']
+            else:
+                LOGGER.warning("missing ISBN for new book %s" % book_info)
             book_obj.new_description = row['description'] or None  # normalize?
             book_obj.orig_description = row['description'] or ''
             book_obj.publisher =row['publisher'] or None
@@ -199,6 +213,8 @@ class Command(BaseCommand):
             book_obj.synced = datetime.now(timezone.utc)
             if not self.dryrun:
                 book_obj.save()
+            # TODO update book_obj so .id is set # check book_obj.pk
+            book_obj.refresh_from_db()
             book_info = f"{book_title!r} id={book_obj.id}"
 
             # comment book creation in BookCatalogue app
@@ -326,11 +342,13 @@ class Command(BaseCommand):
         """ transform name from (name), (forname) to (forname) (name) format"""
         if isinstance(parts, str):
             parts = [a.strip() for a in parts.split(',') if a.strip()]
+        parts = [ v for v in parts if v not in ('Nnn',)]
+        # Nnn is the value set by BkCat if no Vorname is assigned, e.g. for Klabund, Serotonin, ...
         if len(parts) == 2:
             return "%s %s" % (parts[1], parts[0])
         else:
             # e.g. 'Klabund', 'Pociao'
-            assert len(parts) == 1, "unrecogized author name / format"
+            assert len(parts) == 1, "unrecogized author name / format: %s" % parts
             return parts[0]
         
     def handle_existing(self, row, found):
@@ -364,7 +382,6 @@ class Command(BaseCommand):
                 new_authors.discard(author_name)  # already set
             elif author == "Author, Unknown":
                 # get rid of / discard
-                # caused by Authors not having Vornamen, e.g. Serotonin and Klabund
                 LOGGER.warning(f"unknown author assigned to {book_obj}")
             else:
                 LOGGER.info(f"new author {author_name!r} for book {book_info}")
@@ -436,7 +453,7 @@ class Command(BaseCommand):
             if book_obj.publicationDate:
                 # happens if book description for other format / different publisher
                 # use date from BookCatalogue to reduce logging for future syncs
-                LOGGER.info("autp-update date_published for %s: %r -> %r", book_info, book_obj.publicationDate, date_published)
+                LOGGER.info("auto-update date_published for %s: %r -> %r", book_info, book_obj.publicationDate, date_published)
                 book_obj.publicationDate = date_published
                 updated.append('date_published')
             else:
@@ -466,15 +483,16 @@ class Command(BaseCommand):
                 comment_obj.text = notes + NOTE_SUFFIX
                 comment_obj.book = book_obj
                 LOGGER.info(f"update {book_info} add note from Bk: {notes!r}")
-                comment_obj.save()
+                if not self.dryrun:
+                    comment_obj.save()
                 updated.append('notes') 
 
         bookshelf = row['bookshelf']  # 'bookshelf_id', 'bookshelf'
         bookshelves = set([shelf.strip() for shelf in bookshelf.split(',') if shelf.strip()])
         bookshelves.discard('Default')
         if bookshelves:
-            LOGGER.debug(f"book on bookshelf {bookshelf!r} id={row['bookshelf_id']} - {book_info}")
-            pass
+            # LOGGER.debug(f"book on bookshelf {bookshelf!r} id={row['bookshelf_id']} - {book_info}")
+            pass  # do not sync from Bk as not maintained there (presently)
             
         if row['genre']:
             LOGGER.debug(f"book genre {row['genre']!r} - {book_info}")
@@ -485,22 +503,28 @@ class Command(BaseCommand):
         if not bk_description:
             LOGGER.warning(f"no description for {book_info} in bookcatalogue")
             FUTURE = 1 # FUTURE: how to handle this?
+        elif not book_description and not orig_description:
+            # book object in mybookdb has no description yet
+            book_obj.orig_description = bk_description
+            book_obj.new_description = bk_description
+            updated.append('description')
         elif bk_description != book_description:
             diff_pos = [pos for pos, li in enumerate(difflib.ndiff(bk_description, book_description)) if li[0] != ' ']
             # SequenceMatcher .find_longest_match, .ratio
             pos_start = diff_pos[0]
-            if pos_start != 0:
-                LOGGER.info('differences in pos %s ...', diff_pos[:3])
+            if pos_start != 0:  # title partially contained?
+                LOGGER.info('difference for description at pos %s ... for %s' % (pos_start, book_info))
 
             if book_obj.orig_description != book_obj.description:                
                 LOGGER.info(f"save former description in orig_description for {book_info}")
                 book_obj.orig_description = book_obj.description
                 updated.append('orig_description')
-                
-            LOGGER.warning(f"difference in description for {book_info}\n  bk: %s\n  db: %s",
-                           self.pp_description(row['description']),
-                           self.pp_description(book_obj.description)
-                           )
+            else:
+                LOGGER.warning(f"difference in description for {book_info}\n  bk: %s\n  db: %s",
+                            self.pp_description(row['description']),
+                            self.pp_description(book_obj.description)
+                            )
+
             book_obj.new_description = row['description']
             updated.append('description')
             diff.add('description')
@@ -545,11 +569,17 @@ class Command(BaseCommand):
         # 'location', 'list_price', 'anthology', 
         
         if updated:
+            if diff:
+                LOGGER.debug("updating book %s: %s w/diff for %s" % (book_obj, updated, diff))
+            else:
+                LOGGER.debug("updating book %s: %s" % (book_obj, updated))
             if not self.dryrun:
                 book_obj.synced = datetime.now(timezone.utc)
                 book_obj.save()
             self.updated_books[book_info] = updated
         if diff:
+            if not updated:
+                LOGGER.debug("detected diff in fields for book %s in %s" % (book_obj, diff))
             self.differs[book_info] = diff
         return
         
@@ -595,6 +625,8 @@ class Command(BaseCommand):
             found = books.objects.filter(title=book_title)
             if not found:
                 found = books.objects.filter(unified_title=book_title)
+                if found:
+                    LOGGER.info("found book with same title '%s'" % (book_title))
             if found:
                 books_found = [ b for b in found if not b.states.obsolete ]
                 if len(books_found) != 1:
@@ -607,10 +639,9 @@ class Command(BaseCommand):
                 # assume happend because book added both to BookCatalogue and MyBookDB - so fix to match
                 book_info = f"{book_title!r} id={book_obj.id}"
                 if book_obj.bookCatalogueId is not None:
-                    LOGGER.warning(f'found book with title {book_title!r} but different uuid - autocorrected')
-                    self.differs[book_info] = set(('uuid',))
-                    self.updated_books.add(book_info)                    
-                    #self._conflicts_books.append(f"{book_obj.book_title!r} id={book_obj.id} -- not matching book_uuid={uuid.UUID(book_uuid)}")
+                    LOGGER.error(f'found book with title {book_title!r} but different uuid - duplicates in BkCat?')
+                    self._conflicts_books.append(f"{book_obj.book_title!r} id={book_obj.id} -- not matching book_uuid={uuid.UUID(book_uuid)}, duplicates w/same title?")
+                    return  # need manual resolution
                 else:
                     LOGGER.info(f"linked book from BkCatalog with {book_info} - assigning uuid {book_uuid}")
                 book_obj.bookCatalogueId = book_uuid
@@ -653,21 +684,20 @@ class Command(BaseCommand):
             LOGGER.exception('failed to process export.csv')
             raise
                 
-        LOGGER.info(f"processed totally {rows} rows from {csv_path.name}")
+        LOGGER.info(f"processed totally {rows} rows from {csv_path.name}\n")
         if self.new_books:
             LOGGER.info(f"added books from {csv_path.name} (%s):\n  + %s\n" % 
                         (len(self.new_books), "\n  + ".join(self.new_books)))   
         if self.updated_books:
             update_info = []
-            for book_info, updated in self.updated_books:
+            for book_info, updated in self.updated_books.items():
                 update_info.append("%s - %s" % (book_info, updated))
             LOGGER.info(f"updated books from {csv_path.name} (%s):\n  + %s\n" % 
                         (len(self.updated_books), "\n  + ".join(update_info)))        
         if self.differs:
             diff_info = []
-            for book_title in self.differs:
-                diff = self.differs[book_title]
-                diff_info.append(f"{book_title} differs in {diff}")
+            for book_info, fields in self.differs.items():
+                diff_info.append(f"{book_info} differs in {fields}")
             LOGGER.warning(f"found {len(self.differs)} books with differences:\n   %s\n.", '\n   '.join(diff_info))
         
         if self._conflicts_books:
