@@ -149,7 +149,7 @@
     {{ books.states }}
   </span>
 </p>
-<p class="detail_brief">Onleihe: {{ books.onleihebooks|default:'---' }}</p>
+<p class="detail_brief">Onleihe: {{ onleihe_info }}</p>
 
 <hr/>
 
@@ -190,7 +190,7 @@
 <tr>
 <td class="comment-id small">{{ comment.id }}</td>
 <td class="comment-date small">{{ comment.datetime_created }}</td>
-<td class="comment-text">{{ comment.clean_text }}</td>
+<td class="comment-text">TODO fix this: {{ comment.clean_text }}</td>
 </tr>
 {% endfor %}
 
