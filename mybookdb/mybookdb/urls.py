@@ -3,9 +3,12 @@
 """
 from django.contrib import admin
 from django.urls import path, include
-#from mybookdb.settings import DEBUG
-from mybookdb.views import error_404
+from debug_toolbar.toolbar import debug_toolbar_urls
 
+#import mybookdb.settings
+from mybookdb.views import logout_view, error_404
+
+from django.contrib.auth.views import LogoutView
 from django.conf import settings
 from django.conf.urls import handler404
 from django.conf.urls.static import static
@@ -14,7 +17,7 @@ from django.urls import re_path
 from django.views.generic import RedirectView
 
 # from graphene_django.views import GraphQLView  # not yet adapted to Django 4.0
-import django_prometheus
+#import django_prometheus
 
 favicon_view = RedirectView.as_view(url='/static/favicon.ico', permanent=True)
 
@@ -24,7 +27,7 @@ handler404 = error_404  # 'mybooksdb.views.error_404'
 urlpatterns = [
     re_path(r'^favicon\.ico$', favicon_view),
     path('admin/', admin.site.urls),
-]
+] + debug_toolbar_urls()
 
 if settings.USE_DEBUG_TOOLBAR:
     import debug_toolbar
@@ -34,7 +37,8 @@ if settings.USE_DEBUG_TOOLBAR:
         # For django versions before 2.0:
         # re_path(r'^__debug__/', include(debug_toolbar.urls)),
 
-    ] + urlpatterns    
+    ] + urlpatterns
+
 
 urlpatterns += [
     path('bookshelf/', include('bookshelf.urls', namespace="bookshelf")),
@@ -54,9 +58,17 @@ urlpatterns += [
 
 
 # Django site authentication urls (for login, logout, password management)
+#TODO FIX this
 urlpatterns += [
     path('accounts/', include('django.contrib.auth.urls')),
 ]
+urlpatterns += [
+    #path('logout/', LogoutView.as_view())
+    path('logout/', logout_view)
+]
+# (r'^logout/$', 'django.contrib.auth.views.logout',
+#                           {'next_page': '/successfully_logged_out/'})
+
 
 # for django_select2 ModelWidgets 
 # https://django-select2.readthedocs.io/en/latest/get_started.html#installation

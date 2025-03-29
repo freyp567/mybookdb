@@ -185,13 +185,13 @@ class BookCreateForm(forms.ModelForm):
     def clean_updated(self):
         data = self.cleaned_data['updated']
         if data is None:
-            data = datetime.now(tz=timezone.utc)
+            data = timezone.now()
         return data
     
     def clean_created(self):
         data = self.cleaned_data['created']
         if data is None:
-            data = datetime.now(tz=timezone.utc)
+            data = timezone.now()
         return data
     
     def clean_new_description(self):
@@ -209,7 +209,7 @@ class BookCreateForm(forms.ModelForm):
 
     def clean_language(self):
         lang = self.cleaned_data['language']
-        if lang is '--':
+        if lang == '--':
             return None
         else:
             return lang
@@ -377,7 +377,7 @@ class BookUpdateForm(forms.ModelForm):
         
     def clean_updated(self):
         data = self.cleaned_data['updated']
-        data = datetime.now(tz=timezone.utc)
+        data = timezone.now()
         return data
     
     def clean_new_description(self):
@@ -386,11 +386,11 @@ class BookUpdateForm(forms.ModelForm):
     
     def clean_language(self):
         lang = self.cleaned_data['language']
-        if lang is '--':
+        if lang == '--':
             return None
         else:
             return lang
-        
+
     def orig_description(self):
         data = self.cleaned_data['orig_description']
         return data or ''
@@ -434,7 +434,7 @@ class AuthorCreateForm(forms.ModelForm):
     name = forms.CharField(max_length=255, label='Vorname Name')
     familyName = forms.CharField(max_length=255, label='Familienname')
     updated = forms.DateField(disabled=True)    
-    short_bio = forms.CharField(label=_('Kurzbiografie'))
+    short_bio = forms.CharField(label=_('Kurzbiografie'), required=False)
         
     def __init__(self, *args, **kwargs):
         super(AuthorCreateForm, self).__init__(*args, **kwargs)
@@ -461,25 +461,91 @@ class AuthorCreateForm(forms.ModelForm):
             )            
         )
         
-        self.fields['short_bio'].widget = forms.Textarea(attrs={'rows': 4}) # 'cols': 80, 
-        self.fields['updated'].initial = datetime.now(tz=timezone.utc)
-
-
+        self.fields['short_bio'].widget = forms.Textarea(attrs={'rows': 4}) # 'cols': 80,
+        self.fields['updated'].initial = timezone.now()
 
     def clean(self):
+        self._validate_unique = True
         return self.cleaned_data
 
     def clean_updated(self):
         data = self.cleaned_data['updated']
         if data is None:
-            data = datetime.now(tz=timezone.utc)
+            data = timezone.now()
         return data
     
         
-class AuthorUpdateForm(AuthorCreateForm):
+class AuthorUpdateForm(forms.ModelForm):
+
+    class Meta:
+        model = authors
+        fields = (
+            'name',
+            'familyName',
+            'updated',
+            'short_bio',
+            'obsolete'
+        )
+
+    name = forms.CharField(max_length=255, label='Vorname Name')
+    familyName = forms.CharField(max_length=255, label='Familienname', required=False)
+    updated = forms.DateField(disabled=True)
+    short_bio = forms.CharField(label=_('Kurzbiografie'), required=False)
+    obsolete = forms.BooleanField(label=_('aussortiert'))
 
     def __init__(self, *args, **kwargs):
         super(AuthorUpdateForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'lb-sm'
+
+        self.helper.layout = Layout(
+            # Alert(...)
+            Fieldset(
+                '',
+                Field('name'),
+                Field('familyName'),
+                Field('short_bio'),
+            ),
+            Div(
+                Div(Field('updated', readonly=True), css_class='col-md-4', ),
+                css_class='row',
+            ),
+            Div(
+                Div(Field('obsolete', readonly=False), css_class='col-md-4', ),
+                css_class='row',
+            ),
+            FormActions(
+                Submit('save', 'Save changes'),
+                Button('cancel', 'Cancel', css_class='btn btn-default',
+                       onclick="window.history.back()")
+            )
+        )
+
+        self.fields['short_bio'].widget = forms.Textarea(attrs={
+            'rows': 4, 'required': False})
+
+        self.fields['updated'].initial = timezone.now()
+
+
+    def clean(self):
+        self._validate_unique = True
+        return self.cleaned_data
+
+    def clean_updated(self):
+        data = self.cleaned_data['updated']
+        if data is None:
+            data = timezone.now()
+        return data
+
+    def clean_obsolete(self):
+        obsolete = self.cleaned_data['obsolete']
+        # verify that no books assigned if obsolete set to True
+        author_books = books.objects.filter(authors__id=self.instance.id)
+        if obsolete and author_books.count() > 0:
+            raise ValidationError(f"Autor hat noch Bücher ({author_books.count()}), "
+                                  "kann daher nicht aussortiert werden")
+        return obsolete
 
 
 class StateUpdateForm(forms.ModelForm):

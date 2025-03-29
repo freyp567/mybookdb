@@ -85,3 +85,10 @@ if ($('#authorslist').length !== 0) {
 } else {
   console.error("bootstrap table authorslist not found");
 }
+
+function rowStyleAuthor(row, index) {
+    if (row.obsolete) {
+        return {css: {'background-color': 'red'}};
+    }
+    return {};
+}

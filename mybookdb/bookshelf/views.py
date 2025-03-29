@@ -532,7 +532,7 @@ class AuthorListView(generic.ListView):
 def author_obj_to_dict(obj):
     data = {}
     for key in ('id', 'name', 'latest_book', 'updated', 'last_book_update', 
-                'book_rating_avg', 'book_count', 'books_read'):
+                'book_rating_avg', 'book_count', 'books_read', 'obsolete'):
         data[key] = getattr(obj, key)
     return data
 
@@ -658,6 +658,12 @@ class AuthorDetailView(generic.DetailView):
         context['books_other'] = other_books
         
         return context 
+
+
+class AuthorDeleteView(generic.edit.DeleteView):
+    model = authors
+    success_url = "/"
+    template_name = "bookshelf/authors_delete.html"
 
 
 

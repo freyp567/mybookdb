@@ -6,8 +6,11 @@
 {% block content %}
     {{ form.media.css }}
     {{ form.media.js }}
-    
-    <h3>Edit Author Details for "{{object.name}}"</h3>
+
+    <a class="btn btn-outline-warning btn-sm" role="button"
+      href="about:blank">Edit Author
+    </a>
+    <h3>{{object.name}}</h3>
 
     {% for message in messages %}
         <div class="{{ message|bootstrap_message_classes }} alert-dismissable">

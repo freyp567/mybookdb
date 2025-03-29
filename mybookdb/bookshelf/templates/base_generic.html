@@ -40,7 +40,14 @@
    {% if user.is_authenticated %}
      <li>User: {{ user.get_username }}</li>
      <li><a href="{% url 'bookshelf:books-reading' %}">Currently Reading</a></li>
-     <li><a href="{ % url 'logout' % }?next={{request.path}}">Logout</a></li>   
+    <li>
+        <!--- logout requires POST since Django 4.1 -->
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="btn btn-link btn-sm" type="submit">Logout</button>
+      </form>
+    </li>
+
    {% else %}
      <li><a href="{% url 'login' %}?next={{request.path}}">Login</a></li>   
    {% endif %} 

@@ -66,6 +66,12 @@ https://stackoverflow.com/questions/14596743/how-do-you-change-the-width-and-hei
     font-weight:bold;
 }
 
+.detail_obsolete {
+    font-size: 14px;
+    color: orangered;
+    border: thick solid
+}
+
 .detail_brief {
     /* .small-well ? */
     font-size: 11px;

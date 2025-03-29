@@ -4,13 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-Django = "==4.1.7"
+Django = "==5.1.7"
 "django-tables2" = "*"
 django-filter = "*"
 "django-bootstrap4" = "*"
 "Django-Select2" = "*"
-#graphene = "*"
-#graphene-django = "*"  # disabled for Django 4 (2021-12)
 django-extensions = "*"
 werkzeug = "*"
 requests = "*"
@@ -20,12 +18,10 @@ django-crispy-forms = "*"
 django-prometheus = "*"
 django-allow-cidr = "*"
 psycopg2-binary = "*"
-#django-yarn = {editable = true,git = "https://github.com/epineda/django-yarn.git"}
-#r-django-partial-date = "*"
 pyyaml = "*"
 isbnlib = ">=3.10.5"
 requests-random-user-agent = "*"
-#openlibrary-client = "*"
+crispy-bootstrap4 = "*"
 
 [dev-packages]
 "flake8" = "*"
@@ -33,13 +29,10 @@ requests-random-user-agent = "*"
 pylint = "*"
 django-debug-toolbar = "*"
 pipenv-to-requirements = "*"
-#django-compressor = "*"
-#django-compressor-toolkit = "*"
-#django-npm = "*"
 csv-diff = "*"
 
 [requires]
-python_version = "3.11"
+python_version = "3.12"
 
 [pipenv]
 allow_prereleases = false
