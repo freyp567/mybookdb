@@ -73,7 +73,7 @@ def get_files(storage, match_patterns='*', ignore_patterns=None, location=''):
             fn = os.path.join(location, fn)
         if not django_utils.matches_patterns(fn, match_patterns):
             continue
-        LOGGER.info("yarn file: %s", fn)
+        LOGGER.debug("yarn file: %s", fn)
         yield fn
     for dir in directories:
         if django_utils.matches_patterns(dir, ignore_patterns):

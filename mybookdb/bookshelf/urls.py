@@ -65,7 +65,7 @@ urlpatterns += [
 ]
 
 urlpatterns += [
-    #path('test/', views.TestView, name='test'),
+    path('test/', views.test, name='test'),
     #path('authors/', views.AuthorListView.as_view(), name='authors'),
     #path('authors/', views.FilteredAuthorsListView.as_view(), name='authors'),
     path('authors/', views.AuthorsListTableView.as_view(), name='authors'),

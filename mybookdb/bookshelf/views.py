@@ -58,7 +58,7 @@ def index(request):
     return render(
         request,
         'index.html',
-        context={'num_books':num_books, 'num_authors':num_authors,}
+        context={'num_books':num_books, 'num_authors':num_authors, 'is_paginated': False}
     )
 
 
@@ -911,3 +911,13 @@ class BookUserRatingUpdate(generic.UpdateView):  # PermissionRequiredMixin
             return HttpResponseBadRequest('update FAILED')
         else:
             return HttpResponse('updated')
+
+
+def test(request):
+    return render(
+        request,
+        'test.html',
+        context={
+            'form': datetime.now().isoformat(),
+        }
+    )
