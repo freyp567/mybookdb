@@ -73,6 +73,7 @@ urlpatterns += [
     path('authors/create', views.AuthorsCreateView.as_view(), name='author-create'),
     path('author/<int:pk>', views.AuthorDetailView.as_view(), name='author-detail'),
     path('author/<int:pk>/update', views.AuthorUpdateView.as_view(), name='author-update'),
+    path('author/<int:pk>/delete', views.AuthorDeleteView.as_view(), name='author-delete'),
     path('author/<int:pk>/listdetails', views.getAuthorsListDetails, name='authors-list-details'),
     path('authors/book', views.getAuthors, name='authors_book'),
 ]

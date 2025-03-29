@@ -5,7 +5,13 @@
 {% block content %}
 <!-- button type="button" class="btn btn-primary" ... -->
 <a class="btn btn-primary btn-sm" role="button" 
-  href="{% url 'bookshelf:author-update' authors.pk %}">Edit Author Details</a>
+  href="{% url 'bookshelf:author-update' authors.pk %}">Edit Author
+</a>
+{% if authors.obsolete %}
+<a class="btn btn-danger btn-sm" role="button"
+  href="{% url 'bookshelf:author-delete' authors.pk %}">Delete Author
+</a>
+{% endif %}
 
 <h1>{{ authors.name }}</h1>
 <p class="author_bio_short">{{ authors.short_bio|safe|linebreaks }}</p>
@@ -13,6 +19,9 @@
 <!-- p><strong>Details:</strong><br/> 
   (currently no additional description for author -- future)
 </p -->
+{% if authors.obsolete %}
+<p class="detail_obsolete">OBSOLETE</p>
+{% endif %}
 <p class="detail_brief">Updated: {{ authors.updated|date:"c" }}</p>
 <p class="detail_brief">Last Book Update: {{ authors.last_book_update|date:"c" }}</p>
 

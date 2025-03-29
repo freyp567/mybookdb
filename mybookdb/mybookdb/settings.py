@@ -12,9 +12,18 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 from pathlib import Path
+import warnings
+
 #import logging
 #from django.templatetags.static import static
 
+# https://docs.djangoproject.com/en/5.1/topics/i18n/timezones/
+warnings.filterwarnings(
+    "error",
+    r"DateTimeField .* received a naive datetime",
+    RuntimeWarning,
+    r"django.db.models.fields",
+)
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,6 +39,9 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", False)
 
+# required for django debug toolbar
+INTERNAL_IPS = ['127.0.0.1', 'localhost', ]
+
 ALLOWED_CIDR_NETS = os.environ.get('ALLOWED_CIDR_NETS')
 if not ALLOWED_CIDR_NETS:
     pass #ALLOWED_HOSTS = ['*']
@@ -37,6 +49,8 @@ else:
     ALLOWED_CIDR_NETS = ALLOWED_CIDR_NETS.split(',')
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(',')
 
+# required for startup - hardcode it??
+##DJANGO_SITENAME="mybookdb"
 
 PROMETHEUS_METRICS_EXPORT_PORT = 8001
 #PROMETHEUS_METRICS_EXPORT_ADDRESS = os.environ.get('PROMETHEUS_METRICS_EXPORT_ADDRESS') or ''
@@ -50,6 +64,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'debug_toolbar',
     'bookshelf.apps.BookshelfConfig',
     'bookmarks.apps.BookmarksConfig',
     'timeline.apps.TimelineConfig',
@@ -60,8 +75,9 @@ INSTALLED_APPS = [
     'django_select2',
     #'graphene_django',
     'django_extensions',
+    'crispy_bootstrap4',
     'crispy_forms',
-    # 'django_prometheus',  # troubles if deployed in Docker container
+    # 'django_prometheus',  # troubles if deployed in Docker container, so commented out
     'mybookdb',
 ]
 USE_DEBUG_TOOLBAR =os.environ.get("USE_DEBUG_TOOLBAR", False)
@@ -105,6 +121,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     # 'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -152,7 +169,7 @@ if USE_SQLLITE:
             'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
-else:    
+else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -254,7 +271,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
 
 
 BOOTSTRAP4 = {
