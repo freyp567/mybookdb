@@ -1,11 +1,107 @@
+<!--
+playground to isolate issues with templates and resolving
 
+2025-03-29
+issue with bootstrap-table extension filter-control
+causing Resolver404 on page load
+
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
 {% load static %}
 
-<link rel="stylesheet" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}" />
+<link rel="stylesheet" type="text/css"
+      href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
+
+<link rel="stylesheet" type="text/css"
+      href="{% static 'bootstrap-table/dist/bootstrap-table.min.css' %}"/>
+
+<link rel="stylesheet" type="text/css"
+      href="{% static 'bootstrap-table/dist/extensions/filter-control/bootstrap-table-filter-control.min.css' %}"
+>
+
+<script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'bootstrap-table/dist/bootstrap-table.min.js' %}"></script>
+<script src="{% static 'bootstrap-table/dist/extensions/filter-control/bootstrap-table-filter-control.min.js' %}"></script>
+
+</head>
+<body>
 
 <hr/>
 Test page
 <br/>
+<table class="table table-sm authors" id="authorslist"
+       data-toggle="table"
+       data-show-columns="true"
+       data-filter-control="true"
+       data-filter-show-clear="true"
+>
+    <thead>
+    <tr>
+        <th class="author_id"
+            data-field="id"
+            data-filter-control="input"
+        >ID
+        </th>
+        <th id="col-name" class="author_name"
+            data-field="name"
+            data-filter-control="input"
+            data-formatter="format_author_link"
+            data-sortable="true"
+            scope="col">Name
+        </th>
+        <th id="col-rating" class="book_rating_avg"
+            title="average rating of all books read from author"
+            data-field="book_rating_avg"
+            data-filter-control="false"
+            data-sortable="true"
+            scope="col">Rating
+        </th>
+        <th id="col-book-count" data-field="book_count" class="book_count"
+            title="number of books (for list of books, click onto row)"
+            data-filter-control="false"
+            data-sortable="true"
+            scope="col">#
+        </th>
+        <th id="col-bk-read-count" data-field="books_read" class="book_count"
+            title="number of books read"
+            data-filter-control="false"
+            data-sortable="true"
+            scope="col">read
+        </th>
+        <th id="col-auth-update" data-field="updated" class="author_update"
+            title="authors info last updated"
+            data-filter-control="false"
+            data-sortable="true"
+            scope="col">Updated
+        </th>
+        <th id="col-books-update" data-field="last_book_update" class="author_update"
+            title="last book update related to given author"
+            data-filter-control="false"
+            data-sortable="true"
+            scope="col">BkUpd
+        </th>
+        <th id="col-book-latest" data-field="latest_book" class="author_latest_book"
+            data-filter-control="false"
+            data-sortable="false"
+            scope="col">Latest Book
+        </th>
+    </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>**2**</td>
+            <td>**3**</td>
+            <td>**4**</td>
+            <td>**5**</td>
+            <td>**6**</td>
+            <td>**7**</td>
+            <td>**8**</td>
+        </tr>
+    </tbody>
+</table>
 <hr/>
 
 <form action="/test/done" method="post">
@@ -15,3 +111,5 @@ Test page
     <input type="submit" value="Submit Test">
 </form>
 
+</body>
+</html>

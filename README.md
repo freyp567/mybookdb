@@ -27,7 +27,7 @@ As it anyway was an experimental feature not required to use the application, it
 When time comes (and bugs get fixed) we will think about readding GraphQL support.
 
 ## prerequisites
-+ Django 4.0  (4.0 or newer)
++ Django 5.0 (or newer)
 + PostgreSQL (or SQLListe, formerly used but due to some performance problems replaced)
 + more prerequisites, see requirements.txt and Pipfile
 
@@ -45,6 +45,11 @@ For details see https://wiki.librarything.com/index.php/LibraryThing_APIs.
 ## packaging
 Using yarn / django-yarnpkg for packaging Javascript components (bootstrap4, jquery).
 Expect yarn to be installed externally / globally.
+
+Important: run 
+```python mybookdb\manage.py collectstatic```
+after changes to yarn configuration / updates.
+
 
 ## some TODOs
 + login and user access (currently limited to editing book details)

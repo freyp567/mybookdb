@@ -918,6 +918,7 @@ def test(request):
         request,
         'test.html',
         context={
+            'name': 'TESTTESTTEST',
             'form': datetime.now().isoformat(),
         }
     )
